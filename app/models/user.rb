@@ -10,7 +10,7 @@ class User < ApplicationRecord
       echelon: echelon          || 1,
       quotite: quotite          || 1.0,
       departement_code: departement_code || "75",
-      nb_enfants_sft: nb_enfants_sft || 0,
+      nb_enfants_sft: self.nb_enfants_sft || 0, # rubocop:disable Style/RedundantSelf
       nbi_points: nbi_points || 0,
       iss_montant: iss_montant,
       dtc_montant: dtc_montant,

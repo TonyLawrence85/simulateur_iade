@@ -9,9 +9,14 @@ module Iade
     TAUX_CSG_HS          = BigDecimal("0.0920")
     TAUX_REDUCTION_HS    = BigDecimal("0.1131")
     ABATTEMENT_FRAIS_PRO = BigDecimal("0.0175")
+    TAUX_IRCANTEC_T1 = BigDecimal("0.0401") # 4,01% — tranche A (part salariale)
 
     def self.cnracl(assiette:)
       (BigDecimal(assiette.to_s) * TAUX_CNRACL).round(2)
+    end
+
+    def self.ircantec(assiette:)
+      (BigDecimal(assiette.to_s) * TAUX_IRCANTEC_T1).round(2)
     end
 
     def self.rafp(assiette_primes:, tib_annuel: nil)

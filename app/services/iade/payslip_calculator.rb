@@ -182,7 +182,16 @@ module Iade
 
     # ---------------- DÉDUCTIONS ----------------
 
-    def build_deduction_lines
+    def add_retraite_principale
+      case @p[:statut]
+      when "contractuel"
+        add_retraite_ircantec
+      else
+        add_retraite_cnracl
+      end
+    end
+
+    def add_retraite_cnracl # rubocop:disable Metrics/MethodLength
       assiette_cnracl = tib_montant + Iade::AutoPrimesCalculator::CTI_MONTANT
 
       add_deduction(code: "RCN", label: "CNRACL RETRAITE",
@@ -197,7 +206,19 @@ module Iade
 
       add_deduction(code: "RAF", label: "RETRAITE ADD.TITU. (RAFP)",
                     montant: Iade::CotisationsCalculator.rafp(assiette_primes: brut_primes_total),
-                    detail: "5% plafonné")
+                    detail: "5% plafonné (titulaires uniquement)")
+    end
+
+    def add_retraite_ircantec
+      assiette = tib_montant + Iade::AutoPrimesCalculator::CTI_MONTANT + brut_primes_total
+
+      add_deduction(code: "RET", label: "RETRAITE IRCANTEC",
+                    montant: Iade::CotisationsCalculator.ircantec(assiette: assiette),
+                    detail: "4,01% tranche A (contractuel)")
+    end
+
+    def build_deduction_lines # rubocop:disable Metrics/MethodLength
+      add_retraite_principale
 
       base_csg = Iade::CotisationsCalculator.base_csg(brut_total: @brut_lines_total)
 

@@ -1,0 +1,62 @@
+<div class="step-panel">
+  <div class="panel-header">
+    <div class="panel-icon">💶</div>
+    <div class="panel-titles">
+      <h2 class="panel-title">NBI et indemnités fixes</h2>
+      <p class="panel-desc">
+        CTI, prime Veil et prime IADE sont automatiques. Saisir les éléments profil depuis un bulletin récent.
+      </p>
+    </div>
+    <span class="panel-step-counter">Étape 3 / 6</span>
+  </div>
+
+  <div class="panel-body">
+    <div class="section-label">NBI — Nouvelle bonification indiciaire</div>
+
+    <div class="field-grid field-grid--2">
+      <div class="field-group">
+        <%= f.label :nbi_points, class: "field-label" do %>
+          Points NBI <span class="req">*</span>
+        <% end %>
+        <%= f.select :nbi_points, [["0 — aucune", 0], ["10 points", 10], ["15 points", 15], ["20 points", 20]], { selected: @simulation.nbi_points }, required: true, data: { action: "change->simulation#updateNbi" } %>
+        <span class="field-hint">Chercher <code>BONIFICATION IND.</code> (KB1) sur le bulletin</span>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Montant NBI calculé <span class="badge badge--calc">KB1</span></label>
+        <input type="text" disabled class="field-computed" data-simulation-target="nbiDisplay" value="0,00 €"> <%# herb:disable all %>
+      </div>
+    </div>
+
+    <div class="section-label">Indemnités profil (lire sur un bulletin récent)</div>
+
+    <div class="field-grid field-grid--2">
+      <div class="field-group">
+        <%= f.label :iss_montant, class: "field-label" do %>
+          ISS — Ind. spécifique sujétion <span class="badge badge--profile">IS1</span> <span class="req">*</span>
+        <% end %>
+        <%= f.number_field :iss_montant, placeholder: "Ex : 487,25", step: 0.01, min: 0, required: true %>
+        <span class="field-hint">Ligne <code>IND. SPEC.SUJETION</code> sur un bulletin récent</span>
+      </div>
+
+      <div class="field-group">
+        <%= f.label :dtc_montant, class: "field-label" do %>
+          Ind. comp. CSG <span class="badge badge--profile">DTC</span>
+        <% end %>
+        <%= f.number_field :dtc_montant, placeholder: "Ex : 44,18", step: 0.01, min: 0 %>
+      </div>
+
+      <div class="field-group">
+        <%= f.label :wt1_montant, class: "field-label" do %>
+          Remboursement transport <span class="badge badge--profile">WT1</span>
+        <% end %>
+        <%= f.number_field :wt1_montant, placeholder: "Ex : 43,75", step: 0.01, min: 0 %>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-footer">
+    <button type="button" class="btn btn--secondary" data-action="click->simulation#prevStep">← Précédent</button>
+    <button type="button" class="btn btn--primary" data-action="click->simulation#nextStep">Suivant →</button>
+  </div>
+</div>

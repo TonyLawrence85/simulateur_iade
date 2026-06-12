@@ -1,0 +1,73 @@
+<div class="step-panel">
+  <div class="panel-header">
+    <div class="panel-icon">🪪</div>
+    <div class="panel-titles">
+      <h2 class="panel-title">Situation professionnelle</h2>
+      <p class="panel-desc">
+        La grille indiciaire est calculée automatiquement — vous n'avez pas besoin de connaître votre indice majoré.
+      </p>
+    </div>
+    <span class="panel-step-counter">Étape 1 / 6</span>
+  </div>
+
+  <div class="panel-body">
+    <div class="field-grid field-grid--3">
+      <div class="field-group">
+        <%= f.label :statut, class: "field-label" do %>
+          Statut administratif <span class="req">*</span>
+        <% end %>
+        <%= f.select :statut, [["Titulaire (CNRACL)", "titulaire"], ["Stagiaire", "stagiaire"], ["Contractuel (IRCANTEC)", "contractuel"]], { selected: @simulation.statut }, required: true %> <%# herb:disable all %>
+      </div>
+
+      <div class="field-group">
+        <%= f.label :grade, class: "field-label" do %>
+          Grade IADE <span class="req">*</span>
+        <% end %>
+        <%= f.select :grade, [["1er grade", "grade1"], ["2ème grade", "grade2"]], { selected: @simulation.grade }, required: true, data: { action: "change->simulation#updateTib" } %> <%# herb:disable all %>
+      </div>
+
+      <div class="field-group">
+        <%= f.label :echelon, class: "field-label" do %>
+          Échelon <span class="req">*</span>
+        <% end %>
+        <%= f.select :echelon, (1..11).map { |e| [e, e] }, { selected: @simulation.echelon }, required: true, data: { action: "change->simulation#updateTib" } %> <%# herb:disable all %>
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--2" style="margin-top:1rem">
+      <div class="field-group">
+        <%= f.label :quotite, class: "field-label" do %>
+          Quotité de travail <span class="req">*</span>
+        <% end %>
+        <%= f.select :quotite, [["100%", 1.0], ["90%", 0.9], ["80%", 0.8], ["50%", 0.5]], { selected: @simulation.quotite }, required: true, data: { action: "change->simulation#updateTib" } %> <%# herb:disable all %>
+      </div>
+
+      <div class="field-group">
+        <%= f.label :type_cycle, "Type de cycle", class: "field-label" %>
+        <%= f.select :type_cycle, [["7h36", "7h36"], ["7h30", "7h30"], ["12h", "12h"]], { selected: @simulation.type_cycle } %> <%# herb:disable all %>
+      </div>
+    </div>
+
+    <div class="section-label">Traitement calculé automatiquement</div>
+
+    <div class="field-grid field-grid--3">
+      <div class="field-group">
+        <label class="field-label">Indice majoré (IM)</label>
+        <input type="text" disabled class="field-computed" data-simulation-target="imDisplay" value="—"> <%# herb:disable all %>
+      </div>
+      <div class="field-group">
+        <label class="field-label">TIB mensuel brut <span class="badge badge--calc">BT0</span></label>
+        <input type="text" disabled class="field-computed" data-simulation-target="tibDisplay" value="—"> <%# herb:disable all %>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Taux horaire</label>
+        <input type="text" disabled class="field-computed" data-simulation-target="tauxHoraireDisplay" value="—"> <%# herb:disable all %>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-footer">
+    <button type="button" class="btn btn--secondary" data-action="click->simulation#prevStep">← Précédent</button>
+    <button type="button" class="btn btn--primary" data-action="click->simulation#nextStep">Suivant →</button>
+  </div>
+</div>

@@ -1,0 +1,50 @@
+<% content_for :title, "Mes simulations" %>
+
+<div class="sim-app">
+  <div class="sim-header">
+    <h1 class="sim-title">Mes simulations</h1>
+    <p class="sim-subtitle">Historique de vos simulations de paie IADE AP-HP</p>
+  </div>
+
+  <% if @simulations.empty? %>
+    <div class="step-panel">
+      <div class="panel-body" style="text-align:center; padding: 3rem">
+        <p style="color: var(--ink-soft); margin-bottom: 1rem">
+          Aucune simulation pour l'instant.
+        </p>
+        <%= link_to "Créer ma première simulation →", new_simulation_path, class: "btn btn--primary btn--lg" %>
+      </div>
+    </div>
+  <% else %>
+    <div style="margin-bottom: 1rem; text-align: right">
+      <%= link_to "+ Nouvelle simulation", new_simulation_path, class: "btn btn--primary" %>
+    </div>
+
+    <div class="step-panel">
+      <table class="diff-table">
+        <thead>
+          <tr>
+            <th>Mois</th>
+            <th>Grade / Échelon</th>
+            <th class="num">Brut simulé</th>
+            <th class="num">Net à payer</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @simulations.each do |sim| %>
+            <tr>
+              <td><%= Date.strptime(sim.mois_paie, "%Y-%m").strftime("%B %Y").capitalize %></td>
+              <td><%= sim.grade == "grade1" ? "1er grade" : "2ème grade" %> — éch. <%= sim.echelon %></td>
+              <td class="td-num"><%= number_to_currency(sim.result_brut_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
+              <td class="td-num"><%= number_to_currency(sim.result_net_paye, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
+              <td><%= sim.created_at.strftime("%d/%m/%Y") %></td>
+              <td><%= link_to "Voir →", simulation_path(sim), class: "btn btn--secondary btn--sm" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>

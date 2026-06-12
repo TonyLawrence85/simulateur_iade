@@ -1,0 +1,58 @@
+<% content_for :title, "Nouvelle simulation" %>
+
+<div class="sim-app">
+  <div class="sim-header">
+    <h1 class="sim-title">Simulateur de contrôle de fiche de paie</h1>
+    <p class="sim-subtitle">
+      Calculez votre rémunération IADE AP-HP théorique et comparez-la à votre bulletin reçu.
+    </p>
+
+    <nav class="stepper" data-simulation-target="stepper">
+      <%= render "shared/step_item", num: "0", label: "Période",   step: 0, current: @current_step %>
+      <%= render "shared/step_item", num: "1", label: "Situation", step: 1, current: @current_step %>
+      <%= render "shared/step_item", num: "2", label: "Résidence", step: 2, current: @current_step %>
+      <%= render "shared/step_item", num: "3", label: "Indemnités",step: 3, current: @current_step %>
+      <%= render "shared/step_item", num: "4", label: "Activité",  step: 4, current: @current_step %>
+      <%= render "shared/step_item", num: "5", label: "Retenues",  step: 5, current: @current_step %>
+    </nav>
+
+    <div class="progress-label">
+      <span>Progression de la saisie</span>
+      <span class="confidence" data-simulation-target="confidenceLabel">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" data-simulation-target="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="sim-layout"
+       data-controller="simulation"
+       data-simulation-current-step-value="<%= @current_step || 0 %>">
+
+    <div>
+      <%= form_with model: @simulation, url: simulations_path, data: { simulation_target: "form" } do |f| %>
+
+        <div data-simulation-target="panel" data-step="0" class="<%= @current_step == 0 ? '' : 'hidden' %>">
+          <%= render "simulations/steps/step_0", f: f %>
+        </div>
+
+        <div data-simulation-target="panel" data-step="1" class="hidden">
+          <%= render "simulations/steps/step_1", f: f %>
+        </div>
+
+        <div data-simulation-target="panel" data-step="2" class="hidden">
+          <%= render "simulations/steps/step_2", f: f %>
+        </div>
+
+        <div data-simulation-target="panel" data-step="3" class="hidden">
+          <%= render "simulations/steps/step_3", f: f %>
+        </div>
+
+      <% end %>
+    </div>
+
+    <aside class="live-sidebar">
+      <%= render "simulations/live_sidebar" %>
+    </aside>
+  </div>
+</div>

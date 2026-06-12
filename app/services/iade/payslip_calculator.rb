@@ -19,11 +19,12 @@ module Iade
       @warnings = []
     end
 
-    def call
+    def call # rubocop:disable Metrics/MethodLength
       validate_required_params
       return failure_result if @errors.any?
 
       build_brut_lines
+      compute_brut_total
       build_deduction_lines
       compute_totals
 
@@ -223,11 +224,14 @@ module Iade
 
     # ---------------- TOTAUX ----------------
 
+    def compute_brut_total
+      @brut_lines_total = @lines.reject { |l| l[:type] == :deduction }.sum { |l| l[:montant] }
+    end
+
     def compute_totals
-      brut_lines   = @lines.reject { |l| l[:type] == :deduction }
+      @lines.reject { |l| l[:type] == :deduction }
       deduct_lines = @lines.select { |l| l[:type] == :deduction }
 
-      @brut_lines_total  = brut_lines.sum { |l| l[:montant] }
       @brut_total        = @brut_lines_total
       @cotisations_total = deduct_lines.sum { |l| l[:montant] }
       @net_social        = @brut_total - @cotisations_total
@@ -284,7 +288,8 @@ module Iade
     end
 
     def base_imposable_mensuelle
-      @brut_lines_total - @cotisations_total + (@lines.find { |l| l[:code] == "Q60" }&.dig(:montant) || 0)
+      deductions_so_far = @lines.select { |l| l[:type] == :deduction }.sum { |l| l[:montant] }
+      @brut_lines_total - deductions_so_far
     end
 
     def failure_result

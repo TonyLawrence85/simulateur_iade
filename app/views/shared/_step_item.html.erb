@@ -1,0 +1,17 @@
+<%
+  css_class = if step < current
+    "step-item is-done"
+  elsif step == current
+    "step-item is-active"
+  else
+    "step-item"
+  end
+%>
+
+<button type="button"
+        class="<%= css_class %>"
+        data-action="click->simulation#goto"
+        data-step="<%= step %>">
+  <span class="step-num"><%= num %></span>
+  <span class="step-label"><%= label %></span>
+</button>

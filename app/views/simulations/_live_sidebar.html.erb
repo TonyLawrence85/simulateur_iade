@@ -1,0 +1,38 @@
+<div class="kpi-card kpi-card--primary">
+  <p class="kpi-label">TIB mensuel brut</p>
+  <p class="kpi-value" data-simulation-target="sidebarTib">
+    <%= @tib_preview ? number_to_currency(@tib_preview[:tib], unit: "€", delimiter: " ", precision: 2, format: "%n %u") : "—" %> <%# herb:disable all %>
+  </p>
+  <p class="kpi-sub">BT0 — traitement de base</p>
+</div>
+
+<div class="kpi-card">
+  <p class="kpi-label">Brut estimé</p>
+  <p class="kpi-value" data-simulation-target="sidebarBrut">—</p>
+  <p class="kpi-sub">Calculé après soumission</p>
+</div>
+
+<div class="kpi-card kpi-card--success">
+  <p class="kpi-label">Net à payer estimé</p>
+  <p class="kpi-value" data-simulation-target="sidebarNet">—</p>
+  <p class="kpi-sub">Après PAS et retenues</p>
+</div>
+
+<div class="auto-primes-block" style="margin-top:8px">
+  <p class="auto-primes-block__title">Primes automatiques</p>
+  <div class="auto-prime-line">
+    <span class="auto-prime-code">CW1</span>
+    <span class="auto-prime-label">CTI/Ségur</span>
+    <strong>206,00 €</strong>
+  </div>
+  <div class="auto-prime-line">
+    <span class="auto-prime-code">LP1</span>
+    <span class="auto-prime-label">Prime Veil</span>
+    <strong>26,30 €</strong>
+  </div>
+  <div class="auto-prime-line">
+    <span class="auto-prime-code">LPN</span>
+    <span class="auto-prime-label">Prime IADE</span>
+    <strong data-simulation-target="sidebarPrimeIade">485,72 €</strong>
+  </div>
+</div>

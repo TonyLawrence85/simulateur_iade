@@ -1,0 +1,612 @@
+/* ================================================================
+   SIMULATEUR PAIE IADE AP-HP
+   ================================================================ */
+
+:root {
+  --ink:        #1a2332;
+  --ink-soft:   #4a5568;
+  --ink-mute:   #8496ac;
+  --canvas:     #f7f8fa;
+  --surface:    #ffffff;
+  --border:     #dde3ec;
+  --border-focus: #2b6cb0;
+
+  --blue:       #2b6cb0;
+  --blue-light: #ebf4ff;
+  --blue-mid:   #bee3f8;
+  --green:      #276749;
+  --green-light:#f0fff4;
+  --green-mid:  #9ae6b4;
+  --amber:      #92600a;
+  --amber-light:#fffbeb;
+  --amber-mid:  #f6e05e;
+  --red:        #9b2c2c;
+  --red-light:  #fff5f5;
+  --red-mid:    #fed7d7;
+
+  --font-sans:  'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:  'IBM Plex Mono', 'Courier New', monospace;
+
+  --radius-sm:  3px;
+  --radius-md:  5px;
+  --radius-lg:  8px;
+
+  --shadow-card: 0 1px 3px rgba(26,35,50,.08), 0 1px 2px rgba(26,35,50,.04);
+}
+
+/* Conteneur principal du simulateur uniquement —
+   pour éviter tout conflit avec le reste de l'app Bootstrap */
+.sim-app * { box-sizing: border-box; }
+
+.sim-app {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.sim-app code, .sim-app .mono {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: var(--canvas);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--ink-soft);
+}
+
+/* ----------------------------------------------------------------
+   STEPPER & PROGRESSION
+   ---------------------------------------------------------------- */
+.sim-app .sim-header { margin-bottom: 2rem; }
+
+.sim-app .sim-title {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.sim-app .sim-subtitle {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+.sim-app .stepper {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 1.75rem 0 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+
+.sim-app .step-item {
+  flex: 1;
+  min-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px 8px;
+  border-right: 1px solid var(--border);
+  border-bottom: none;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-decoration: none;
+  color: var(--ink-mute);
+  gap: 3px;
+  position: relative;
+  background: transparent;
+}
+.sim-app .step-item:last-child { border-right: none; }
+.sim-app .step-item:hover { background: var(--canvas); color: var(--ink-soft); }
+
+.sim-app .step-item.is-active { background: var(--ink); color: #fff; }
+.sim-app .step-item.is-done    { background: var(--green-light); color: var(--green); }
+
+.sim-app .step-item.is-done::after,
+.sim-app .step-item.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+}
+.sim-app .step-item.is-done::after   { background: var(--green); }
+.sim-app .step-item.is-active::after { background: var(--blue); }
+
+.sim-app .step-num {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.7;
+  line-height: 1;
+}
+.sim-app .step-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.sim-app .progress-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 1rem 0 1.75rem;
+  overflow: hidden;
+}
+.sim-app .progress-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sim-app .progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+}
+.sim-app .progress-label .confidence {
+  font-family: var(--font-mono);
+  color: var(--green);
+  font-weight: 500;
+}
+
+/* ----------------------------------------------------------------
+   PANNEAUX D'ÉTAPE
+   ---------------------------------------------------------------- */
+.sim-app .step-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.sim-app .panel-header {
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.sim-app .panel-icon {
+  width: 32px; height: 32px;
+  background: var(--blue-light);
+  border: 1px solid var(--blue-mid);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+.sim-app .panel-titles { flex: 1; }
+.sim-app .panel-title {
+  font-size: 1rem; font-weight: 600; color: var(--ink); line-height: 1.3;
+}
+.sim-app .panel-desc {
+  font-size: 0.8125rem; color: var(--ink-soft); margin-top: 2px; line-height: 1.4;
+}
+.sim-app .panel-step-counter {
+  font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-mute);
+  white-space: nowrap; padding-top: 2px;
+}
+.sim-app .panel-body { padding: 1.5rem; }
+.sim-app .panel-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--canvas);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+
+/* ----------------------------------------------------------------
+   CHAMPS DE FORMULAIRE
+   ---------------------------------------------------------------- */
+.sim-app .field-grid { display: grid; gap: 1rem; }
+.sim-app .field-grid--2 { grid-template-columns: 1fr 1fr; }
+.sim-app .field-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
+.sim-app .field-grid--6 { grid-template-columns: repeat(6, 1fr); }
+
+.sim-app .field-group { display: flex; flex-direction: column; gap: 5px; }
+.sim-app .field-label {
+  font-size: 0.8125rem; font-weight: 500; color: var(--ink-soft);
+  display: flex; align-items: center; gap: 5px;
+}
+.sim-app .field-label .req { color: var(--red); font-size: 0.875rem; line-height: 1; }
+.sim-app .field-hint { font-size: 0.75rem; color: var(--ink-mute); line-height: 1.4; }
+.sim-app .field-hint--warn { color: var(--amber); }
+
+.sim-app input[type="text"],
+.sim-app input[type="number"],
+.sim-app input[type="month"],
+.sim-app input[type="date"],
+.sim-app select {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  width: 100%;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  appearance: none;
+}
+.sim-app input:focus, .sim-app select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(43,108,176,.15);
+}
+.sim-app input:disabled, .sim-app select:disabled {
+  background: var(--canvas); color: var(--ink-mute); cursor: not-allowed;
+}
+.sim-app input[type="number"] { font-family: var(--font-mono); }
+
+.sim-app .field-computed {
+  font-family: var(--font-mono);
+  font-size: 1rem; font-weight: 500;
+  color: var(--blue);
+  background: var(--blue-light);
+  border-color: var(--blue-mid);
+}
+.sim-app .field-computed:disabled { color: var(--blue); }
+
+.sim-app .section-label {
+  font-size: 0.6875rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--ink-mute);
+  margin: 1.25rem 0 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.sim-app .section-label:first-child { margin-top: 0; }
+
+/* ----------------------------------------------------------------
+   TOGGLES
+   ---------------------------------------------------------------- */
+.sim-app .toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  gap: 12px;
+}
+.sim-app .toggle-row + .toggle-row { margin-top: 6px; }
+.sim-app .toggle-label { font-size: 0.875rem; color: var(--ink-soft); }
+
+.sim-app .toggle-switch { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+.sim-app .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.sim-app .toggle-track {
+  position: absolute; inset: 0;
+  background: var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.sim-app .toggle-track::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  left: 3px; top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+.sim-app .toggle-switch input:checked + .toggle-track { background: var(--blue); }
+.sim-app .toggle-switch input:checked + .toggle-track::before { transform: translateX(16px); }
+
+.sim-app .confirm-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.sim-app .confirm-row input[type="checkbox"] {
+  width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; cursor: pointer;
+  accent-color: var(--blue);
+}
+.sim-app .confirm-row label {
+  font-size: 0.8125rem; color: var(--ink-soft); line-height: 1.5; cursor: pointer;
+}
+.sim-app .confirm-row label strong { color: var(--ink); }
+
+/* ----------------------------------------------------------------
+   ALERTES & BADGES
+   ---------------------------------------------------------------- */
+.sim-app .alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem; line-height: 1.5;
+  display: flex; gap: 8px; align-items: flex-start;
+  border-left: 3px solid;
+}
+.sim-app .alert + .alert { margin-top: 8px; }
+.sim-app .alert--info  { background: var(--blue-light);  border-color: var(--blue);  color: #1a365d; }
+.sim-app .alert--warn  { background: var(--amber-light); border-color: var(--amber); color: var(--amber); }
+.sim-app .alert--ok    { background: var(--green-light); border-color: var(--green); color: var(--green); }
+.sim-app .alert--error { background: var(--red-light);   border-color: var(--red);   color: var(--red); }
+
+.sim-app .badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.6875rem; font-weight: 600;
+  padding: 2px 7px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.sim-app .badge--auto    { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+.sim-app .badge--calc    { background: var(--blue-light);  color: var(--blue);  border: 1px solid var(--blue-mid); }
+.sim-app .badge--profile { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-mid); }
+.sim-app .badge--var     { background: var(--canvas);      color: var(--ink-soft); border: 1px solid var(--border); }
+.sim-app .badge--missing,
+.sim-app .badge--under   { background: var(--red-light);   color: var(--red);   border: 1px solid var(--red-mid); }
+.sim-app .badge--over    { background: var(--amber-light);  color: var(--amber); border: 1px solid var(--amber-mid); }
+.sim-app .badge--ok      { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+
+/* ----------------------------------------------------------------
+   SIDEBAR KPI
+   ---------------------------------------------------------------- */
+.sim-app .sim-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.sim-app .live-sidebar {
+  display: flex; flex-direction: column; gap: 8px;
+  position: sticky; top: 16px;
+}
+
+.sim-app .kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-card);
+}
+.sim-app .kpi-label {
+  font-size: 0.6875rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--ink-mute); margin-bottom: 4px;
+}
+.sim-app .kpi-value {
+  font-family: var(--font-mono);
+  font-size: 1.375rem; font-weight: 500;
+  color: var(--ink); line-height: 1.2;
+}
+.sim-app .kpi-sub { font-size: 0.75rem; color: var(--ink-mute); margin-top: 2px; }
+.sim-app .kpi-card--primary .kpi-value { color: var(--blue); }
+.sim-app .kpi-card--success .kpi-value { color: var(--green); }
+
+/* ----------------------------------------------------------------
+   PRIMES AUTOMATIQUES
+   ---------------------------------------------------------------- */
+.sim-app .auto-primes-block {
+  background: var(--green-light);
+  border: 1px solid var(--green-mid);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.sim-app .auto-primes-block__title {
+  font-size: 0.75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--green); margin-bottom: 0.75rem;
+}
+.sim-app .auto-prime-line {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.875rem; padding: 4px 0;
+}
+.sim-app .auto-prime-line + .auto-prime-line {
+  border-top: 1px solid var(--green-mid); padding-top: 6px; margin-top: 2px;
+}
+.sim-app .auto-prime-code {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--green); font-weight: 500;
+}
+.sim-app .auto-prime-label { color: #276749; flex: 1; margin: 0 8px; }
+
+/* ----------------------------------------------------------------
+   TABLEAU DE DIFF
+   ---------------------------------------------------------------- */
+.sim-app .diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.sim-app .diff-table th {
+  font-size: 0.6875rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--ink-mute);
+  padding: 8px 12px; text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--canvas);
+}
+.sim-app .diff-table th.num { text-align: right; }
+.sim-app .diff-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.sim-app .diff-table tr:last-child td { border-bottom: none; }
+.sim-app .diff-table tr:hover td { background: var(--canvas); }
+
+.sim-app .diff-table .td-code {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--ink-mute); white-space: nowrap;
+}
+.sim-app .diff-table .td-label { color: var(--ink); }
+.sim-app .diff-table .td-num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.875rem; font-weight: 500;
+  white-space: nowrap;
+}
+.sim-app .diff-table .td-delta { text-align: right; font-family: var(--font-mono); font-weight: 600; }
+
+.sim-app .diff-ok   { color: var(--ink-mute); }
+.sim-app .diff-pos  { color: var(--green); }
+.sim-app .diff-neg  { color: var(--red); }
+.sim-app .diff-over { color: var(--amber); }
+
+.sim-app .row-anomaly td { background: var(--red-light) !important; }
+
+.sim-app .diff-totals td {
+  font-weight: 600;
+  border-top: 2px solid var(--border);
+  padding-top: 10px;
+}
+
+/* ----------------------------------------------------------------
+   KPI RÉSULTAT (en-tête show.html.erb)
+   ---------------------------------------------------------------- */
+.sim-app .result-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  background: var(--surface);
+}
+.sim-app .result-kpi {
+  padding: 1.25rem 1.25rem 1rem;
+  border-right: 1px solid var(--border);
+}
+.sim-app .result-kpi:last-child { border-right: none; }
+.sim-app .rk-label {
+  font-size: 0.6875rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--ink-mute); margin-bottom: 6px;
+}
+.sim-app .rk-value {
+  font-family: var(--font-mono);
+  font-size: 1.5rem; font-weight: 500;
+  color: var(--ink); line-height: 1;
+}
+.sim-app .rk-sub { font-size: 0.75rem; color: var(--ink-mute); margin-top: 4px; }
+.sim-app .rk-positive { color: var(--green); }
+.sim-app .rk-negative { color: var(--red); }
+
+/* ----------------------------------------------------------------
+   BOUTONS
+   ---------------------------------------------------------------- */
+.sim-app .btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.875rem; font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.12s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.sim-app .btn:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.sim-app .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.sim-app .btn--primary {
+  background: var(--ink); color: white; border-color: var(--ink);
+}
+.sim-app .btn--primary:hover:not(:disabled) {
+  background: #2d3748; border-color: #2d3748; text-decoration: none; color: white;
+}
+
+.sim-app .btn--secondary {
+  background: var(--surface); color: var(--ink-soft); border-color: var(--border);
+}
+.sim-app .btn--secondary:hover:not(:disabled) {
+  background: var(--canvas); color: var(--ink); text-decoration: none;
+}
+
+.sim-app .btn--success {
+  background: var(--green); color: white; border-color: var(--green);
+}
+.sim-app .btn--success:hover:not(:disabled) {
+  background: #1e5c3f; text-decoration: none; color: white;
+}
+
+.sim-app .btn--sm { font-size: 0.8125rem; padding: 6px 12px; }
+.sim-app .btn--lg { font-size: 1rem; padding: 11px 22px; }
+
+/* ----------------------------------------------------------------
+   ANOMALIES (page compare)
+   ---------------------------------------------------------------- */
+.sim-app .anomaly-block {
+  background: var(--red-light);
+  border: 1px solid var(--red-mid);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-top: 1.25rem;
+}
+.sim-app .anomaly-block__header {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 600; color: var(--red);
+  margin-bottom: 0.75rem; font-size: 0.9375rem;
+}
+.sim-app .anomaly-item {
+  padding: 8px 0;
+  border-top: 1px solid var(--red-mid);
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 8px; align-items: baseline;
+  font-size: 0.875rem;
+}
+.sim-app .anomaly-code  { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--red); font-weight: 500; }
+.sim-app .anomaly-label { color: var(--ink); }
+.sim-app .anomaly-delta { font-family: var(--font-mono); font-weight: 600; color: var(--red); text-align: right; white-space: nowrap; }
+.sim-app .anomaly-total {
+  margin-top: 0.75rem; padding-top: 0.75rem;
+  border-top: 2px solid var(--red-mid);
+  font-weight: 600; color: var(--red);
+  display: flex; justify-content: space-between; font-size: 1rem;
+}
+
+/* ----------------------------------------------------------------
+   ONGLETS
+   ---------------------------------------------------------------- */
+.sim-app .tab-bar {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+.sim-app .tab-btn {
+  padding: 9px 16px;
+  font-size: 0.875rem; font-weight: 500;
+  color: var(--ink-soft);
+  border: none; background: none; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.sim-app .tab-btn.is-active { color: var(--blue); border-bottom-color: var(--blue); }
+.sim-app .tab-panel { display: none; }
+.sim-app .tab-panel.is-active { display: block; }
+
+/* ----------------------------------------------------------------
+   UTILITAIRES
+   ---------------------------------------------------------------- */
+.sim-app .hidden { display: none !important; }
+
+/* ----------------------------------------------------------------
+   RESPONSIVE
+   ---------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .sim-app .sim-layout { grid-template-columns: 1fr; }
+  .sim-app .live-sidebar { position: static; }
+  .sim-app .result-kpis { grid-template-columns: 1fr 1fr; }
+  .sim-app .field-grid--3,
+  .sim-app .field-grid--6 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .sim-app .result-kpis { grid-template-columns: 1fr; }
+  .sim-app .field-grid--2 { grid-template-columns: 1fr; }
+}

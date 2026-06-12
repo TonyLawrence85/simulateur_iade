@@ -1,0 +1,50 @@
+<div class="step-panel">
+  <div class="panel-header">
+    <div class="panel-icon">📅</div>
+    <div class="panel-titles">
+      <h2 class="panel-title">Période de simulation</h2>
+      <p class="panel-desc">
+        Définit le mois simulé. Les décalages de paie AP-HP (M, M+1, M+2) sont calculés automatiquement.
+      </p>
+    </div>
+    <span class="panel-step-counter">Étape 0 / 6</span>
+  </div>
+
+  <div class="panel-body">
+    <div class="field-grid field-grid--2">
+      <div class="field-group">
+        <% mois_defaut = @simulation.mois_paie.presence || Date.today.strftime("%Y-%m") %> <%# herb:disable all %>
+        <%= f.label :mois_paie, class: "field-label" do %>
+          Mois et année de paie <span class="req">*</span>
+        <% end %>
+        <%= f.month_field :mois_paie, value: mois_defaut, required: true, data: { simulation_target: "moisPaie", action: "change->simulation#updateDates" } %>
+        <span class="field-hint">Ex : 2026-04 = bulletin d'avril 2026</span>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Mois d'activité (nuits — M)</label>
+        <input type="month" disabled class="field-computed" data-simulation-target="moisM" value="<%= mois_defaut %>"> <%# herb:disable all %>
+        <span class="field-hint">Payées le mois même</span>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Mois dim./fériés (M−1)</label>
+        <input type="month" disabled class="field-computed" data-simulation-target="moisM1"> <%# herb:disable all %>
+        <span class="field-hint">Payés en M+1</span>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Mois TP7/IT7/DHN (M−2)</label>
+        <input type="month" disabled class="field-computed" data-simulation-target="moisM2"> <%# herb:disable all %>
+        <span class="field-hint">Payés en M+2</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-footer">
+    <span></span>
+    <button type="button" class="btn btn--primary" data-action="click->simulation#nextStep">
+      Suivant →
+    </button>
+  </div>
+</div>

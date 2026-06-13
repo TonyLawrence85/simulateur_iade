@@ -1,0 +1,65 @@
+<% content_for :title, "Comparer — #{@simulation.mois_paie}" %>
+
+<div class="sim-app">
+  <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center">
+    <%= link_to "← Résultat", simulation_path(@simulation), class: "btn btn--secondary btn--sm" %>
+    <button class="btn btn--secondary btn--sm" onclick="window.print()">Imprimer</button>
+  </div>
+
+  <div class="sim-header">
+    <h1 class="sim-title">Comparer avec votre bulletin</h1>
+    <p class="sim-subtitle">
+      <%= Date.strptime(@simulation.mois_paie, "%Y-%m").strftime("%B %Y").capitalize %> ·
+      Saisissez les montants de votre bulletin pour détecter les anomalies.
+    </p>
+  </div>
+
+  <%# Formulaire de saisie du bulletin réel %>
+  <div class="step-panel" style="margin-bottom:1.5rem">
+    <div class="panel-header">
+      <div class="panel-icon">📄</div>
+      <div class="panel-titles">
+        <h2 class="panel-title">Votre bulletin reçu</h2>
+        <p class="panel-desc">Saisir les montants depuis votre bulletin papier</p>
+      </div>
+    </div>
+
+    <div class="panel-body">
+      <%= form_with url: compare_simulation_path(@simulation), method: :post do |f| %>
+
+        <div class="section-label">Totaux du bulletin</div>
+        <div class="field-grid field-grid--2" style="margin-bottom:1rem">
+          <div class="field-group">
+            <label class="field-label">Brut total (bulletin)</label>
+            <input type="number" name="real[brut]" placeholder="Ex : 4 231,50" step="0.01" value="<%= @simulation.real_brut_total %>">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Net à payer (bulletin)</label>
+            <input type="number" name="real[net]" placeholder="Ex : 3 208,32" step="0.01" value="<%= @simulation.real_net_paye %>">
+          </div>
+        </div>
+
+        <div class="section-label">Lignes individuelles (optionnel — pour un diff précis)</div>
+        <div class="field-grid field-grid--3">
+          <% %w[BT0 CW1 LP1 LPN IS1 KB1 BR0 KR0 CS0 JMA RCN UCB UCX Q60].each do |code| %>
+            <div class="field-group">
+              <label class="field-label"><code><%= code %></code></label>
+              <input type="number" name="real_lines[<%= code %>]" placeholder="€" step="0.01" value="<%= @simulation.real_lines&.dig(code) %>">
+            </div>
+          <% end %>
+        </div>
+
+        <div class="panel-footer" style="margin: 1rem -1.5rem -1.5rem; padding: 1rem 1.5rem">
+          <span></span>
+          <%= f.submit "Comparer →", class: "btn btn--primary" %>
+        </div>
+
+      <% end %>
+    </div>
+  </div>
+
+  <%# Résultat de la comparaison %>
+  <% if @comparison %>
+    <%= render "simulations/comparison_result", comparison: @comparison %>
+  <% end %>
+</div>

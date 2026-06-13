@@ -1,0 +1,130 @@
+<% content_for :title, "Résultat — #{@simulation.mois_paie}" %>
+
+<div class="sim-app">
+  <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center">
+    <%= link_to "← Mes simulations", simulations_path, class: "btn btn--secondary btn--sm" %>
+    <%= link_to "Comparer avec mon bulletin →", compare_simulation_path(@simulation), class: "btn btn--primary" %>
+  </div>
+
+  <div class="sim-header">
+    <h1 class="sim-title">
+      Résultat — <%= Date.strptime(@simulation.mois_paie, "%Y-%m").strftime("%B %Y").capitalize %>
+    </h1>
+    <p class="sim-subtitle">
+      <%= @simulation.grade == "grade1" ? "1er grade" : "2ème grade" %> ·
+      Échelon <%= @simulation.echelon %> ·
+      <%= (@simulation.quotite.to_f * 100).to_i %>% ·
+      <%= @simulation.statut.capitalize %>
+    </p>
+  </div>
+
+  <div class="result-kpis">
+    <div class="result-kpi">
+      <p class="rk-label">Brut total</p>
+      <p class="rk-value"><%= number_to_currency(@result.brut_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+      <p class="rk-sub">Avant cotisations</p>
+    </div>
+    <div class="result-kpi">
+      <p class="rk-label">Total cotisations</p>
+      <p class="rk-value"><%= number_to_currency(@result.cotisations_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+      <p class="rk-sub">Retenues salariales</p>
+    </div>
+    <div class="result-kpi">
+      <p class="rk-label">Net avant PAS</p>
+      <p class="rk-value"><%= number_to_currency(@result.net_avant_pas, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+      <p class="rk-sub">Net imposable</p>
+    </div>
+    <div class="result-kpi">
+      <p class="rk-label">Net à payer</p>
+      <p class="rk-value rk-positive"><%= number_to_currency(@result.net_paye, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+      <p class="rk-sub">Après PAS<%= @simulation.mutuelle.to_f > 0 ? " + mutuelle" : "" %></p>
+    </div>
+  </div>
+
+  <% if @result.warnings.any? %>
+    <% @result.warnings.each do |w| %>
+      <div class="alert alert--warn" style="margin-bottom:.75rem">
+        <span>⚠</span><span><%= w %></span>
+      </div>
+    <% end %>
+  <% end %>
+
+  <div class="step-panel">
+    <div class="panel-header">
+      <div class="panel-icon">📋</div>
+      <div class="panel-titles">
+        <h2 class="panel-title">Détail ligne par ligne</h2>
+        <p class="panel-desc">Toutes les lignes calculées selon votre situation</p>
+      </div>
+      <span class="panel-step-counter"><%= @result.lines.count %> lignes</span>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table class="diff-table">
+        <thead>
+          <tr>
+            <th style="width:90px">Code</th>
+            <th>Libellé</th>
+            <th style="width:120px" class="num">Montant</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:var(--canvas)">
+            <td colspan="3" style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);padding:6px 12px">
+              Éléments de rémunération brute
+            </td>
+          </tr>
+          <% @result.lines.select { |l| l[:type] == :brut }.each do |line| %>
+            <tr>
+              <td class="td-code"><code><%= line[:code] %></code></td>
+              <td class="td-label">
+                <%= line[:label] %>
+                <% if line[:detail] %>
+                  <span style="font-size:.75rem;color:var(--ink-mute);display:block"><%= line[:detail] %></span>
+                <% end %>
+              </td>
+              <td class="td-num" style="color:var(--green)">
+                + <%= number_to_currency(line[:montant], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+              </td>
+            </tr>
+          <% end %>
+
+          <tr style="background:var(--canvas);border-top:1px solid var(--border)">
+            <td colspan="3" style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);padding:6px 12px">
+              Retenues salariales
+            </td>
+          </tr>
+          <% @result.lines.select { |l| l[:type] == :deduction }.each do |line| %>
+            <tr>
+              <td class="td-code"><code><%= line[:code] %></code></td>
+              <td class="td-label">
+                <%= line[:label] %>
+                <% if line[:detail] %>
+                  <span style="font-size:.75rem;color:var(--ink-mute);display:block"><%= line[:detail] %></span>
+                <% end %>
+              </td>
+              <td class="td-num" style="color:var(--red)">
+                − <%= number_to_currency(line[:montant].abs, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+              </td>
+            </tr>
+          <% end %>
+
+          <tr class="diff-totals">
+            <td colspan="2" style="text-align:right;padding-right:1rem;color:var(--ink-soft)">Net avant PAS</td>
+            <td class="td-num"><%= number_to_currency(@result.net_avant_pas, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
+          </tr>
+          <tr class="diff-totals" style="border-top:2px solid var(--ink)">
+            <td colspan="2" style="text-align:right;padding-right:1rem;font-size:1rem">Net à payer</td>
+            <td class="td-num" style="font-size:1.125rem;color:var(--green)">
+              <%= number_to_currency(@result.net_paye, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="margin-top:1.5rem;text-align:center">
+    <%= link_to "Comparer avec mon bulletin reçu →", compare_simulation_path(@simulation), class: "btn btn--primary btn--lg" %>
+  </div>
+</div>

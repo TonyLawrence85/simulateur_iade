@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_12_202308) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_12_233053) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -47,6 +47,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_12_202308) do
 
   create_table "simulation_sessions", force: :cascade do |t|
     t.string "bulletin_file_path"
+    t.boolean "confirm_decalage"
     t.datetime "created_at", null: false
     t.string "departement_code"
     t.decimal "dhn_heures"

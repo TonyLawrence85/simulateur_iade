@@ -34,6 +34,10 @@ class SimulationSession < ApplicationRecord
     )
   end
 
+  def to_param
+    token
+  end
+
   private
 
   def generate_token

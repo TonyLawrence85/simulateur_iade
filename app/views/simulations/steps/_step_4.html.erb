@@ -1,0 +1,95 @@
+<div class="step-panel">
+  <div class="panel-header">
+    <div class="panel-icon">🕐</div>
+    <div class="panel-titles">
+      <h2 class="panel-title">Activité du mois</h2>
+      <p class="panel-desc">
+        Variables selon le planning. Attention aux décalages de paie AP-HP.
+      </p>
+    </div>
+    <span class="panel-step-counter">Étape 4 / 6</span>
+  </div>
+
+  <div class="panel-body">
+
+    <div class="alert alert--warn">
+      <span>⚠</span>
+      <div>
+        <strong>Règle AP-HP — décalages de paie :</strong><br>
+        Nuits (JMA) = activité de <strong>ce mois</strong> ·
+        Dim./fériés = activité de <strong>M−1</strong> (payés M+1) ·
+        TP7/IT7/DHN = activité de <strong>M−2</strong> (payés M+2)
+      </div>
+    </div>
+
+    <div class="confirm-row" style="margin-top:.75rem">
+      <%= f.check_box :confirm_decalage, required: true %>
+      <label for="simulation_session_confirm_decalage">
+        Je confirme avoir saisi les variables du <strong>bon mois d'activité</strong> selon les décalages AP-HP ci-dessus.
+      </label>
+    </div>
+
+    <div class="section-label" style="margin-top:1.25rem">
+      Nuits — activité de ce mois <span class="badge badge--var">JMA</span>
+    </div>
+
+    <div class="field-grid field-grid--3">
+      <div class="field-group">
+        <%= f.label :heures_nuit, "Heures de nuit (21h–6h)", class: "field-label" %>
+        <%= f.number_field :heures_nuit, placeholder: "0", step: 0.5, min: 0, data: { action: "input->simulation#updatePlanning" } %>
+      </div>
+    </div>
+
+    <div class="section-label">
+      Dim. & jours fériés — activité de M−1 <span class="badge badge--var">M+1</span>
+    </div>
+
+    <div class="field-grid field-grid--2">
+      <div class="field-group">
+        <%= f.label :heures_dimanche, "Dimanches travaillés (h)", class: "field-label" %>
+        <%= f.number_field :heures_dimanche, placeholder: "0", step: 0.5, min: 0, data: { action: "input->simulation#updatePlanning" } %>
+        <span class="field-hint field-hint--warn">Saisir l'activité du mois M−1</span>
+      </div>
+      <div class="field-group">
+        <%= f.label :heures_ferie, "Jours fériés travaillés (h)", class: "field-label" %>
+        <%= f.number_field :heures_ferie, placeholder: "0", step: 0.5, min: 0, data: { action: "input->simulation#updatePlanning" } %>
+        <span class="field-hint field-hint--warn">Saisir l'activité du mois M−1</span>
+      </div>
+    </div>
+
+    <div class="section-label">
+      TP7 / IT7 / DHN — activité de M−2 <span class="badge badge--var">M+2</span>
+    </div>
+
+    <div class="field-grid field-grid--3">
+      <div class="field-group">
+        <%= f.label :tp7_qty, "TP7 (quantité)", class: "field-label" %>
+        <%= f.number_field :tp7_qty, placeholder: "0", step: 1, min: 0 %>
+      </div>
+      <div class="field-group">
+        <%= f.label :it7_qty, "IT7 (quantité)", class: "field-label" %>
+        <%= f.number_field :it7_qty, placeholder: "0", step: 1, min: 0 %>
+      </div>
+      <div class="field-group">
+        <%= f.label :dhn_heures, "DHN (heures)", class: "field-label" %>
+        <%= f.number_field :dhn_heures, placeholder: "0", step: 0.5, min: 0 %>
+      </div>
+    </div>
+
+    <div class="section-label">Heures supplémentaires</div>
+
+    <div class="field-grid field-grid--6">
+      <div class="field-group"><label class="field-label">Jour 25%</label><%= f.number_field :hs_jour_25, placeholder: "0", step: 0.5, min: 0 %></div>
+      <div class="field-group"><label class="field-label">Jour 50%</label><%= f.number_field :hs_jour_50, placeholder: "0", step: 0.5, min: 0 %></div>
+      <div class="field-group"><label class="field-label">Jour 100%</label><%= f.number_field :hs_jour_100, placeholder: "0", step: 0.5, min: 0 %></div>
+      <div class="field-group"><label class="field-label">Nuit 25%</label><%= f.number_field :hs_nuit_25, placeholder: "0", step: 0.5, min: 0 %></div>
+      <div class="field-group"><label class="field-label">Nuit 50%</label><%= f.number_field :hs_nuit_50, placeholder: "0", step: 0.5, min: 0 %></div>
+      <div class="field-group"><label class="field-label">Nuit 100%</label><%= f.number_field :hs_nuit_100, placeholder: "0", step: 0.5, min: 0 %></div>
+    </div>
+  </div>
+
+  <div class="panel-footer">
+    <button type="button" class="btn btn--secondary" data-action="click->simulation#prevStep">← Précédent</button>
+    <button type="button" class="btn btn--primary" data-action="click->simulation#nextStep">Suivant →</button>
+  </div>
+</div>

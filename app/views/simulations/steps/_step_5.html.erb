@@ -1,0 +1,42 @@
+<div class="step-panel">
+  <div class="panel-header">
+    <div class="panel-icon">🧾</div>
+    <div class="panel-titles">
+      <h2 class="panel-title">Retenues personnelles</h2>
+      <p class="panel-desc">
+        CNRACL/IRCANTEC, CSG et RAFP sont calculées automatiquement. Saisissez votre taux PAS.
+      </p>
+    </div>
+    <span class="panel-step-counter">Étape 5 / 6</span>
+  </div>
+
+  <div class="panel-body">
+
+    <div class="section-label">Prélèvement à la source</div>
+
+    <div class="field-grid field-grid--2">
+      <div class="field-group">
+        <%= f.label :taux_pas, class: "field-label" do %>
+          Taux PAS personnalisé <span class="req">*</span> <span class="badge badge--var">Q60</span>
+        <% end %>
+        <%= f.number_field :taux_pas, placeholder: "Ex : 6.20", step: 0.01, min: 0, max: 100, required: true %>
+        <span class="field-hint">Votre taux personnalisé — ligne Q60 du bulletin</span>
+      </div>
+    </div>
+
+    <div class="section-label">Retenues facultatives</div>
+
+    <div class="field-grid field-grid--2">
+      <div class="field-group">
+        <%= f.label :mutuelle, "Mutuelle / prévoyance", class: "field-label" %>
+        <%= f.number_field :mutuelle, placeholder: "0,00", step: 0.01, min: 0 %>
+        <span class="field-hint">Pour coller exactement au net à payer</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-footer">
+    <button type="button" class="btn btn--secondary" data-action="click->simulation#prevStep">← Précédent</button>
+    <button type="submit" class="btn btn--success btn--lg">Lancer la simulation →</button>
+  </div>
+</div>

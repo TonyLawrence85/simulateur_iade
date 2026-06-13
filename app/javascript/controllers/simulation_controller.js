@@ -30,22 +30,30 @@ export default class extends Controller {
   IR_TAUX = { 1: 0.03, 2: 0.01, 3: 0.00 }
 
   connect() {
-    this.goto(this.currentStepValue)
+    this._render(this.currentStepValue)
     this.updateDates()
+    this.updateTib()
+    this.updateProgress()
   }
 
   nextStep(e) {
     e.preventDefault()
-    if (this.currentStepValue < 5) this.goto(this.currentStepValue + 1)
+    if (this.currentStepValue < 5) this._render(this.currentStepValue + 1)
   }
 
   prevStep(e) {
     e.preventDefault()
-    if (this.currentStepValue > 0) this.goto(this.currentStepValue - 1)
+    if (this.currentStepValue > 0) this._render(this.currentStepValue - 1)
   }
 
-  goto(step) {
-    this.currentStepValue = step
+  goto(e) {
+    e.preventDefault()
+    const step = parseInt(e.currentTarget.dataset.step)
+    this._render(step)
+  }
+
+  _render(step) {
+  this.currentStepValue = step
 
     this.panelTargets.forEach(panel => {
       const panelStep = parseInt(panel.dataset.step)
@@ -60,6 +68,8 @@ export default class extends Controller {
     })
 
     window.scrollTo({ top: 0, behavior: "smooth" })
+
+    this.updateProgress()
   }
 
   updateDates() {
@@ -112,6 +122,31 @@ export default class extends Controller {
 
     if (this.hasNbiDisplayTarget)
       this.nbiDisplayTarget.value = `${this.formatEuros(nbi)} €`
+  }
+
+  updatePlanning() {
+    const tib    = this._tib || 0
+    const tauxH  = tib / 151.67
+    const hNuit  = parseFloat(this.formTarget.querySelector("[name='simulation_session[heures_nuit]']")?.value) || 0
+    const hDim   = parseFloat(this.formTarget.querySelector("[name='simulation_session[heures_dimanche]']")?.value) || 0
+    const hFerie = parseFloat(this.formTarget.querySelector("[name='simulation_session[heures_ferie]']")?.value) || 0
+
+    const jma   = tauxH * hNuit * 1.25
+    const dimJf = tauxH * hDim * 0.25 + tauxH * hFerie * 1.0
+
+    const brutEst = tib + 206 + 26.30 + this.PRIME_IADE + jma + dimJf
+
+    if (this.hasSidebarBrutTarget)
+      this.sidebarBrutTarget.textContent = `${this.formatEuros(brutEst.toFixed(2))} €`
+  }
+
+  updateProgress() {
+    const required = this.formTarget.querySelectorAll("[required]")
+    const filled   = Array.from(required).filter(el => el.value && el.value.trim() !== "")
+    const pct      = required.length > 0 ? Math.round((filled.length / required.length) * 100) : 0
+
+    if (this.hasProgressFillTarget)    this.progressFillTarget.style.width = `${pct}%`
+    if (this.hasConfidenceLabelTarget) this.confidenceLabelTarget.textContent = `${pct}%`
   }
 
   updateTib() {

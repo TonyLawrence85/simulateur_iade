@@ -57,13 +57,15 @@ class SimulationsController < ApplicationController
         real_brut_total: params.dig(:real, :brut).presence,
         real_net_paye: params.dig(:real, :net).presence
       )
+      redirect_to compare_simulation_path(@simulation)
+      return
     end
 
-    return unless @simulation.real_lines.present?
+    return unless @simulation.real_brut_total.present? || @simulation.real_lines.present?
 
     @comparison = Iade::PayslipComparison.compare(
       simulated_result: @result,
-      real_lines: @simulation.real_lines,
+      real_lines: @simulation.real_lines || {},
       real_totals: {
         brut: @simulation.real_brut_total,
         net: @simulation.real_net_paye
@@ -105,14 +107,13 @@ class SimulationsController < ApplicationController
   end
 
   def simulation_params
-    params.require(:simulation).permit(
+    params.require(:simulation_session).permit(
       :mois_paie, :statut, :grade, :echelon, :quotite, :type_cycle,
-      :departement_code, :commune,
-      :nb_enfants_sft, :garde_alternee, :sft_autre_parent,
+      :departement_code,
+      :nb_enfants_sft, :garde_alternee,
       :nbi_points, :iss_montant, :dtc_montant, :wt1_montant,
       :taux_pas, :mutuelle,
-      :has_prorata, :date_changement, :nature_changement,
-      :heures_nuit, :nb_astreintes, :type_astreinte,
+      :heures_nuit,
       :heures_dimanche, :heures_ferie,
       :tp7_qty, :it7_qty, :dhn_heures,
       :hs_jour_25, :hs_jour_50, :hs_jour_100,

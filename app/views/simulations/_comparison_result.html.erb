@@ -1,0 +1,101 @@
+<div class="step-panel">
+  <div class="panel-header">
+    <div class="panel-icon"><%= comparison.has_anomalies ? "⚠️" : "✅" %></div>
+    <div class="panel-titles">
+      <h2 class="panel-title">
+        <% if comparison.has_anomalies %>
+          <%= comparison.anomalies.size %> anomalie<%= comparison.anomalies.size > 1 ? "s" : "" %> détectée<%= comparison.anomalies.size > 1 ? "s" : "" %>
+        <% else %>
+          Aucune anomalie — bulletin conforme
+        <% end %>
+      </h2>
+      <% if comparison.delta_brut %>
+        <p class="panel-desc">
+          Écart brut :
+          <strong style="color:<%= comparison.delta_brut.positive? ? 'var(--red)' : 'var(--green)' %>">
+            <%= comparison.delta_brut.positive? ? "−" : "+" %>
+            <%= number_to_currency(comparison.delta_brut.abs, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+          </strong>
+        </p>
+      <% end %>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto">
+    <table class="diff-table">
+      <thead>
+        <tr>
+          <th style="width:90px">Code</th>
+          <th>Libellé</th>
+          <th class="num" style="width:120px">Simulé</th>
+          <th class="num" style="width:120px">Bulletin</th>
+          <th class="num" style="width:100px">Écart</th>
+          <th style="width:100px">Statut</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% comparison.lines.each do |line| %>
+          <tr class="<%= line.status != :ok ? 'row-anomaly' : '' %>">
+            <td class="td-code"><code><%= line.code %></code></td>
+            <td class="td-label"><%= line.label %></td>
+            <td class="td-num">
+              <%= line.montant_sim ? number_to_currency(line.montant_sim, unit: "€", delimiter: " ", precision: 2, format: "%n %u") : "—" %>
+            </td>
+            <td class="td-num">
+              <%= line.montant_real ? number_to_currency(line.montant_real, unit: "€", delimiter: " ", precision: 2, format: "%n %u") : "—" %>
+            </td>
+            <td class="td-delta <%= line.delta&.positive? ? 'diff-neg' : line.delta&.negative? ? 'diff-pos' : 'diff-ok' %>">
+              <% if line.delta && line.delta != 0 %>
+                <%= line.delta.positive? ? "−" : "+" %>
+                <%= number_to_currency(line.delta.abs, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+              <% else %>
+                —
+              <% end %>
+            </td>
+            <td>
+              <span class="badge badge--<%= line.status %>"> <%# herb:disable all %>
+                <%= { ok: "OK", missing: "Manquant", under: "Sous-payé", over: "Sur-payé", extra: "Extra" }[line.status] %>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if comparison.has_anomalies %>
+    <div class="anomaly-block" style="margin:1.5rem">
+      <div class="anomaly-block__header">⚠ Récapitulatif des anomalies</div>
+      <% comparison.anomalies.each do |a| %>
+        <div class="anomaly-item">
+          <span class="anomaly-code"><%= a.code %></span>
+          <span class="anomaly-label"><%= a.label %></span>
+          <span class="anomaly-delta">
+            <%= number_to_currency((a.montant_sim || a.delta).abs, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+          </span>
+        </div>
+      <% end %>
+      <% total_du = comparison.anomalies.select { |a| [:missing, :under].include?(a.status) }.sum { |a| (a.montant_sim || a.delta).abs } %>
+      <% if total_du > 0 %>
+        <div class="anomaly-total">
+          <span>Total potentiellement dû</span>
+          <span><%= number_to_currency(total_du, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></span>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="panel-footer">
+      <div class="alert alert--warn" style="flex:1;margin:0">
+        <span>ℹ</span>
+        <span>Contactez le service RH de votre établissement muni de ce rapport. Ce document est indicatif.</span>
+      </div>
+    </div>
+  <% else %>
+    <div class="panel-footer">
+      <div class="alert alert--ok" style="flex:1;margin:0">
+        <span>✓</span>
+        <span>Aucune anomalie détectée — votre bulletin correspond à la simulation.</span>
+      </div>
+    </div>
+  <% end %>
+</div>

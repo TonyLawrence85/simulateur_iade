@@ -1,6 +1,8 @@
 <% content_for :title, "Nouvelle simulation" %>
 
-<div class="sim-app">
+<div class="sim-app"
+       data-controller="simulation"
+       data-simulation-current-step-value="<%= @current_step || 0 %>">
   <div class="sim-header">
     <h1 class="sim-title">Simulateur de contrôle de fiche de paie</h1>
     <p class="sim-subtitle">
@@ -25,12 +27,8 @@
     </div>
   </div>
 
-  <div class="sim-layout"
-       data-controller="simulation"
-       data-simulation-current-step-value="<%= @current_step || 0 %>">
-
-    <div>
-      <%= form_with model: @simulation, url: simulations_path, data: { simulation_target: "form" } do |f| %>
+  <div class="sim-layout">
+    <%= form_with model: @simulation, url: simulations_path, data: { simulation_target: "form", action: "input->simulation#updateProgress change->simulation#updateProgress" } do |f| %>
 
         <div data-simulation-target="panel" data-step="0" class="<%= @current_step == 0 ? '' : 'hidden' %>">
           <%= render "simulations/steps/step_0", f: f %>
@@ -48,11 +46,18 @@
           <%= render "simulations/steps/step_3", f: f %>
         </div>
 
-      <% end %>
-    </div>
+        <div data-simulation-target="panel" data-step="4" class="hidden">
+          <%= render "simulations/steps/step_4", f: f %>
+        </div>
+
+        <div data-simulation-target="panel" data-step="5" class="hidden">
+          <%= render "simulations/steps/step_5", f: f %>
+        </div>
+
+    <% end %>
+  </div>
 
     <aside class="live-sidebar">
       <%= render "simulations/live_sidebar" %>
     </aside>
-  </div>
 </div>

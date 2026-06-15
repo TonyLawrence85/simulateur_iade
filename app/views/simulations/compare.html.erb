@@ -100,6 +100,21 @@
 
   <%# Résultat de la comparaison %>
   <% if @comparison %>
-    <%= render "simulations/comparison_result", comparison: @comparison %>
+    <div id="comparison-result">
+      <%= render "simulations/comparison_result", comparison: @comparison %>
+    </div>
+
+    <script> <%# herb:disable all %>
+      document.addEventListener("turbo:load", function() {
+        const el = document.getElementById("comparison-result");
+        if (el) {
+          setTimeout(function() {
+            const navbarHeight = document.querySelector("nav")?.offsetHeight || 60;
+            const top = el.getBoundingClientRect().top + window.scrollY - navbarHeight - 20;
+            window.scrollTo({ top: top, behavior: "smooth" });
+          }, 150);
+        }
+      });
+    </script>
   <% end %>
 </div>

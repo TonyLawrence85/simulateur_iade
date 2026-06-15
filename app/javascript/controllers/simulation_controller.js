@@ -141,12 +141,9 @@ export default class extends Controller {
   }
 
   updateProgress() {
-    const required = this.formTarget.querySelectorAll("[required]")
-    const filled   = Array.from(required).filter(el => el.value && el.value.trim() !== "")
-    const pct      = required.length > 0 ? Math.round((filled.length / required.length) * 100) : 0
-
+    const pct = Math.round((this.currentStepValue / 5) * 100)
     if (this.hasProgressFillTarget)    this.progressFillTarget.style.width = `${pct}%`
-    if (this.hasConfidenceLabelTarget) this.confidenceLabelTarget.textContent = `${pct}%`
+    if (this.hasConfidenceLabelTarget) this.confidenceLabelTarget.textContent = `Étape ${this.currentStepValue + 1} / 6`
   }
 
   updateTib() {

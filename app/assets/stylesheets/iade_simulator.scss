@@ -610,3 +610,14 @@
   .sim-app .result-kpis { grid-template-columns: 1fr; }
   .sim-app .field-grid--2 { grid-template-columns: 1fr; }
 }
+
+/* Centrage titres simulateur */
+.sim-app .sim-title,
+.sim-app .panel-title {
+  text-align: center;
+}
+
+/* Tagline centrée */
+.sim-app .sim-subtitle {
+  text-align: center;
+}

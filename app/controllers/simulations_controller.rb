@@ -57,7 +57,7 @@ class SimulationsController < ApplicationController
         real_brut_total: params.dig(:real, :brut).presence,
         real_net_paye: params.dig(:real, :net).presence
       )
-      redirect_to compare_simulation_path(@simulation)
+      redirect_to compare_simulation_path(@simulation) + "#comparison-result"
       return
     end
 
@@ -76,9 +76,24 @@ class SimulationsController < ApplicationController
   def upload_bulletin
     if params[:bulletin].present?
       @simulation.bulletin_pdf.attach(params[:bulletin])
-      result = Iade::Ocr::BulletinExtractor.call(
-        file_path: ActiveStorage::Blob.service.path_for(@simulation.bulletin_pdf.key)
-      )
+      # Télécharger vers un fichier temporaire avec la bonne extension
+      content_type = @simulation.bulletin_pdf.content_type
+      extension = case content_type
+                  when "application/pdf"  then ".pdf"
+                  when "image/jpeg"       then ".jpg"
+                  when "image/png"        then ".png"
+                  when "image/heic"       then ".heic"
+                  else ".pdf" # rubocop:disable Lint/DuplicateBranch
+                  end
+
+      tmp = Tempfile.new(["bulletin", extension])
+      tmp.binmode
+      @simulation.bulletin_pdf.download { |chunk| tmp.write(chunk) }
+      tmp.flush
+
+      result = Iade::Ocr::BulletinExtractor.call(file_path: tmp.path)
+      tmp.close
+      tmp.unlink
 
       if result.errors.any?
         redirect_to compare_simulation_path(@simulation),

@@ -1,38 +1,79 @@
 <nav class="navbar navbar-expand-sm navbar-light navbar-lewagon">
   <div class="container-fluid">
-    <%= link_to "#", class: "navbar-brand" do %>
-      <%= image_tag "https://raw.githubusercontent.com/lewagon/fullstack-images/master/uikit/logo.png" %>
+
+    <%= link_to root_path, class: "navbar-brand d-flex align-items-center gap-2",
+        style: "text-decoration:none" do %>
+      <%# Icône cercle avec checkmark %>
+      <svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="32" fill="#1a2332"/>
+        <polyline points="18,32 28,44 46,22"
+                  fill="none" stroke="#4ade80" stroke-width="5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <%# Logotype IADE avec A vert %>
+      <span style="font-family:'IBM Plex Sans',sans-serif;font-size:1.2rem;font-weight:700;letter-spacing:0.12em;line-height:1">
+        <span style="color:#1a2332">I</span><span style="color:#276749;position:relative;top:-2px;font-size:1.35rem">A</span><span style="color:#1a2332">DE</span>
+      </span>
+      <span style="font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;font-weight:300;color:#8496ac;letter-spacing:0.18em;text-transform:uppercase;margin-left:2px;align-self:flex-end;padding-bottom:1px">
+        contrôle
+      </span>
     <% end %>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent"
+            aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto">
         <% if user_signed_in? %>
-          <li class="nav-item active">
-            <%= link_to "Home", "#", class: "nav-link" %>
+          <li class="nav-item">
+            <%= link_to "Accueil", root_path, class: "nav-link" %>
           </li>
           <li class="nav-item">
-            <%= link_to "Messages", "#", class: "nav-link" %>
-          </li>
-          <li class="nav-item dropdown">
-          <a href="#" class="avatar" id="navbarDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <%= image_tag "https://kitt.lewagon.com/placeholder/users/ssaunier", class: "avatar", alt: "dropdown menu" %>
-          </a>
-            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-              <%= link_to "Action", "#", class: "dropdown-item" %>
-              <%= link_to "Another action", "#", class: "dropdown-item" %>
-              <%= link_to "Log out", destroy_user_session_path, data: {turbo_method: :delete}, class: "dropdown-item" %>
-            </div>
+            <%= link_to "+ Nouvelle simulation", new_simulation_path, class: "nav-link" %>
           </li>
         <% else %>
           <li class="nav-item">
-            <%= link_to "Login", new_user_session_path, class: "nav-link" %>
+            <%= link_to "Connexion", new_user_session_path, class: "nav-link" %>
+          </li>
+          <li class="nav-item">
+            <%= link_to "Inscription", new_user_registration_path, class: "nav-link" %>
           </li>
         <% end %>
       </ul>
+
+      <% if user_signed_in? %>
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle d-flex align-items-center gap-2" <%# herb:disable all %>
+               id="navbarDropdown" data-bs-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">
+              <%# Avatar initiale — pas de photo Wagon %>
+              <div style="width:34px;height:34px;border-radius:50%;
+                          background:#1a2332;border:2px solid #276749;
+                          display:flex;align-items:center;justify-content:center;
+                          color:white;font-weight:600;font-size:.875rem;
+                          font-family:'IBM Plex Sans',sans-serif;flex-shrink:0">
+                <%= current_user.email[0].upcase %>
+              </div>
+              <span style="font-size:.8125rem;color:#4a5568;max-width:160px;
+                           overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                <%= current_user.email %>
+              </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+              <%= link_to "Mes simulations", simulations_path, class: "dropdown-item" %>
+              <div class="dropdown-divider"></div>
+              <%= link_to "Se déconnecter", destroy_user_session_path,
+                  data: { turbo_method: :delete },
+                  class: "dropdown-item text-danger" %>
+            </div>
+          </li>
+        </ul>
+      <% end %>
     </div>
   </div>
 </nav>

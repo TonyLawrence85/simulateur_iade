@@ -31,7 +31,7 @@
       <% end %>
 
       <div class="auth-field">
-        <%= f.label :email, "Adresse Email", class: "auth-label" %>
+        <%= f.label :email, "Email", class: "auth-label" %>
         <%= f.email_field :email, autofocus: true, autocomplete: "email",
             class: "auth-input", placeholder: "you@aphp.fr" %>
       </div>
@@ -41,7 +41,7 @@
         <%= f.password_field :password, autocomplete: "new-password",
             class: "auth-input", placeholder: "6 caractères min" %>
         <% if @minimum_password_length %>
-          <span class="auth-hint">Minimum <%= @minimum_password_length %> characters</span>
+          <span class="auth-hint"><%= @minimum_password_length %>caractères min</span>
         <% end %>
       </div>
 

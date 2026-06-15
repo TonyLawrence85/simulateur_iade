@@ -1,0 +1,64 @@
+<% content_for :title, "Créer un compte" %>
+
+<div class="auth-page">
+  <div class="auth-card">
+
+    <%# Logo %>
+    <div class="auth-logo">
+      <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+        <circle cx="32" cy="32" r="32" fill="#1a2332"/>
+        <polyline points="18,32 28,44 46,22" fill="none" stroke="#4ade80"
+                  stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="auth-logo__text">
+        <span style="color:#1a2332">I</span><span style="color:#276749;position:relative;top:-2px;font-size:1.2em">A</span><span style="color:#1a2332">DE</span>
+        <span style="color:#8496ac;font-weight:300;font-size:.85em;letter-spacing:.12em"> contrôle</span>
+      </span>
+    </div>
+
+    <h1 class="auth-title">Créez votre compte</h1>
+    <p class="auth-subtitle">Gratuit · Confidentialité absolue des données personnelles · Destiné à un usage interne au sein de l'AP-HP </p>
+
+    <%= form_with model: resource, as: resource_name,
+        url: registration_path(resource_name), class: "auth-form" do |f| %>
+
+      <% if resource.errors.any? %>
+        <div class="auth-errors">
+          <% resource.errors.full_messages.each do |msg| %>
+            <p class="auth-error-msg">⚠ <%= msg %></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="auth-field">
+        <%= f.label :email, "Adresse Email", class: "auth-label" %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email",
+            class: "auth-input", placeholder: "you@aphp.fr" %>
+      </div>
+
+      <div class="auth-field">
+        <%= f.label :password, "Mot de passe", class: "auth-label" %>
+        <%= f.password_field :password, autocomplete: "new-password",
+            class: "auth-input", placeholder: "6 caractères min" %>
+        <% if @minimum_password_length %>
+          <span class="auth-hint">Minimum <%= @minimum_password_length %> characters</span>
+        <% end %>
+      </div>
+
+      <div class="auth-field">
+        <%= f.label :password_confirmation, "Confirmez votre mot de passe", class: "auth-label" %>
+        <%= f.password_field :password_confirmation, autocomplete: "new-password",
+            class: "auth-input", placeholder: "••••••••" %>
+      </div>
+
+      <%= f.submit "Créer mon compte →", class: "auth-submit" %>
+
+    <% end %>
+
+    <p class="auth-switch">
+      Vous possédez un compte?
+      <%= link_to "Se connecter", new_user_session_path, class: "auth-link auth-link--strong" %>
+    </p>
+
+  </div>
+</div>

@@ -1,0 +1,58 @@
+<% content_for :title, "Se connecter" %>
+
+<div class="auth-page">
+  <div class="auth-card">
+
+    <%# Logo %>
+    <div class="auth-logo">
+      <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+        <circle cx="32" cy="32" r="32" fill="#1a2332"/>
+        <polyline points="18,32 28,44 46,22" fill="none" stroke="#4ade80"
+                  stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="auth-logo__text">
+        <span style="color:#1a2332">I</span><span style="color:#276749;position:relative;top:-2px;font-size:1.2em">A</span><span style="color:#1a2332">DE</span>
+        <span style="color:#8496ac;font-weight:300;font-size:.85em;letter-spacing:.12em"> contrôle</span>
+      </span>
+    </div>
+
+    <h1 class="auth-title">Bon retour ! </h1>
+    <p class="auth-subtitle">Connectez-vous pour accéder à vos simulations de paie</p>
+
+    <%= form_with model: resource, as: resource_name,
+        url: session_path(resource_name), class: "auth-form" do |f| %>
+
+      <div class="auth-field">
+        <%= f.label :email, "Adresse Email", class: "auth-label" %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email",
+            class: "auth-input", placeholder: "you@aphp.fr" %>
+      </div>
+
+      <div class="auth-field">
+        <%= f.label :password, "Mot de passe", class: "auth-label" %>
+        <%= f.password_field :password, autocomplete: "current-password",
+            class: "auth-input", placeholder: "••••••••" %>
+      </div>
+
+      <div class="auth-options">
+        <label class="auth-remember">
+          <%= f.check_box :remember_me, class: "auth-checkbox" %>
+          <span>Se souvenir de moi</span>
+        </label>
+        <% if devise_mapping.recoverable? %>
+          <%= link_to "Mot de passe oublié?", new_password_path(resource_name),
+              class: "auth-link" %>
+        <% end %>
+      </div>
+
+      <%= f.submit "Se connecter →", class: "auth-submit" %>
+
+    <% end %>
+
+    <p class="auth-switch">
+      Pas encore de compte?
+      <%= link_to "Créer un compte maintenant", new_user_registration_path, class: "auth-link auth-link--strong" %>
+    </p>
+
+  </div>
+</div>

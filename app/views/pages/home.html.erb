@@ -1,2 +1,121 @@
-<h1>Pages#home</h1>
-<p>Find me in app/views/pages/home.html.erb</p>
+<div class="iade-home">
+
+  <%# ── HERO ─────────────────────────────────────────────── %>
+  <section class="home-hero">
+    <div class="home-hero__inner">
+
+      <div class="home-hero__badge">
+        <span class="home-badge">
+          <span style="color:#4ade80">A</span>IDE pour les
+          <span style="color:#4ade80">IADE</span> AP-HP
+        </span>
+      </div>
+
+      <h1 class="home-hero__title">
+        Votre fiche de paie<br>
+        <span class="home-hero__title--accent">mérite d'être vérifiée</span>
+      </h1>
+
+      <p class="home-hero__sub">
+        Le logiciel de paie AP-HP génère des erreurs. IADE Contrôle calcule
+        votre rémunération théorique et la compare à votre bulletin reçu —
+        pour détecter les anomalies en quelques secondes.
+      </p>
+
+      <div class="home-hero__actions">
+        <%= link_to "Créer mon compte gratuitement →",
+            new_user_registration_path,
+            class: "home-btn home-btn--primary" %>
+        <%= link_to "Se connecter",
+            new_user_session_path,
+            class: "home-btn home-btn--ghost" %>
+      </div>
+
+      <p class="home-hero__mention">
+        Gratuit · Sans données personnelles transmises · Usage interne AP-HP
+      </p>
+    </div>
+
+    <%# Aperçu simulateur %>
+    <div class="home-hero__preview">
+      <div class="home-preview-card">
+        <div class="home-preview-card__header">
+          <div class="home-preview-dot home-preview-dot--red"></div>
+          <div class="home-preview-dot home-preview-dot--amber"></div>
+          <div class="home-preview-dot home-preview-dot--green"></div>
+          <span class="home-preview-card__title">Résultat simulation — Juin 2026</span>
+        </div>
+        <div class="home-preview-card__body">
+          <div class="home-preview-kpis">
+            <div class="home-preview-kpi">
+              <span class="home-preview-kpi__label">Brut simulé</span>
+              <span class="home-preview-kpi__value">4 312,45 €</span>
+            </div>
+            <div class="home-preview-kpi home-preview-kpi--alert">
+              <span class="home-preview-kpi__label">Brut bulletin</span>
+              <span class="home-preview-kpi__value">4 188,61 €</span>
+            </div>
+            <div class="home-preview-kpi home-preview-kpi--danger">
+              <span class="home-preview-kpi__label">Écart détecté</span>
+              <span class="home-preview-kpi__value">− 123,84 €</span>
+            </div>
+          </div>
+          <div class="home-preview-anomaly">
+            <span class="home-preview-anomaly__icon">⚠</span>
+            <div>
+              <strong>2 anomalies détectées</strong><br>
+              <span>KB1 — NBI manquante · JMA — nuits sous-comptées</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%# ── 3 ARGUMENTS ───────────────────────────────────────── %>
+  <section class="home-args">
+    <div class="home-arg">
+      <div class="home-arg__icon">🧮</div>
+      <h2 class="home-arg__title">Calcul exact selon votre situation</h2>
+      <p class="home-arg__text">
+        Grade, échelon, NBI, quotité, indemnités de résidence, SFT — chaque
+        élément de votre rémunération est calculé selon les grilles indiciaires
+        officielles AP-HP, mises à jour automatiquement.
+      </p>
+    </div>
+
+    <div class="home-arg">
+      <div class="home-arg__icon">📄</div>
+      <h2 class="home-arg__title">Importez votre bulletin en un clic</h2>
+      <p class="home-arg__text">
+        Déposez votre bulletin PDF ou prenez-en une photo. Notre moteur OCR
+        extrait automatiquement les montants ligne par ligne et les compare
+        à la simulation — sans ressaisie manuelle.
+      </p>
+    </div>
+
+    <div class="home-arg">
+      <div class="home-arg__icon">🛡️</div>
+      <h2 class="home-arg__title">Un outil à vocation sociale</h2>
+      <p class="home-arg__text">
+        IADE Contrôle est né d'un constat simple : trop d'IADE AP-HP sont
+        sous-payés sans le savoir. Cet outil gratuit vous donne les moyens
+        de défendre votre rémunération, chiffres à l'appui.
+      </p>
+    </div>
+  </section>
+
+  <%# ── CTA FINAL ─────────────────────────────────────────── %>
+  <section class="home-cta">
+    <h2 class="home-cta__title">
+      Prêt à vérifier votre fiche de paie ?
+    </h2>
+    <p class="home-cta__sub">
+      Créez votre compte en 30 secondes — aucune carte bancaire requise.
+    </p>
+    <%= link_to "Commencer gratuitement →",
+        new_user_registration_path,
+        class: "home-btn home-btn--primary home-btn--lg" %>
+  </section>
+
+</div>

@@ -1,6 +1,6 @@
 class SimulationsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_simulation, only: %i[show compare]
+  before_action :set_simulation, only: %i[show compare upload_bulletin]
 
   def index
     @simulations = current_user.simulation_sessions.recent.limit(20)
@@ -71,6 +71,32 @@ class SimulationsController < ApplicationController
         net: @simulation.real_net_paye
       }
     )
+  end
+
+  def upload_bulletin
+    if params[:bulletin].present?
+      @simulation.bulletin_pdf.attach(params[:bulletin])
+      result = Iade::Ocr::BulletinExtractor.call(
+        file_path: ActiveStorage::Blob.service.path_for(@simulation.bulletin_pdf.key)
+      )
+
+      if result.errors.any?
+        redirect_to compare_simulation_path(@simulation),
+                    alert: "Extraction échouée : #{result.errors.join(', ')}"
+        return
+      end
+
+      @simulation.update!(
+        real_lines: result.lines.transform_values(&:to_s).presence || {},
+        real_brut_total: result.totals[:brut],
+        real_net_paye: result.totals[:net_paye]
+      )
+
+      redirect_to compare_simulation_path(@simulation),
+                  notice: "Bulletin extrait avec succès (#{result.lines.size} lignes trouvées, confiance : #{result.confidence})."
+    else
+      redirect_to compare_simulation_path(@simulation), alert: "Aucun fichier sélectionné."
+    end
   end
 
   def tib_preview

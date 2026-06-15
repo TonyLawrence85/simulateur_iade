@@ -1,5 +1,6 @@
 class SimulationSession < ApplicationRecord
   belongs_to :user
+  has_one_attached :bulletin_pdf
 
   STATUTS = %w[titulaire stagiaire contractuel].freeze
   GRADES  = %w[grade1 grade2].freeze

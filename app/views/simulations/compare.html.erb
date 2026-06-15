@@ -14,6 +14,46 @@
     </p>
   </div>
 
+  <%# Zone d'upload bulletin %>
+  <div class="step-panel" style="margin-bottom:1.5rem">
+    <div class="panel-header">
+      <div class="panel-icon">📎</div>
+      <div class="panel-titles">
+        <h2 class="panel-title">Importer votre bulletin (PDF ou photo)</h2>
+        <p class="panel-desc">
+          Extraction automatique des montants par OCR — PDF natif AP-HP recommandé.
+        </p>
+      </div>
+    </div>
+
+    <div class="panel-body">
+      <%= form_with url: upload_bulletin_simulation_path(@simulation), method: :post, multipart: true do |f| %>
+        <div style="border:1.5px dashed var(--border);border-radius:var(--radius-lg);padding:2rem;text-align:center;color:var(--ink-mute)">
+          <div style="font-size:2rem;margin-bottom:.5rem">📄</div>
+          <p style="font-weight:500;color:var(--ink-soft);margin-bottom:.5rem">
+            Glisser-déposer ou sélectionner votre bulletin
+          </p>
+          <p style="font-size:.8125rem;margin-bottom:1rem">
+            PDF natif AP-HP · Photo JPG/PNG · Max 10 Mo
+          </p>
+          <%= f.file_field :bulletin,
+              accept: "application/pdf,image/jpeg,image/png,image/heic",
+              style: "margin-bottom:1rem" %>
+        </div>
+        <div style="margin-top:1rem;text-align:right">
+          <%= f.submit "Extraire les montants →", class: "btn btn--primary" %>
+        </div>
+      <% end %>
+
+      <% if @simulation.bulletin_pdf.attached? %>
+        <div class="alert alert--ok" style="margin-top:1rem">
+          <span>✓</span>
+          <span>Bulletin importé : <strong><%= @simulation.bulletin_pdf.filename %></strong></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
   <%# Formulaire de saisie du bulletin réel %>
   <div class="step-panel" style="margin-bottom:1.5rem">
     <div class="panel-header">

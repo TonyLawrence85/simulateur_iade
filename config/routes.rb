@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     member do
       get  :compare
       post :compare
+      post :upload_bulletin
     end
     collection do
       get :tib_preview

@@ -76,15 +76,30 @@
       </div>
     </div>
 
-    <div class="section-label">Heures supplémentaires</div>
+    <div class="section-label">
+      Heures supplémentaires (IHTS FPH)
+    </div>
+    <div class="alert alert--info" style="margin-bottom:0.75rem">
+      <span>ℹ</span>
+      <div>
+        <strong>Barèmes FPH :</strong>
+        Jour ×1,26 · Nuit ×2,52 · Dim./Fériés ×2,10 — base = (TIB+IR) × 12 / 1 820 h
+      </div>
+    </div>
 
-    <div class="field-grid field-grid--6">
-      <div class="field-group"><label class="field-label">Jour 25%</label><%= f.number_field :hs_jour_25, placeholder: "0", step: 0.5, min: 0 %></div>
-      <div class="field-group"><label class="field-label">Jour 50%</label><%= f.number_field :hs_jour_50, placeholder: "0", step: 0.5, min: 0 %></div>
-      <div class="field-group"><label class="field-label">Jour 100%</label><%= f.number_field :hs_jour_100, placeholder: "0", step: 0.5, min: 0 %></div>
-      <div class="field-group"><label class="field-label">Nuit 25%</label><%= f.number_field :hs_nuit_25, placeholder: "0", step: 0.5, min: 0 %></div>
-      <div class="field-group"><label class="field-label">Nuit 50%</label><%= f.number_field :hs_nuit_50, placeholder: "0", step: 0.5, min: 0 %></div>
-      <div class="field-group"><label class="field-label">Nuit 100%</label><%= f.number_field :hs_nuit_100, placeholder: "0", step: 0.5, min: 0 %></div>
+    <div class="field-grid field-grid--3">
+      <div class="field-group">
+        <%= f.label :hs_jour, "HS Jour (h)", class: "field-label" %>
+        <%= f.number_field :hs_jour, placeholder: "0", step: 0.5, min: 0 %>
+      </div>
+      <div class="field-group">
+        <%= f.label :hs_nuit, "HS Nuit (h)", class: "field-label" %>
+        <%= f.number_field :hs_nuit, placeholder: "0", step: 0.5, min: 0 %>
+      </div>
+      <div class="field-group">
+        <%= f.label :hs_dim_jf, "HS Dim./Fériés (h)", class: "field-label" %>
+        <%= f.number_field :hs_dim_jf, placeholder: "0", step: 0.5, min: 0 %>
+      </div>
     </div>
   </div>
 

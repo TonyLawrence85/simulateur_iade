@@ -6,8 +6,7 @@ module Iade
     TAUX_RAFP            = BigDecimal("0.0500")
     TAUX_CSG_CRDS        = BigDecimal("0.0290")
     TAUX_CSG_MALADIE     = BigDecimal("0.0680")
-    TAUX_CSG_HS          = BigDecimal("0.0920")
-    TAUX_REDUCTION_HS    = BigDecimal("0.1131")
+    TAUX_CSG_HS          = BigDecimal("0.0680")
     ABATTEMENT_FRAIS_PRO = BigDecimal("0.0175")
     TAUX_IRCANTEC_T1 = BigDecimal("0.0401") # 4,01% — tranche A (part salariale)
 
@@ -45,10 +44,6 @@ module Iade
 
     def self.csg_hs(assiette_hs:)
       (BigDecimal(assiette_hs.to_s) * TAUX_CSG_HS).round(2)
-    end
-
-    def self.reduction_hs(assiette_hs:)
-      (BigDecimal(assiette_hs.to_s) * TAUX_REDUCTION_HS).round(2)
     end
 
     def self.pas(base_imposable:, taux:)

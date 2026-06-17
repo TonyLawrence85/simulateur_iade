@@ -2,39 +2,37 @@
 
 module Iade
   class HeuresSupCalculator
-    MAJORATIONS = {
-      jour_25: BigDecimal("1.25"), jour_50:  BigDecimal("1.50"), jour_100: BigDecimal("2.00"),
-      nuit_25: BigDecimal("1.25"), nuit_50:  BigDecimal("1.50"), nuit_100: BigDecimal("2.00")
-    }.freeze
+    # Formules FPH (Décret IHTS) : base = (TIB + IR) × 12 / 1820
+    TAUX_JOUR   = BigDecimal("1.26")
+    TAUX_NUIT   = BigDecimal("2.52")  # 1.26 × 2
+    TAUX_DIM_JF = BigDecimal("2.10")  # 1.26 × (1 + 2/3)
 
-    LABELS = {
-      jour_25: "HS JOUR – 25%",  jour_50:  "HS JOUR – 50%",  jour_100: "HS JOUR – 100%",
-      nuit_25: "HS NUIT – 25%",  nuit_50:  "HS NUIT – 50%",  nuit_100: "HS NUIT – 100%"
-    }.freeze
+    TYPES = [
+      { key: :jour,   code: "HSJOUR",  label: "HS JOUR",        taux: TAUX_JOUR },
+      { key: :nuit,   code: "HSNUIT",  label: "HS NUIT",        taux: TAUX_NUIT },
+      { key: :dim_jf, code: "HSDIMJF", label: "HS DIM./FÉRIÉS", taux: TAUX_DIM_JF }
+    ].freeze
 
-    def initialize(tib_mensuel:, hs_jour_25: 0, hs_jour_50: 0, hs_jour_100: 0,
-                   hs_nuit_25: 0, hs_nuit_50: 0, hs_nuit_100: 0)
-      @heures = {
-        jour_25: BigDecimal(hs_jour_25.to_s), jour_50: BigDecimal(hs_jour_50.to_s), jour_100: BigDecimal(hs_jour_100.to_s),
-        nuit_25: BigDecimal(hs_nuit_25.to_s), nuit_50: BigDecimal(hs_nuit_50.to_s), nuit_100: BigDecimal(hs_nuit_100.to_s)
-      }
-      @taux_horaire = PlanningCalculator.taux_horaire_from_tib(tib_mensuel)
+    def initialize(tib_mensuel:, ir_mensuel: 0, hs_jour: 0, hs_nuit: 0, hs_dim_jf: 0)
+      @base   = PlanningCalculator.base_horaire(tib_mensuel: tib_mensuel, ir_mensuel: ir_mensuel)
+      @heures = { jour: BigDecimal(hs_jour.to_s), nuit: BigDecimal(hs_nuit.to_s),
+                  dim_jf: BigDecimal(hs_dim_jf.to_s) }
     end
 
     def compute
-      lines = []
-      total = BigDecimal("0")
+      lines = TYPES.filter_map { |t| compute_line(t) }
+      { lines: lines, total: lines.sum { |l| l[:montant] }.round(2) }
+    end
 
-      @heures.each do |type, heures|
-        next if heures.zero?
+    private
 
-        montant = (@taux_horaire * heures * MAJORATIONS[type]).round(2)
-        lines << { code: "HS#{type.to_s.upcase}", label: LABELS[type], montant: montant,
-                   detail: "#{heures}h × #{@taux_horaire.round(4)} €/h × #{MAJORATIONS[type]}" }
-        total += montant
-      end
+    def compute_line(type)
+      heures = @heures[type[:key]]
+      return nil if heures.zero?
 
-      { lines: lines, total: total.round(2) }
+      montant = (@base * heures * type[:taux]).round(2)
+      { code: type[:code], label: type[:label], montant: montant,
+        detail: "#{heures}h × #{@base.round(4)} €/h × #{type[:taux]}" }
     end
   end
 end

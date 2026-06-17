@@ -1,48 +1,47 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
 # db/seeds.rb
+# Données de référence — idempotentes avec mise à jour si nécessaire
 
 puts "🌱 Seeding valeur du point d'indice…"
 
-PointValue.find_or_create_by!(date_debut: Date.new(2023, 7, 1)) do |pv|
-  pv.valeur           = 4.92284
-  pv.reference_decret = "Décret 2023-519 du 28/06/2023"
-end
+pv = PointValue.find_or_initialize_by(date_debut: Date.new(2023, 7, 1))
+pv.valeur           = 4.92278
+pv.reference_decret = "Décret 2023-519 du 28/06/2023 — valeur au 01/01/2024 : 4,92278 €/point"
+pv.save!
 
-puts "🌱 Seeding grille indiciaire IADE — Grade 1…"
+puts "🌱 Seeding grille indiciaire IADE — Grade 1 (10 échelons)…"
 
+# Source : emploi-collectivites.fr — vérifié le 18/04/2026
 grille_grade1 = {
-  1 => 340, 2 => 358, 3 => 379, 4 => 405, 5 => 430,
-  6 => 458, 7 => 487, 8 => 514, 9 => 541, 10 => 566, 11 => 583
+  1 => 450, 2 => 478, 3 => 506, 4 => 534, 5 => 563,
+  6 => 593, 7 => 624, 8 => 656, 9 => 690, 10 => 727
 }
 
 grille_grade1.each do |echelon, im|
-  GradeScale.find_or_create_by!(grade: "grade1", echelon: echelon, date_debut: Date.new(2023, 7, 1)) do |gs|
-    gs.indice_majore = im
-    gs.source         = "PPCR 2023"
-  end
+  gs = GradeScale.find_or_initialize_by(grade: "grade1", echelon: echelon, date_debut: Date.new(2023, 7, 1))
+  gs.indice_majore = im
+  gs.source        = "PPCR — grille vérifiée 18/04/2026"
+  gs.save!
 end
 
-puts "🌱 Seeding grille indiciaire IADE — Grade 2…"
+# Supprimer l'ancien échelon 11 du grade 1 (inexistant dans la grille officielle)
+GradeScale.where(grade: "grade1", echelon: 11).destroy_all
+
+puts "🌱 Seeding grille indiciaire IADE — Grade 2 (8 échelons)…"
 
 grille_grade2 = {
-  1 => 517, 2 => 536, 3 => 556, 4 => 577, 5 => 598,
-  6 => 618, 7 => 638, 8 => 659, 9 => 680, 10 => 700, 11 => 718
+  1 => 558, 2 => 582, 3 => 615, 4 => 648,
+  5 => 681, 6 => 714, 7 => 743, 8 => 769
 }
 
 grille_grade2.each do |echelon, im|
-  GradeScale.find_or_create_by!(grade: "grade2", echelon: echelon, date_debut: Date.new(2023, 7, 1)) do |gs|
-    gs.indice_majore = im
-    gs.source         = "PPCR 2023"
-  end
+  gs = GradeScale.find_or_initialize_by(grade: "grade2", echelon: echelon, date_debut: Date.new(2023, 7, 1))
+  gs.indice_majore = im
+  gs.source        = "PPCR — grille vérifiée 18/04/2026"
+  gs.save!
 end
+
+# Supprimer les anciens échelons 9-11 du grade 2 (inexistants dans la grille officielle)
+GradeScale.where(grade: "grade2", echelon: 9..11).destroy_all
 
 puts "🌱 Seeding zones d'indemnité de résidence (Île-de-France)…"
 
@@ -58,10 +57,10 @@ zones = {
 }
 
 zones.each do |code, (zone, nom)|
-  DepartmentZone.find_or_create_by!(code: code, date_debut: Date.new(1967, 3, 28)) do |dz|
-    dz.nom  = nom
-    dz.zone = zone
-  end
+  dz = DepartmentZone.find_or_initialize_by(code: code, date_debut: Date.new(1967, 3, 28))
+  dz.nom  = nom
+  dz.zone = zone
+  dz.save!
 end
 
 puts "✅ Seed terminé !"

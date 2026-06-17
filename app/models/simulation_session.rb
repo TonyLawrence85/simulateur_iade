@@ -30,8 +30,7 @@ class SimulationSession < ApplicationRecord
       :taux_pas, :mutuelle, :garde_alternee,
       :heures_nuit, :heures_dimanche, :heures_ferie,
       :tp7_qty, :it7_qty, :dhn_heures,
-      :hs_jour_25, :hs_jour_50, :hs_jour_100,
-      :hs_nuit_25, :hs_nuit_50, :hs_nuit_100
+      :hs_jour, :hs_nuit, :hs_dim_jf
     )
   end
 

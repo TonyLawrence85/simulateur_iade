@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_14_004110) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -86,9 +86,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_14_004110) do
     t.decimal "heures_dimanche"
     t.decimal "heures_ferie"
     t.decimal "heures_nuit"
+    t.decimal "hs_dim_jf"
+    t.decimal "hs_jour"
     t.decimal "hs_jour_100"
     t.decimal "hs_jour_25"
     t.decimal "hs_jour_50"
+    t.decimal "hs_nuit"
     t.decimal "hs_nuit_100"
     t.decimal "hs_nuit_25"
     t.decimal "hs_nuit_50"

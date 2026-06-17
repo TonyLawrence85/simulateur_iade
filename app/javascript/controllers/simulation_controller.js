@@ -14,20 +14,23 @@ export default class extends Controller {
     currentStep: { type: Number, default: 0 }
   }
 
-  VALEUR_POINT = 4.92284
-  PRIME_IADE   = 485.72
+  // Valeur du point FPH (au 01/01/2024 — source officielle)
+  VALEUR_POINT = 4.92278
+  CTI_POINTS   = 49
+  PRIME_VEIL   = 90.00
+  PRIME_IADE   = 180.00
 
+  // Grille officielle vérifiée le 18/04/2026
+  // Grade 1 : 10 échelons / Grade 2 : 8 échelons
   GRILLE = {
-    grade1: { 1:340, 2:358, 3:379, 4:405, 5:430, 6:458, 7:487, 8:514, 9:541, 10:566, 11:583 },
-    grade2: { 1:517, 2:536, 3:556, 4:577, 5:598, 6:618, 7:638, 8:659, 9:680, 10:700, 11:718 }
+    grade1: { 1:450, 2:478, 3:506, 4:534, 5:563, 6:593, 7:624, 8:656, 9:690, 10:727 },
+    grade2: { 1:558, 2:582, 3:615, 4:648, 5:681, 6:714, 7:743, 8:769 }
   }
 
-  IR_ZONES = {
-    "75":1, "92":1, "93":1, "94":1,
-    "77":2, "78":2, "91":2, "95":2
-  }
+  MAX_ECHELON = { grade1: 10, grade2: 8 }
 
-  IR_TAUX = { 1: 0.03, 2: 0.01, 3: 0.00 }
+  IR_ZONES = { "75":1, "92":1, "93":1, "94":1, "77":2, "78":2, "91":2, "95":2 }
+  IR_TAUX  = { 1: 0.03, 2: 0.01, 3: 0.00 }
 
   connect() {
     this._render(this.currentStepValue)
@@ -53,7 +56,7 @@ export default class extends Controller {
   }
 
   _render(step) {
-  this.currentStepValue = step
+    this.currentStepValue = step
 
     this.panelTargets.forEach(panel => {
       const panelStep = parseInt(panel.dataset.step)
@@ -68,7 +71,6 @@ export default class extends Controller {
     })
 
     window.scrollTo({ top: 0, behavior: "smooth" })
-
     this.updateProgress()
   }
 
@@ -88,6 +90,25 @@ export default class extends Controller {
     if (this.hasMoisM2Target) this.moisM2Target.value = toValue(m2Date)
   }
 
+  // Changement de grade → mettre à jour la liste des échelons disponibles puis recalculer
+  gradeChanged(e) {
+    const grade   = e.target.value
+    const maxEch  = this.MAX_ECHELON[grade] || 11
+    const echelonSelect = this.formTarget.querySelector("[name='simulation_session[echelon]']")
+    if (!echelonSelect) return
+
+    const currentVal = parseInt(echelonSelect.value) || 1
+    echelonSelect.innerHTML = ""
+    for (let i = 1; i <= maxEch; i++) {
+      const opt = document.createElement("option")
+      opt.value = i
+      opt.textContent = i
+      if (i === Math.min(currentVal, maxEch)) opt.selected = true
+      echelonSelect.appendChild(opt)
+    }
+    this.updateTib()
+  }
+
   updateIr() {
     const deptCode = this.formTarget.querySelector("[name='simulation_session[departement_code]']")?.value || "75"
     const tib   = this._tib || 0
@@ -99,6 +120,8 @@ export default class extends Controller {
       this.zoneDisplayTarget.value = `Zone ${zone} — ${(taux * 100).toFixed(0)}% du TIB`
     if (this.hasIrDisplayTarget)
       this.irDisplayTarget.value = `${this.formatEuros(ir)} €`
+
+    this._ir = parseFloat(ir)
   }
 
   updateSft() {
@@ -126,15 +149,20 @@ export default class extends Controller {
 
   updatePlanning() {
     const tib    = this._tib || 0
-    const tauxH  = tib / 151.67
+    const ir     = this._ir  || 0
+    const base   = (tib + ir) * 12 / 1820   // Base horaire FPH
+
     const hNuit  = parseFloat(this.formTarget.querySelector("[name='simulation_session[heures_nuit]']")?.value) || 0
     const hDim   = parseFloat(this.formTarget.querySelector("[name='simulation_session[heures_dimanche]']")?.value) || 0
     const hFerie = parseFloat(this.formTarget.querySelector("[name='simulation_session[heures_ferie]']")?.value) || 0
 
-    const jma   = tauxH * hNuit * 1.25
-    const dimJf = tauxH * hDim * 0.25 + tauxH * hFerie * 1.0
+    const jma   = base * 0.25 * hNuit          // JMA = 25% × base × heures nuit
+    const dimJf = (hDim + hFerie) * 7.50       // IDJF = 7,50 €/h fixe
 
-    const brutEst = tib + 206 + 26.30 + this.PRIME_IADE + jma + dimJf
+    const cti   = this.CTI_POINTS * this.VALEUR_POINT * (this._quotite || 1)
+    const veil  = this.PRIME_VEIL * (this._quotite || 1)
+    const iade  = this.PRIME_IADE * (this._quotite || 1)
+    const brutEst = tib + cti + veil + iade + jma + dimJf
 
     if (this.hasSidebarBrutTarget)
       this.sidebarBrutTarget.textContent = `${this.formatEuros(brutEst.toFixed(2))} €`
@@ -154,17 +182,18 @@ export default class extends Controller {
     const im = this.GRILLE[grade]?.[echelon]
     if (!im) return
 
-    const tib       = (im * this.VALEUR_POINT * quotite).toFixed(2)
-    const tauxH     = (parseFloat(tib) / 151.67).toFixed(4)
+    const tib       = im * this.VALEUR_POINT * quotite
+    const tauxH     = (tib * 12 / 1820).toFixed(4)    // taux horaire FPH (÷ 1820 h/an)
     const primeIade = (this.PRIME_IADE * quotite).toFixed(2)
 
     if (this.hasImDisplayTarget)          this.imDisplayTarget.value          = im
-    if (this.hasTibDisplayTarget)         this.tibDisplayTarget.value         = `${this.formatEuros(tib)} €`
+    if (this.hasTibDisplayTarget)         this.tibDisplayTarget.value         = `${this.formatEuros(tib.toFixed(2))} €`
     if (this.hasTauxHoraireDisplayTarget) this.tauxHoraireDisplayTarget.value = `${tauxH} €/h`
-    if (this.hasSidebarTibTarget)         this.sidebarTibTarget.textContent   = `${this.formatEuros(tib)} €`
+    if (this.hasSidebarTibTarget)         this.sidebarTibTarget.textContent   = `${this.formatEuros(tib.toFixed(2))} €`
     if (this.hasSidebarPrimeIadeTarget)   this.sidebarPrimeIadeTarget.textContent = `${this.formatEuros(primeIade)} €`
 
-    this._tib = parseFloat(tib)
+    this._tib     = tib
+    this._quotite = quotite
     this.updateIr()
     this.updateSft()
     this.updateNbi()
@@ -173,5 +202,4 @@ export default class extends Controller {
   formatEuros(value) {
     return parseFloat(value).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
-
 }

@@ -2,16 +2,18 @@
 
 module Iade
   class TibCalculator
-    VALEUR_POINT = BigDecimal("4.92284")
+    VALEUR_POINT = BigDecimal("4.92278")
 
+    # Grille officielle IADE FPH — vérifiée le 18/04/2026
+    # Grade 1 : 10 échelons / Grade 2 : 8 échelons
     GRILLE_FALLBACK = {
       "grade1" => {
-        1 => 340, 2  => 358, 3  => 379, 4  => 405, 5  => 430,
-        6 => 458, 7  => 487, 8  => 514, 9  => 541, 10 => 566, 11 => 583
+        1 => 450, 2 => 478, 3 => 506, 4 => 534, 5 => 563,
+        6 => 593, 7 => 624, 8 => 656, 9 => 690, 10 => 727
       },
       "grade2" => {
-        1 => 517, 2  => 536, 3  => 556, 4  => 577, 5  => 598,
-        6 => 618, 7  => 638, 8  => 659, 9  => 680, 10 => 700, 11 => 718
+        1 => 558, 2 => 582, 3 => 615, 4 => 648, 5 => 681,
+        6 => 714, 7 => 743, 8 => 769
       }
     }.freeze
 
@@ -36,7 +38,7 @@ module Iade
     end
 
     def taux_horaire
-      compute_annuel / BigDecimal("1607")
+      compute_annuel / BigDecimal("1820")
     end
 
     private

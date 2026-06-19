@@ -5,7 +5,6 @@ export default class extends Controller {
     "panel", "stepper",
     "moisPaie", "moisM", "moisM1", "moisM2",
     "imDisplay", "tibDisplay", "tauxHoraireDisplay",
-    "sidebarTib", "sidebarBrut", "sidebarNet", "sidebarPrimeIade",
     "progressFill", "confidenceLabel",
     "form", "zoneDisplay", "irDisplay", "sftDisplay", "nbiDisplay"
   ]
@@ -14,14 +13,12 @@ export default class extends Controller {
     currentStep: { type: Number, default: 0 }
   }
 
-  // Valeur du point FPH (au 01/01/2024 — source officielle)
+  // ── Constantes métier ──────────────────────────────────────────
   VALEUR_POINT = 4.92278
   CTI_POINTS   = 49
   PRIME_VEIL   = 90.00
   PRIME_IADE   = 180.00
 
-  // Grille officielle vérifiée le 18/04/2026
-  // Grade 1 : 10 échelons / Grade 2 : 8 échelons
   GRILLE = {
     grade1: { 1:450, 2:478, 3:506, 4:534, 5:563, 6:593, 7:624, 8:656, 9:690, 10:727 },
     grade2: { 1:558, 2:582, 3:615, 4:648, 5:681, 6:714, 7:743, 8:769 }
@@ -32,6 +29,7 @@ export default class extends Controller {
   IR_ZONES = { "75":1, "92":1, "93":1, "94":1, "77":2, "78":2, "91":2, "95":2 }
   IR_TAUX  = { 1: 0.03, 2: 0.01, 3: 0.00 }
 
+  // ── Lifecycle ─────────────────────────────────────────────────
   connect() {
     this._render(this.currentStepValue)
     this.updateDates()
@@ -39,6 +37,7 @@ export default class extends Controller {
     this.updateProgress()
   }
 
+  // ── Navigation ────────────────────────────────────────────────
   nextStep(e) {
     e.preventDefault()
     if (!this._validateCurrentStep()) return
@@ -60,18 +59,15 @@ export default class extends Controller {
     this.currentStepValue = step
 
     this.panelTargets.forEach(panel => {
-      const panelStep = parseInt(panel.dataset.step)
-      panel.classList.toggle("hidden", panelStep !== step)
+      panel.classList.toggle("hidden", parseInt(panel.dataset.step) !== step)
     })
 
-    const stepBtns = this.element.querySelectorAll(".step-item")
-    stepBtns.forEach((btn, i) => {
+    this.element.querySelectorAll(".step-item").forEach((btn, i) => {
       btn.classList.remove("is-active", "is-done")
-      if (i === step) btn.classList.add("is-active")
+      if (i === step)     btn.classList.add("is-active")
       else if (i < step) btn.classList.add("is-done")
     })
 
-    // Nettoyer les erreurs de validation de l'étape qu'on quitte
     this.element.querySelectorAll(".step-validation-error").forEach(el => el.remove())
     this.element.querySelectorAll(".field-invalid").forEach(el => el.classList.remove("field-invalid"))
 
@@ -79,98 +75,83 @@ export default class extends Controller {
     this.updateProgress()
   }
 
+  // ── Dates ─────────────────────────────────────────────────────
   updateDates() {
     const raw = this.hasMoisPaieTarget ? this.moisPaieTarget.value : null
     if (!raw) return
-
     const [year, month] = raw.split("-").map(Number)
-    const mDate  = new Date(year, month - 1, 1)
-    const m1Date = new Date(year, month - 2, 1)
-    const m2Date = new Date(year, month - 3, 1)
-
-    const toValue = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-
-    if (this.hasMoisMTarget)  this.moisMTarget.value  = toValue(mDate)
-    if (this.hasMoisM1Target) this.moisM1Target.value = toValue(m1Date)
-    if (this.hasMoisM2Target) this.moisM2Target.value = toValue(m2Date)
+    const toValue = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`
+    if (this.hasMoisMTarget)  this.moisMTarget.value  = toValue(new Date(year, month-1, 1))
+    if (this.hasMoisM1Target) this.moisM1Target.value = toValue(new Date(year, month-2, 1))
+    if (this.hasMoisM2Target) this.moisM2Target.value = toValue(new Date(year, month-3, 1))
   }
 
-  // Changement de grade → mettre à jour la liste des échelons disponibles puis recalculer
+  // ── Changement de grade ───────────────────────────────────────
   gradeChanged(e) {
-    const grade   = e.target.value
-    const maxEch  = this.MAX_ECHELON[grade] || 11
-    const echelonSelect = this.formTarget.querySelector("[name='simulation_session[echelon]']")
-    if (!echelonSelect) return
-
-    const currentVal = parseInt(echelonSelect.value) || 1
-    echelonSelect.innerHTML = ""
+    const grade  = e.target.value
+    const maxEch = this.MAX_ECHELON[grade] || 11
+    const sel    = this.formTarget.querySelector("[name='simulation_session[echelon]']")
+    if (!sel) return
+    const cur = parseInt(sel.value) || 1
+    sel.innerHTML = ""
     for (let i = 1; i <= maxEch; i++) {
       const opt = document.createElement("option")
-      opt.value = i
-      opt.textContent = i
-      if (i === Math.min(currentVal, maxEch)) opt.selected = true
-      echelonSelect.appendChild(opt)
+      opt.value = i; opt.textContent = i
+      if (i === Math.min(cur, maxEch)) opt.selected = true
+      sel.appendChild(opt)
     }
     this.updateTib()
   }
 
+  // ── Mises à jour des affichages dans le formulaire ────────────
+  updateTib() {
+    const grade   = this._fv("grade")   || "grade1"
+    const echelon = parseInt(this._fv("echelon")) || 1
+    const quotite = parseFloat(this._fv("quotite")) || 1.0
+    const im      = this.GRILLE[grade]?.[echelon]
+    if (!im) return
+
+    const tib   = im * this.VALEUR_POINT * quotite
+    const tauxH = (tib * 12 / 1820).toFixed(4)
+
+    if (this.hasImDisplayTarget)          this.imDisplayTarget.value          = im
+    if (this.hasTibDisplayTarget)         this.tibDisplayTarget.value         = `${this.fmt(tib)} €`
+    if (this.hasTauxHoraireDisplayTarget) this.tauxHoraireDisplayTarget.value = `${tauxH} €/h`
+
+    this.updateSidebar()
+  }
+
   updateIr() {
-    const deptCode = this.formTarget.querySelector("[name='simulation_session[departement_code]']")?.value || "75"
-    const tib   = this._tib || 0
-    const zone  = this.IR_ZONES[deptCode] || 3
+    const dept  = this._fv("departement_code") || "75"
+    const tib   = parseFloat(this._fv_tib()) || 0
+    const zone  = this.IR_ZONES[dept] || 3
     const taux  = this.IR_TAUX[zone] || 0
     const ir    = (tib * taux).toFixed(2)
 
     if (this.hasZoneDisplayTarget)
-      this.zoneDisplayTarget.value = `Zone ${zone} — ${(taux * 100).toFixed(0)}% du TIB`
+      this.zoneDisplayTarget.value = `Zone ${zone} — ${(taux*100).toFixed(0)}% du TIB`
     if (this.hasIrDisplayTarget)
-      this.irDisplayTarget.value = `${this.formatEuros(ir)} €`
+      this.irDisplayTarget.value = `${this.fmt(ir)} €`
 
-    this._ir = parseFloat(ir)
+    this.updateSidebar()
   }
 
   updateSft() {
-    const nb       = parseInt(this.formTarget.querySelector("[name='simulation_session[nb_enfants_sft]']")?.value) || 0
-    const tib      = this._tib || 0
-    const alternee = this.formTarget.querySelector("[name='simulation_session[garde_alternee]']")?.value === "true"
-
-    let sft = 0
-    if (nb === 1)      sft = 2.29
-    else if (nb === 2) sft = Math.max(73.04, 10.67 + tib * 0.03)
-    else if (nb >= 3)  sft = Math.max(181.56 + (nb - 3) * 129.10, 15.24 + tib * 0.08 + (nb - 3) * (4.57 + tib * 0.06))
-    if (alternee && sft > 0) sft /= 2
+    const nb       = parseInt(this._fv("nb_enfants_sft")) || 0
+    const tib      = this._fv_tib() || 0
+    const alternee = this._fv("garde_alternee") === "true"
+    let sft = this._calcSft(nb, tib, alternee)
 
     if (this.hasSftDisplayTarget)
-      this.sftDisplayTarget.value = `${this.formatEuros(sft.toFixed(2))} €`
+      this.sftDisplayTarget.value = `${this.fmt(sft.toFixed(2))} €`
+    this.updateSidebar()
   }
 
   updateNbi() {
-    const pts = parseInt(this.formTarget.querySelector("[name='simulation_session[nbi_points]']")?.value) || 0
+    const pts = parseInt(this._fv("nbi_points")) || 0
     const nbi = (pts * this.VALEUR_POINT).toFixed(2)
-
-    if (this.hasNbiDisplayTarget)
-      this.nbiDisplayTarget.value = `${this.formatEuros(nbi)} €`
-  }
-
-  updatePlanning() {
-    const tib    = this._tib || 0
-    const ir     = this._ir  || 0
-    const base   = (tib + ir) * 12 / 1820   // Base horaire FPH
-
-    const hNuit  = parseFloat(this.formTarget.querySelector("[name='simulation_session[heures_nuit]']")?.value) || 0
-    const hDim   = parseFloat(this.formTarget.querySelector("[name='simulation_session[heures_dimanche]']")?.value) || 0
-    const hFerie = parseFloat(this.formTarget.querySelector("[name='simulation_session[heures_ferie]']")?.value) || 0
-
-    const jma   = base * 0.25 * hNuit          // JMA = 25% × base × heures nuit
-    const dimJf = (hDim + hFerie) * 7.50       // IDJF = 7,50 €/h fixe
-
-    const cti   = this.CTI_POINTS * this.VALEUR_POINT * (this._quotite || 1)
-    const veil  = this.PRIME_VEIL * (this._quotite || 1)
-    const iade  = this.PRIME_IADE * (this._quotite || 1)
-    const brutEst = tib + cti + veil + iade + jma + dimJf
-
-    if (this.hasSidebarBrutTarget)
-      this.sidebarBrutTarget.textContent = `${this.formatEuros(brutEst.toFixed(2))} €`
+    if (this.hasNbiDisplayTarget) this.nbiDisplayTarget.value = `${this.fmt(nbi)} €`
+    this.updateSidebar()
   }
 
   updateProgress() {
@@ -179,67 +160,196 @@ export default class extends Controller {
     if (this.hasConfidenceLabelTarget) this.confidenceLabelTarget.textContent = `Étape ${this.currentStepValue + 1} / 6`
   }
 
-  updateTib() {
-    const grade   = this.formTarget.querySelector("[name='simulation_session[grade]']")?.value || "grade1"
-    const echelon = parseInt(this.formTarget.querySelector("[name='simulation_session[echelon]']")?.value) || 1
-    const quotite = parseFloat(this.formTarget.querySelector("[name='simulation_session[quotite]']")?.value) || 1.0
+  // ── SIDEBAR TEMPS RÉEL ────────────────────────────────────────
+  updateSidebar() {
+    const grade    = this._fv("grade")    || "grade1"
+    const echelon  = parseInt(this._fv("echelon")) || 1
+    const quotite  = parseFloat(this._fv("quotite")) || 1.0
+    const statut   = this._fv("statut")   || "titulaire"
+    const dept     = this._fv("departement_code") || "75"
+    const nbiPts   = parseInt(this._fv("nbi_points")) || 0
+    const nbEnf    = parseInt(this._fv("nb_enfants_sft")) || 0
+    const alternee = this._fv("garde_alternee") === "true"
+    const tausPas  = parseFloat(this._fv("taux_pas")) || 0
+    const mutuelle = parseFloat(this._fv("mutuelle")) || 0
+    const hNuit    = parseFloat(this._fv("heures_nuit")) || 0
+    const hDim     = parseFloat(this._fv("heures_dimanche")) || 0
+    const hFerie   = parseFloat(this._fv("heures_ferie")) || 0
+    const hsJour   = parseFloat(this._fv("hs_jour")) || 0
+    const hsNuit   = parseFloat(this._fv("hs_nuit")) || 0
+    const hsDimJf  = parseFloat(this._fv("hs_dim_jf")) || 0
 
-    const im = this.GRILLE[grade]?.[echelon]
-    if (!im) return
+    // ── Traitements fixes ──
+    const im  = this.GRILLE[grade]?.[echelon] || 0
+    const tib = im * this.VALEUR_POINT * quotite
+    const cti = this.CTI_POINTS * this.VALEUR_POINT * quotite
+    const veil = this.PRIME_VEIL * quotite
+    const iade = this.PRIME_IADE * quotite
+    const iba  = statut === "contractuel" ? 0 : (389 * quotite / 12)
 
-    const tib       = im * this.VALEUR_POINT * quotite
-    const tauxH     = (tib * 12 / 1820).toFixed(4)    // taux horaire FPH (÷ 1820 h/an)
-    const primeIade = (this.PRIME_IADE * quotite).toFixed(2)
+    const zone   = this.IR_ZONES[dept] || 3
+    const tauxIr = this.IR_TAUX[zone] || 0
+    const ir     = tib * tauxIr
+    const irNbi  = (nbiPts * this.VALEUR_POINT * quotite) * tauxIr
+    const nbi    = nbiPts * this.VALEUR_POINT * quotite
+    const iss    = (13 / 1900) * 12 * (tib + ir)
+    const sft    = this._calcSft(nbEnf, tib, alternee)
 
-    if (this.hasImDisplayTarget)          this.imDisplayTarget.value          = im
-    if (this.hasTibDisplayTarget)         this.tibDisplayTarget.value         = `${this.formatEuros(tib.toFixed(2))} €`
-    if (this.hasTauxHoraireDisplayTarget) this.tauxHoraireDisplayTarget.value = `${tauxH} €/h`
-    if (this.hasSidebarTibTarget)         this.sidebarTibTarget.textContent   = `${this.formatEuros(tib.toFixed(2))} €`
-    if (this.hasSidebarPrimeIadeTarget)   this.sidebarPrimeIadeTarget.textContent = `${this.formatEuros(primeIade)} €`
+    // ── Planning ──
+    const baseH  = (tib + ir) * 12 / 1820
+    const jma    = baseH * 0.25 * hNuit
+    const dimjf  = (hDim + hFerie) * 7.50
+    const hsTotal = baseH * (hsJour * 1.26 + hsNuit * 2.52 + hsDimJf * 2.10)
 
-    this._tib     = tib
-    this._quotite = quotite
-    this.updateIr()
-    this.updateSft()
-    this.updateNbi()
+    // ── Brut ──
+    const brut = tib + cti + veil + iade - iba + ir + nbi + irNbi + iss + sft + jma + dimjf + hsTotal
+
+    // ── Cotisations estimées ──
+    let cnracl = 0, rafp = 0
+    if (statut !== "contractuel") {
+      cnracl = 0.111 * (tib + cti)
+      if (nbiPts > 0) cnracl += 0.111 * nbi
+      const primesApresIba = Math.max(0, cti + veil + iade - iba + iss + jma + dimjf)
+      const plafondRafp    = tib * 12 * 0.20
+      rafp = Math.min(primesApresIba, plafondRafp) * 0.05
+    } else {
+      cnracl = 0.0401 * (tib + cti + brut)   // IRCANTEC approximation
+    }
+    const baseCsg  = brut * 0.9825
+    const csgTotal = baseCsg * (0.029 + 0.068) + (hsTotal > 0 ? hsTotal * 0.068 : 0)
+    const totalAv  = cnracl + rafp + csgTotal
+    const netAvPas = brut - totalAv
+    const pas      = netAvPas * (tausPas / 100)
+    const net      = netAvPas - pas - mutuelle
+
+    // ── Mise à jour du DOM ──
+    this._sbAmt("tib",    tib)
+    this._sbAmt("cti",    cti)
+    this._sbAmt("veil",   veil)
+    this._sbAmt("iade",   iade)
+    this._sbNeg("iba",    iba,    statut !== "contractuel")
+    this._sbAmt("ir",     ir)
+    this._sbAmt("iss",    iss)
+
+    if (nbiPts > 0) {
+      this._sbAmt("nbi", nbi)
+      this._sbLineShow("nbi", true)
+    } else {
+      this._sbLineShow("nbi", false)
+    }
+
+    if (nbEnf > 0 && sft > 0) {
+      this._sbAmt("sft", sft)
+      this._sbLineShow("sft", true)
+    } else {
+      this._sbLineShow("sft", false)
+    }
+
+    const hasPlanning = jma > 0 || dimjf > 0 || hsTotal > 0
+    this._sbLineShow("planning", hasPlanning)
+    this._sbLineShow("jma",   jma   > 0); if (jma   > 0) this._sbAmt("jma",   jma)
+    this._sbLineShow("dimjf", dimjf > 0); if (dimjf > 0) this._sbAmt("dimjf", dimjf)
+    this._sbLineShow("hs",    hsTotal > 0); if (hsTotal > 0) this._sbAmt("hs", hsTotal)
+
+    this._sbTotal("brut",   brut)
+    this._sbNeg("cnracl",   cnracl + rafp, true)
+    this._sbNeg("csg",      csgTotal,      true)
+    this._sbNeg("pas",      pas,           tausPas > 0)
+    this._sbTotal("net",    net)
   }
 
-  // Valide tous les champs required du panel courant avant de passer à l'étape suivante
+  // ── Validation par étape ──────────────────────────────────────
   _validateCurrentStep() {
     const panel = this.panelTargets.find(p => parseInt(p.dataset.step) === this.currentStepValue)
     if (!panel) return true
-
-    const fields  = Array.from(panel.querySelectorAll("[required]"))
-    const invalid = fields.filter(f => {
-      if (f.type === "checkbox") return !f.checked
-      return !f.value || f.value.trim() === ""
-    })
-
-    // Nettoyer les erreurs précédentes
+    const invalid = Array.from(panel.querySelectorAll("[required]")).filter(f =>
+      f.type === "checkbox" ? !f.checked : !f.value || f.value.trim() === ""
+    )
     panel.querySelectorAll(".step-validation-error").forEach(el => el.remove())
     panel.querySelectorAll(".field-invalid").forEach(el => el.classList.remove("field-invalid"))
-
     if (invalid.length === 0) return true
 
-    // Surligner les champs manquants
     invalid.forEach(f => f.closest(".field-group")?.classList.add("field-invalid"))
-
-    // Afficher le bandeau d'erreur au-dessus des boutons
-    const footer = panel.querySelector(".panel-footer")
+    const labels = [...new Set(invalid.map(f => {
+      const lbl = panel.querySelector(`label[for="${f.id}"]`)
+      return lbl ? lbl.textContent.replace(/[*✱]/g,"").trim() : "champ obligatoire"
+    }))]
     const errDiv = document.createElement("div")
     errDiv.className = "alert alert--error step-validation-error"
     errDiv.style.marginBottom = "0.75rem"
-    const labels = invalid.map(f => {
-      const lbl = panel.querySelector(`label[for="${f.id}"]`)
-      return lbl ? lbl.textContent.replace(/[*✱]/g, "").trim() : "un champ obligatoire"
-    })
-    const unique = [...new Set(labels)]
-    errDiv.textContent = `Champ${unique.length > 1 ? "s" : ""} obligatoire${unique.length > 1 ? "s" : ""} manquant${unique.length > 1 ? "s" : ""} : ${unique.join(", ")}.`
-    footer.before(errDiv)
+    errDiv.textContent = `Champ${labels.length>1?"s":""} obligatoire${labels.length>1?"s":""} manquant${labels.length>1?"s":""} : ${labels.join(", ")}.`
+    panel.querySelector(".panel-footer").before(errDiv)
     return false
   }
 
-  formatEuros(value) {
+  // ── Helpers ───────────────────────────────────────────────────
+
+  _fv(name) {
+    return this.formTarget.querySelector(`[name='simulation_session[${name}]']`)?.value
+  }
+
+  _fv_tib() {
+    const grade   = this._fv("grade")   || "grade1"
+    const echelon = parseInt(this._fv("echelon")) || 1
+    const quotite = parseFloat(this._fv("quotite")) || 1.0
+    const im      = this.GRILLE[grade]?.[echelon] || 0
+    return im * this.VALEUR_POINT * quotite
+  }
+
+  _calcSft(nb, tib, alternee) {
+    let sft = 0
+    if (nb === 1)      sft = 2.29
+    else if (nb === 2) sft = Math.max(73.04, 10.67 + tib * 0.03)
+    else if (nb >= 3)  sft = Math.max(181.56 + (nb-3)*129.10, 15.24 + tib*0.08 + (nb-3)*(4.57 + tib*0.06))
+    return alternee && sft > 0 ? sft / 2 : sft
+  }
+
+  // Montant positif dans la sidebar
+  _sbAmt(id, value) {
+    const el = this.element.querySelector(`[data-sb="${id}"]`)
+    if (!el) return
+    if (value > 0.005) {
+      el.textContent = this.fmt(value.toFixed(2)) + " €"
+      el.classList.add("is-set")
+    } else {
+      el.textContent = "—"
+      el.classList.remove("is-set")
+    }
+  }
+
+  // Montant négatif (cotisation ou déduction)
+  _sbNeg(id, value, show) {
+    const el = this.element.querySelector(`[data-sb="${id}"]`)
+    if (!el) return
+    if (show && value > 0.005) {
+      el.textContent = "−" + this.fmt(value.toFixed(2)) + " €"
+      el.classList.add("is-set")
+    } else {
+      el.textContent = "—"
+      el.classList.remove("is-set")
+    }
+  }
+
+  // Total brut ou net
+  _sbTotal(id, value) {
+    const el = this.element.querySelector(`[data-sb="${id}"]`)
+    if (!el) return
+    if (value > 0.005) {
+      el.textContent = this.fmt(value.toFixed(2)) + " €"
+      el.classList.add("is-set")
+    } else {
+      el.textContent = "—"
+      el.classList.remove("is-set")
+    }
+  }
+
+  // Affiche / masque une ligne ou section conditionnelle
+  _sbLineShow(id, visible) {
+    const el = this.element.querySelector(`[data-sb-line="${id}"]`)
+    if (el) el.classList.toggle("hidden", !visible)
+  }
+
+  fmt(value) {
     return parseFloat(value).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 }

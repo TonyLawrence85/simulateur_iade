@@ -1,38 +1,115 @@
-<div class="kpi-card kpi-card--primary">
-  <p class="kpi-label">TIB mensuel brut</p>
-  <p class="kpi-value" data-simulation-target="sidebarTib">
-    <%= @tib_preview ? number_to_currency(@tib_preview[:tib], unit: "€", delimiter: " ", precision: 2, format: "%n %u") : "—" %> <%# herb:disable all %>
+<div class="sb-card">
+
+  <div class="sb-header">
+    <span class="sb-title">Estimation bulletin</span>
+    <span class="sb-live-dot"></span>
+  </div>
+
+  <%# Traitements & indemnités fixes %>
+  <div class="sb-section">
+    <div class="sb-section-label">Traitements &amp; indemnités</div>
+
+    <div class="sb-line">
+      <span class="sb-code">BT0</span>
+      <span class="sb-name">TIB</span>
+      <span class="sb-amount" data-sb="tib"><%= @tib_preview ? number_to_currency(@tib_preview[:tib], unit: "€", delimiter: " ", separator: ",", precision: 2, format: "%n %u") : "—" %></span>
+    </div>
+    <div class="sb-line sb-line--auto">
+      <span class="sb-code">CW1</span>
+      <span class="sb-name">CTI / Ségur</span>
+      <span class="sb-amount sb-amount--auto" data-sb="cti">—</span>
+    </div>
+    <div class="sb-line sb-line--auto">
+      <span class="sb-code">LP1</span>
+      <span class="sb-name">Prime Veil</span>
+      <span class="sb-amount sb-amount--auto" data-sb="veil">—</span>
+    </div>
+    <div class="sb-line sb-line--auto">
+      <span class="sb-code">LPN</span>
+      <span class="sb-name">Prime IADE</span>
+      <span class="sb-amount sb-amount--auto" data-sb="iade">—</span>
+    </div>
+    <div class="sb-line">
+      <span class="sb-code">IBA</span>
+      <span class="sb-name">Abat. PPCR</span>
+      <span class="sb-amount sb-amount--neg" data-sb="iba">—</span>
+    </div>
+    <div class="sb-line">
+      <span class="sb-code">BR0</span>
+      <span class="sb-name">Ind. résidence</span>
+      <span class="sb-amount" data-sb="ir">—</span>
+    </div>
+    <div class="sb-line hidden" data-sb-line="nbi">
+      <span class="sb-code">KB1</span>
+      <span class="sb-name">NBI</span>
+      <span class="sb-amount" data-sb="nbi">—</span>
+    </div>
+    <div class="sb-line">
+      <span class="sb-code">IS1</span>
+      <span class="sb-name">ISS</span>
+      <span class="sb-amount" data-sb="iss">—</span>
+    </div>
+    <div class="sb-line hidden" data-sb-line="sft">
+      <span class="sb-code">CS0</span>
+      <span class="sb-name">SFT</span>
+      <span class="sb-amount" data-sb="sft">—</span>
+    </div>
+  </div>
+
+  <%# Variables de planning (masqué par défaut) %>
+  <div class="sb-section hidden" data-sb-line="planning">
+    <div class="sb-section-label">Planning</div>
+    <div class="sb-line hidden" data-sb-line="jma">
+      <span class="sb-code">JMA</span>
+      <span class="sb-name">Ind. nuits</span>
+      <span class="sb-amount" data-sb="jma">—</span>
+    </div>
+    <div class="sb-line hidden" data-sb-line="dimjf">
+      <span class="sb-code">JW0</span>
+      <span class="sb-name">Dim. / Fériés</span>
+      <span class="sb-amount" data-sb="dimjf">—</span>
+    </div>
+    <div class="sb-line hidden" data-sb-line="hs">
+      <span class="sb-code">HS</span>
+      <span class="sb-name">Heures sup.</span>
+      <span class="sb-amount" data-sb="hs">—</span>
+    </div>
+  </div>
+
+  <%# Total brut %>
+  <div class="sb-total sb-total--brut">
+    <span>Brut estimé</span>
+    <strong data-sb="brut">—</strong>
+  </div>
+
+  <%# Cotisations (estimées) %>
+  <div class="sb-section">
+    <div class="sb-section-label">Cotisations <span class="sb-est-tag">estimées</span></div>
+    <div class="sb-line">
+      <span class="sb-code">RCN</span>
+      <span class="sb-name">CNRACL + RAFP</span>
+      <span class="sb-amount sb-amount--ded" data-sb="cnracl">—</span>
+    </div>
+    <div class="sb-line">
+      <span class="sb-code">CSG</span>
+      <span class="sb-name">CSG / CRDS</span>
+      <span class="sb-amount sb-amount--ded" data-sb="csg">—</span>
+    </div>
+    <div class="sb-line">
+      <span class="sb-code">Q60</span>
+      <span class="sb-name">PAS</span>
+      <span class="sb-amount sb-amount--ded" data-sb="pas">—</span>
+    </div>
+  </div>
+
+  <%# Net estimé %>
+  <div class="sb-total sb-total--net">
+    <span>Net estimé</span>
+    <strong data-sb="net">—</strong>
+  </div>
+
+  <p class="sb-disclaimer">
+    Estimation · résultat exact après &laquo;&nbsp;Lancer la simulation&nbsp;&raquo;
   </p>
-  <p class="kpi-sub">BT0 — traitement de base</p>
-</div>
 
-<div class="kpi-card">
-  <p class="kpi-label">Brut estimé</p>
-  <p class="kpi-value" data-simulation-target="sidebarBrut">—</p>
-  <p class="kpi-sub">Calculé après soumission</p>
-</div>
-
-<div class="kpi-card kpi-card--success">
-  <p class="kpi-label">Net à payer estimé</p>
-  <p class="kpi-value" data-simulation-target="sidebarNet">—</p>
-  <p class="kpi-sub">Après PAS et retenues</p>
-</div>
-
-<div class="auto-primes-block" style="margin-top:8px">
-  <p class="auto-primes-block__title">Primes automatiques</p>
-  <div class="auto-prime-line">
-    <span class="auto-prime-code">CW1</span>
-    <span class="auto-prime-label">CTI/Ségur</span>
-    <strong>206,00 €</strong>
-  </div>
-  <div class="auto-prime-line">
-    <span class="auto-prime-code">LP1</span>
-    <span class="auto-prime-label">Prime Veil</span>
-    <strong>26,30 €</strong>
-  </div>
-  <div class="auto-prime-line">
-    <span class="auto-prime-code">LPN</span>
-    <span class="auto-prime-label">Prime IADE</span>
-    <strong data-simulation-target="sidebarPrimeIade">485,72 €</strong>
-  </div>
 </div>

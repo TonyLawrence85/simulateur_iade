@@ -41,6 +41,7 @@ export default class extends Controller {
 
   nextStep(e) {
     e.preventDefault()
+    if (!this._validateCurrentStep()) return
     if (this.currentStepValue < 5) this._render(this.currentStepValue + 1)
   }
 
@@ -69,6 +70,10 @@ export default class extends Controller {
       if (i === step) btn.classList.add("is-active")
       else if (i < step) btn.classList.add("is-done")
     })
+
+    // Nettoyer les erreurs de validation de l'étape qu'on quitte
+    this.element.querySelectorAll(".step-validation-error").forEach(el => el.remove())
+    this.element.querySelectorAll(".field-invalid").forEach(el => el.classList.remove("field-invalid"))
 
     window.scrollTo({ top: 0, behavior: "smooth" })
     this.updateProgress()
@@ -197,6 +202,41 @@ export default class extends Controller {
     this.updateIr()
     this.updateSft()
     this.updateNbi()
+  }
+
+  // Valide tous les champs required du panel courant avant de passer à l'étape suivante
+  _validateCurrentStep() {
+    const panel = this.panelTargets.find(p => parseInt(p.dataset.step) === this.currentStepValue)
+    if (!panel) return true
+
+    const fields  = Array.from(panel.querySelectorAll("[required]"))
+    const invalid = fields.filter(f => {
+      if (f.type === "checkbox") return !f.checked
+      return !f.value || f.value.trim() === ""
+    })
+
+    // Nettoyer les erreurs précédentes
+    panel.querySelectorAll(".step-validation-error").forEach(el => el.remove())
+    panel.querySelectorAll(".field-invalid").forEach(el => el.classList.remove("field-invalid"))
+
+    if (invalid.length === 0) return true
+
+    // Surligner les champs manquants
+    invalid.forEach(f => f.closest(".field-group")?.classList.add("field-invalid"))
+
+    // Afficher le bandeau d'erreur au-dessus des boutons
+    const footer = panel.querySelector(".panel-footer")
+    const errDiv = document.createElement("div")
+    errDiv.className = "alert alert--error step-validation-error"
+    errDiv.style.marginBottom = "0.75rem"
+    const labels = invalid.map(f => {
+      const lbl = panel.querySelector(`label[for="${f.id}"]`)
+      return lbl ? lbl.textContent.replace(/[*✱]/g, "").trim() : "un champ obligatoire"
+    })
+    const unique = [...new Set(labels)]
+    errDiv.textContent = `Champ${unique.length > 1 ? "s" : ""} obligatoire${unique.length > 1 ? "s" : ""} manquant${unique.length > 1 ? "s" : ""} : ${unique.join(", ")}.`
+    footer.before(errDiv)
+    return false
   }
 
   formatEuros(value) {

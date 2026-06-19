@@ -39,7 +39,7 @@ class SimulationsController < ApplicationController
     else
       @current_step = 0
       @tib_preview = compute_tib_preview(@simulation)
-      flash.now[:alert] = @simulation.errors.full_messages.first
+      flash.now[:alert] = @simulation.errors.full_messages.join(" · ")
       render :new, status: :unprocessable_entity
     end
   end

@@ -221,6 +221,9 @@
 .sim-app .field-label .req { color: var(--red); font-size: 0.875rem; line-height: 1; }
 .sim-app .field-hint { font-size: 0.75rem; color: var(--ink-mute); line-height: 1.4; }
 .sim-app .field-hint--warn { color: var(--amber); }
+.sim-app .field-invalid input,
+.sim-app .field-invalid select { border-color: var(--red) !important; background: var(--red-light) !important; }
+.sim-app .field-invalid .field-label { color: var(--red); }
 
 .sim-app input[type="text"],
 .sim-app input[type="number"],

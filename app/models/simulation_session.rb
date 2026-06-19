@@ -11,8 +11,9 @@ class SimulationSession < ApplicationRecord
   validates :echelon,          presence: true, inclusion: { in: 1..11 }
   validates :quotite,          presence: true, numericality: { greater_than: 0, less_than_or_equal_to: 1 }
   validates :departement_code, presence: true
-  validates :taux_pas,         numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  validates :token,            presence: true, uniqueness: true
+  validates :taux_pas,          numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :confirm_decalage,  acceptance: { accept: ["1", true] }
+  validates :token,             presence: true, uniqueness: true
 
   before_validation :generate_token, on: :create
 

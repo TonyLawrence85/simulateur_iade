@@ -43,7 +43,7 @@ module Iade
 
     # ---------------- BRUT ----------------
 
-    def build_brut_lines
+    def build_brut_lines # rubocop:disable Metrics/MethodLength
       add_tib
       add_cti
       add_prime_veil
@@ -54,6 +54,7 @@ module Iade
       add_sft
       add_sft_nbi               # KS0 + KS1 (nécessite @ir_nbi_montant)
       add_iss                   # IS1 calculé automatiquement
+      add_abattement_ppcr       # IBA (déduction PPCR, réduit le brut et l'assiette RAFP)
       add_dtc
       add_wt1
       add_jma
@@ -153,6 +154,14 @@ module Iade
       (BigDecimal("13") / BigDecimal("1900") * 12 * (tib_montant + ir)).round(2)
     end
 
+    def add_abattement_ppcr
+      return if @p[:statut] == "contractuel"
+
+      @iba_montant = (BigDecimal("389") * quotite / 12).round(2)
+      add_line(code: "IBA", label: "ABAT.PPCR.CAT A", category: :auto,
+               montant: -@iba_montant, detail: "389 € × #{quotite_pct} / 12")
+    end
+
     def add_dtc
       return if @p[:dtc_montant].blank? || @p[:dtc_montant].to_f.zero?
 
@@ -245,7 +254,7 @@ module Iade
 
       rafp = Iade::CotisationsCalculator.rafp(
         assiette_primes: brut_primes_total,
-        tib_annuel:      tib_montant * 12
+        tib_annuel: tib_montant * 12
       )
       @rafp_montant = rafp
       add_deduction(code: "RAF", label: "RETRAITE ADD.TITU. (RAFP)",
@@ -350,8 +359,10 @@ module Iade
     end
 
     def brut_primes_total
-      codes = %w[CW1 LP1 LPN IS1 JMA JW0 TP7/IT7/DHN]
-      @lines.select { |l| codes.include?(l[:code]) && l[:type] == :brut }.sum { |l| l[:montant] }
+      # IBA inclus (montant négatif) → réduit l'assiette RAFP automatiquement (PDF §8)
+      codes = %w[CW1 LP1 LPN IS1 JMA JW0 TP7/IT7/DHN IBA]
+      total = @lines.select { |l| codes.include?(l[:code]) && l[:type] == :brut }.sum { |l| l[:montant] }
+      [total, BigDecimal("0")].max
     end
 
     def hs_montant_total

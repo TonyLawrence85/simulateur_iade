@@ -36,6 +36,7 @@ module Iade
       def run_tesseract(image_path)
         output_base = image_path.sub(/\.\w+$/, "_ocr")
         _out, err, status = Open3.capture3(
+          tessdata_env,
           "tesseract", image_path, output_base, *TESSERACT_CONFIG.split
         )
         raise "Tesseract failed: #{err}" unless status.success?
@@ -44,6 +45,14 @@ module Iade
         text = File.read(output_file, encoding: "UTF-8")
         File.delete(output_file)
         text
+      end
+
+      # Heroku apt buildpack installe dans /app/.apt/usr/ au lieu de /usr/
+      def tessdata_env
+        prefix = ENV["TESSDATA_PREFIX"].presence
+        prefix ||= "/app/.apt/usr/share/tesseract-ocr/5/tessdata" if
+          Dir.exist?("/app/.apt/usr/share/tesseract-ocr/5/tessdata")
+        prefix ? { "TESSDATA_PREFIX" => prefix } : {}
       end
 
       def cleanup(paths)

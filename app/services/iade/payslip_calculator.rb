@@ -183,8 +183,8 @@ module Iade
       montant = Iade::PlanningCalculator.indemnite_nuit(
         heures: heures, tib_mensuel: tib_montant, ir_mensuel: @ir_montant || 0
       )
-      add_line(code: "JMA", label: "IND. NUIT MAJOREE", category: :var_m,
-               montant: montant, detail: "#{heures}h × 25% × base horaire (TIB+IR)", pay_lag: :mois_m)
+      add_line(code: "JMA", label: "IND. NUIT MAJOREE", category: :var_m1,
+               montant: montant, detail: "#{heures}h × 25% × base horaire (TIB+IR)", pay_lag: :mois_m1)
     end
 
     def add_dim_jf

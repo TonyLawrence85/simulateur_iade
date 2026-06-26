@@ -33,7 +33,9 @@ class SimulationSession < ApplicationRecord
       :tp7_qty, :it7_qty, :dhn_heures,
       :hs_jour, :hs_nuit, :hs_dim_jf,
       :montant_psr, :jours_absence_psr, :montant_lsu,
-      :nb_gardes, :heures_par_garde
+      :nb_gardes, :heures_par_garde,
+      :jours_carence, :jours_cmo90, :jours_cmo50,
+      :date_entree_echelon
     )
   end
 

@@ -124,6 +124,74 @@
     </div>
   </div>
 
+  <% if @carriere %>
+    <div class="step-panel" style="margin-top:1.5rem">
+      <div class="panel-header">
+        <div class="panel-icon">📈</div>
+        <div class="panel-titles">
+          <h2 class="panel-title">Prochaine évolution de carrière</h2>
+          <p class="panel-desc">Indicatif — durées minimales IADE (Décret n° 2012-1483)</p>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="result-kpis" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+          <div class="result-kpi">
+            <p class="rk-label">Échelon actuel</p>
+            <p class="rk-value">Éch. <%= @carriere.echelon_actuel %></p>
+            <p class="rk-sub">IM <%= @carriere.im_actuel %> · <%= number_to_currency(@carriere.tib_actuel, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>/mois</p>
+          </div>
+
+          <% if @carriere.echelon_suivant %>
+            <div class="result-kpi">
+              <p class="rk-label">Prochain échelon</p>
+              <p class="rk-value rk-positive">Éch. <%= @carriere.echelon_suivant %></p>
+              <p class="rk-sub">IM <%= @carriere.im_suivant %> · +<%= number_to_currency(@carriere.delta_tib, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>/mois</p>
+            </div>
+
+            <div class="result-kpi">
+              <p class="rk-label">Taux HS nuit actuel</p>
+              <p class="rk-value"><%= number_to_currency(@carriere.taux_hs_nuit_actuel, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>/h</p>
+              <p class="rk-sub">Au prochain : <%= number_to_currency(@carriere.taux_hs_nuit_suivant, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>/h</p>
+            </div>
+
+            <% if @carriere.mois_restants %>
+              <div class="result-kpi">
+                <p class="rk-label">Date estimée</p>
+                <p class="rk-value"><%= I18n.l(@carriere.date_estimee, format: "%b %Y") %></p>
+                <p class="rk-sub">
+                  <% if @carriere.mois_restants == 0 %>
+                    Avancement possible maintenant
+                  <% else %>
+                    Dans <%= @carriere.mois_restants %> mois
+                  <% end %>
+                </p>
+              </div>
+            <% elsif @simulation.date_entree_echelon.blank? %>
+              <div class="result-kpi">
+                <p class="rk-label">Date estimée</p>
+                <p class="rk-value" style="font-size:1rem;color:var(--ink-mute)">—</p>
+                <p class="rk-sub">Saisir la date d'entrée dans l'échelon (étape 1) pour estimer</p>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="result-kpi">
+              <p class="rk-label">Avancement</p>
+              <p class="rk-value" style="font-size:1rem">Échelon terminal</p>
+              <p class="rk-sub">Dernier échelon de votre grade</p>
+            </div>
+          <% end %>
+        </div>
+
+        <% if @carriere.passage_grade2_possible %>
+          <div class="alert alert--info" style="margin-top:1rem">
+            <span>ℹ</span><span>Vous êtes éligible à un passage au 2ème grade (sous réserve des conditions statutaires et de la liste d'aptitude).</span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <div style="margin-top:1.5rem;text-align:center">
     <%= link_to "Comparer avec mon bulletin reçu →", compare_simulation_path(@simulation), class: "btn btn--primary btn--lg" %>
   </div>

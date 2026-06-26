@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_20_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_20_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -77,6 +77,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_120000) do
     t.string "bulletin_file_path"
     t.boolean "confirm_decalage"
     t.datetime "created_at", null: false
+    t.date "date_entree_echelon"
     t.string "departement_code"
     t.decimal "dhn_heures"
     t.decimal "dtc_montant"
@@ -99,6 +100,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_120000) do
     t.decimal "iss_montant"
     t.integer "it7_qty"
     t.integer "jours_absence_psr", default: 0
+    t.integer "jours_carence", default: 0
+    t.integer "jours_cmo50", default: 0
+    t.integer "jours_cmo90", default: 0
     t.string "mois_paie"
     t.decimal "montant_lsu", precision: 10, scale: 2
     t.decimal "montant_psr", precision: 10, scale: 2

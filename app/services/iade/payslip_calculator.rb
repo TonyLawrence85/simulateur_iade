@@ -263,6 +263,30 @@ module Iade
                montant: BigDecimal(montant.to_s), detail: "Montant saisi")
     end
 
+    def add_retenues_absence
+      return unless absence_jours?
+
+      calc = Iade::AbsencesCalculator.new(**absence_calc_args)
+      calc.retenues.each do |r|
+        add_deduction(code: r[:code], label: r[:label], montant: r[:montant], detail: r[:detail])
+      end
+    end
+
+    def absence_jours?
+      @p[:jours_carence].to_i.positive? ||
+        @p[:jours_cmo90].to_i.positive? ||
+        @p[:jours_cmo50].to_i.positive?
+    end
+
+    def absence_calc_args
+      { params: @p,
+        tib: line_montant("BT0"), cti: line_montant("CW1"),
+        ir: line_montant("BR0"), nbi: line_montant("KB1"),
+        ir_nbi: line_montant("KR0"),
+        iss: line_montant("IS1"), veil: line_montant("LP1"),
+        iade: line_montant("LPN"), dtc: line_montant("DTC") }
+    end
+
     # ---------------- DÉDUCTIONS ----------------
 
     def add_retraite_principale
@@ -304,6 +328,7 @@ module Iade
     end
 
     def build_deduction_lines # rubocop:disable Metrics/MethodLength
+      add_retenues_absence
       add_retraite_principale
 
       base_csg = Iade::CotisationsCalculator.base_csg(brut_total: @brut_lines_total)
@@ -358,6 +383,10 @@ module Iade
     def add_deduction(code:, label:, montant:, detail: nil)
       @lines << { code: code, label: label, category: :deduction, montant: montant.to_d.round(2),
                   detail: detail, type: :deduction }
+    end
+
+    def line_montant(code)
+      @lines.find { |l| l[:code] == code }&.dig(:montant) || BigDecimal("0")
     end
 
     def tib_calculator

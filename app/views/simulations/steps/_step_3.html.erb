@@ -53,6 +53,34 @@
         <%= f.number_field :wt1_montant, placeholder: "Ex : 43,75", step: 0.01, min: 0 %>
       </div>
     </div>
+
+    <div class="section-label">Absences ce mois-ci</div>
+
+    <div class="field-grid field-grid--3">
+      <div class="field-group">
+        <%= f.label :jours_carence, class: "field-label" do %>
+          Jours de carence <span class="badge badge--ret">CAR</span>
+        <% end %>
+        <%= f.number_field :jours_carence, min: 0, max: 30, step: 1, placeholder: "0" %>
+        <span class="field-hint">1er jour maladie = 100% retenue</span>
+      </div>
+
+      <div class="field-group">
+        <%= f.label :jours_cmo90, class: "field-label" do %>
+          Jours CMO à 90% <span class="badge badge--ret">CMO</span>
+        <% end %>
+        <%= f.number_field :jours_cmo90, min: 0, max: 90, step: 1, placeholder: "0" %>
+        <span class="field-hint">Jours 2→90 de maladie (retenue 10%)</span>
+      </div>
+
+      <div class="field-group">
+        <%= f.label :jours_cmo50, class: "field-label" do %>
+          Jours CMO à 50% <span class="badge badge--ret">CMO</span>
+        <% end %>
+        <%= f.number_field :jours_cmo50, min: 0, max: 90, step: 1, placeholder: "0" %>
+        <span class="field-hint">Jours 91→180 de maladie (retenue 50%)</span>
+      </div>
+    </div>
   </div>
 
   <div class="panel-footer">

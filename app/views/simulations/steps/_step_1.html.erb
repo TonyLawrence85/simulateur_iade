@@ -48,6 +48,16 @@
       </div>
     </div>
 
+    <div class="field-grid field-grid--2" style="margin-top:1rem">
+      <div class="field-group">
+        <%= f.label :date_entree_echelon, class: "field-label" do %>
+          Date de prise d'effet de l'échelon actuel
+        <% end %>
+        <%= f.date_field :date_entree_echelon, max: Date.today %>
+        <span class="field-hint">Optionnel — sert à estimer la date du prochain échelon</span>
+      </div>
+    </div>
+
     <div class="section-label">Traitement calculé automatiquement</div>
 
     <div class="field-grid field-grid--3">

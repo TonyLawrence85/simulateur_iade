@@ -181,8 +181,11 @@ export default class extends Controller {
     const mPsr     = parseFloat(this._fv("montant_psr")) || 0
     const jAbsPsr  = parseInt(this._fv("jours_absence_psr")) || 0
     const mLsu     = parseFloat(this._fv("montant_lsu")) || 0
-    const nbGardes = parseFloat(this._fv("nb_gardes")) || 0
-    const hGarde   = parseFloat(this._fv("heures_par_garde")) || 4
+    const nbGardes    = parseFloat(this._fv("nb_gardes")) || 0
+    const hGarde      = parseFloat(this._fv("heures_par_garde")) || 4
+    const joursCarence = parseInt(this._fv("jours_carence")) || 0
+    const joursCmo90   = parseInt(this._fv("jours_cmo90"))   || 0
+    const joursCmo50   = parseInt(this._fv("jours_cmo50"))   || 0
 
     // ── Traitements fixes ──
     const im  = this.GRILLE[grade]?.[echelon] || 0
@@ -213,6 +216,12 @@ export default class extends Controller {
     const psr      = Math.max(0, mPsr - pertePsr)
     const lsu      = mLsu
 
+    // ── Absences (retenues approchées — détail exact sur bulletin) ──
+    const retCarence = joursCarence > 0 ? (tib + cti) * joursCarence / 30 : 0
+    const retCmo90   = joursCmo90   > 0 ? (tib + cti) * 0.10 * joursCmo90 / 30 : 0
+    const retCmo50   = joursCmo50   > 0 ? (tib + cti) * 0.50 * joursCmo50 / 30 : 0
+    const retAbsTotal = retCarence + retCmo90 + retCmo50
+
     // ── Brut ──
     const brut = tib + cti + veil + iade - iba + ir + nbi + irNbi + iss + sft +
                  jma + dimjf + hsTotal + gardes + psr + lsu
@@ -232,7 +241,7 @@ export default class extends Controller {
     const hsGardes = hsTotal + gardes
     const csgTotal = baseCsg * (0.029 + 0.068) + (hsGardes > 0 ? hsGardes * 0.068 : 0)
     const totalAv  = cnracl + rafp + csgTotal
-    const netAvPas = brut - totalAv
+    const netAvPas = brut - totalAv - retAbsTotal
     const pas      = netAvPas * (tausPas / 100)
     const net      = netAvPas - pas - mutuelle
 
@@ -270,6 +279,12 @@ export default class extends Controller {
     this._sbLineShow("primes-var", hasPrimesVar)
     this._sbLineShow("psr", psr > 0); if (psr > 0) this._sbAmt("psr", psr)
     this._sbLineShow("lsu", lsu > 0); if (lsu > 0) this._sbAmt("lsu", lsu)
+
+    const hasAbsences = retAbsTotal > 0
+    this._sbLineShow("absences", hasAbsences)
+    this._sbLineShow("carence", retCarence > 0); if (retCarence > 0) this._sbNeg("carence", retCarence, true)
+    this._sbLineShow("cmo90",   retCmo90   > 0); if (retCmo90   > 0) this._sbNeg("cmo90",   retCmo90,   true)
+    this._sbLineShow("cmo50",   retCmo50   > 0); if (retCmo50   > 0) this._sbNeg("cmo50",   retCmo50,   true)
 
     this._sbTotal("brut",   brut)
     this._sbNeg("cnracl",   cnracl + rafp, true)

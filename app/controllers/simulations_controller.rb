@@ -2,6 +2,10 @@ class SimulationsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_simulation, only: %i[show compare upload_bulletin]
 
+  IR_ZONES = { "75" => 1, "92" => 1, "93" => 1, "94" => 1,
+               "77" => 2, "78" => 2, "91" => 2, "95" => 2 }.freeze
+  IR_TAUX  = { 1 => 0.03, 2 => 0.01, 3 => 0.00 }.freeze
+
   def index
     @simulations = current_user.simulation_sessions.recent.limit(20)
   end
@@ -45,7 +49,14 @@ class SimulationsController < ApplicationController
   end
 
   def show
-    @result = @simulation.simulate!
+    @result   = @simulation.simulate!
+    @carriere = Iade::CarriereCalculator.new(
+      grade: @simulation.grade,
+      echelon: @simulation.echelon,
+      quotite: @simulation.quotite,
+      ir_taux: ir_taux_for(@simulation),
+      date_entree_echelon: @simulation.date_entree_echelon
+    ).compute
   end
 
   def compare
@@ -139,6 +150,11 @@ class SimulationsController < ApplicationController
     redirect_to simulations_path, alert: "Simulation introuvable."
   end
 
+  def ir_taux_for(sim)
+    zone = IR_ZONES[sim.departement_code.to_s] || 3
+    IR_TAUX[zone]
+  end
+
   def compute_tib_preview(sim)
     calc = Iade::TibCalculator.new(grade: sim.grade, echelon: sim.echelon, quotite: sim.quotite || 1.0)
     tib  = calc.compute
@@ -160,6 +176,8 @@ class SimulationsController < ApplicationController
       :hs_jour, :hs_nuit, :hs_dim_jf,
       :montant_psr, :jours_absence_psr, :montant_lsu,
       :nb_gardes, :heures_par_garde,
+      :jours_carence, :jours_cmo90, :jours_cmo50,
+      :date_entree_echelon,
       :confirm_decalage
     )
   end

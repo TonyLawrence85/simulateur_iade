@@ -282,7 +282,7 @@ module Iade
       { params: @p,
         tib: line_montant("BT0"), cti: line_montant("CW1"),
         ir: line_montant("BR0"), nbi: line_montant("KB1"),
-        ir_nbi: line_montant("KR0"),
+        ir_nbi: line_montant("KR0"), ks1: line_montant("KS1"),
         iss: line_montant("IS1"), veil: line_montant("LP1"),
         iade: line_montant("LPN"), dtc: line_montant("DTC") }
     end

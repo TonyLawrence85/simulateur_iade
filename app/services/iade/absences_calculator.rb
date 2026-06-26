@@ -12,19 +12,21 @@ module Iade
       "30G" => "RET. N.B.I. CAR.",
       "30F" => "RET. NBI IR/IA CAR",
       "07L" => "RET. IND. SP. 10%",
+      "07E" => "RET. IND. SUJ. 10%",
+      "30K" => "RET. IND.SP.NBI CAR",
       "50C" => "RET. TR. BRUT 50%",
       "50L" => "RET. IND. SP. 50%",
       "DTR" => "RET. IND. COMP."
     }.freeze
 
-    def initialize(params:, tib:, cti:, ir:, nbi:, ir_nbi:, iss:, veil:, iade:, dtc:)
+    def initialize(params:, tib:, cti:, ir:, nbi:, ir_nbi:, iss:, veil:, iade:, dtc:, ks1: BigDecimal("0"))
       @jours_carence = params[:jours_carence].to_i
       @jours_cmo90   = params[:jours_cmo90].to_i
       @jours_cmo50   = params[:jours_cmo50].to_i
       @tib = tib; @cti = cti; @ir = ir
       @nbi = nbi; @ir_nbi = ir_nbi
       @iss = iss; @veil = veil; @iade = iade
-      @dtc = dtc
+      @dtc = dtc; @ks1 = ks1
     end
 
     def any?
@@ -42,6 +44,7 @@ module Iade
         if @nbi.positive?
           lines << ret("30G", @nbi    * j / 30, "#{@jours_carence}j × NBI")
           lines << ret("30F", @ir_nbi * j / 30, "#{@jours_carence}j × IR NBI")
+          lines << ret("30K", @ks1    * j / 30, "#{@jours_carence}j × KS1") if @ks1.positive?
         end
       end
 
@@ -50,7 +53,10 @@ module Iade
         j = BigDecimal(@jours_cmo90.to_s)
         lines << ret("07C", (@tib + @cti) * j / 30 * BigDecimal("0.10"), "#{@jours_cmo90}j × 10%")
         lines << ret("07L", (@iss + @veil + @iade) * j / 30 * BigDecimal("0.10"), "#{@jours_cmo90}j × 10%")
-        lines << ret("07A", @nbi * j / 30 * BigDecimal("0.10"), "#{@jours_cmo90}j × 10%") if @nbi.positive?
+        if @nbi.positive?
+          lines << ret("07A", @nbi * j / 30 * BigDecimal("0.10"), "#{@jours_cmo90}j × 10%")
+          lines << ret("07E", @ks1 * j / 30 * BigDecimal("0.10"), "#{@jours_cmo90}j × 10% × KS1") if @ks1.positive?
+        end
       end
 
       # ── CMO 50% (retenue 50% du traitement par jour) ────────────

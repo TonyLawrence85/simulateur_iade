@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_17_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_20_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -86,6 +86,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_17_120000) do
     t.decimal "heures_dimanche"
     t.decimal "heures_ferie"
     t.decimal "heures_nuit"
+    t.decimal "heures_par_garde", precision: 4, scale: 1
     t.decimal "hs_dim_jf"
     t.decimal "hs_jour"
     t.decimal "hs_jour_100"
@@ -97,9 +98,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_17_120000) do
     t.decimal "hs_nuit_50"
     t.decimal "iss_montant"
     t.integer "it7_qty"
+    t.integer "jours_absence_psr", default: 0
     t.string "mois_paie"
+    t.decimal "montant_lsu", precision: 10, scale: 2
+    t.decimal "montant_psr", precision: 10, scale: 2
     t.decimal "mutuelle"
     t.integer "nb_enfants_sft"
+    t.decimal "nb_gardes", precision: 6, scale: 2
     t.integer "nbi_points"
     t.decimal "quotite"
     t.decimal "real_brut_total"

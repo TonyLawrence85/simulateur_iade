@@ -158,6 +158,8 @@ class SimulationsController < ApplicationController
       :heures_dimanche, :heures_ferie,
       :tp7_qty, :it7_qty, :dhn_heures,
       :hs_jour, :hs_nuit, :hs_dim_jf,
+      :montant_psr, :jours_absence_psr, :montant_lsu,
+      :nb_gardes, :heures_par_garde,
       :confirm_decalage
     )
   end

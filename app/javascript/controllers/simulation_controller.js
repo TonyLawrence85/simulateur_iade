@@ -41,7 +41,7 @@ export default class extends Controller {
   nextStep(e) {
     e.preventDefault()
     if (!this._validateCurrentStep()) return
-    if (this.currentStepValue < 5) this._render(this.currentStepValue + 1)
+    if (this.currentStepValue < 6) this._render(this.currentStepValue + 1)
   }
 
   prevStep(e) {
@@ -155,9 +155,9 @@ export default class extends Controller {
   }
 
   updateProgress() {
-    const pct = Math.round((this.currentStepValue / 5) * 100)
+    const pct = Math.round((this.currentStepValue / 6) * 100)
     if (this.hasProgressFillTarget)    this.progressFillTarget.style.width = `${pct}%`
-    if (this.hasConfidenceLabelTarget) this.confidenceLabelTarget.textContent = `Étape ${this.currentStepValue + 1} / 6`
+    if (this.hasConfidenceLabelTarget) this.confidenceLabelTarget.textContent = `Étape ${this.currentStepValue + 1} / 7`
   }
 
   // ── SIDEBAR TEMPS RÉEL ────────────────────────────────────────
@@ -178,6 +178,11 @@ export default class extends Controller {
     const hsJour   = parseFloat(this._fv("hs_jour")) || 0
     const hsNuit   = parseFloat(this._fv("hs_nuit")) || 0
     const hsDimJf  = parseFloat(this._fv("hs_dim_jf")) || 0
+    const mPsr     = parseFloat(this._fv("montant_psr")) || 0
+    const jAbsPsr  = parseInt(this._fv("jours_absence_psr")) || 0
+    const mLsu     = parseFloat(this._fv("montant_lsu")) || 0
+    const nbGardes = parseFloat(this._fv("nb_gardes")) || 0
+    const hGarde   = parseFloat(this._fv("heures_par_garde")) || 4
 
     // ── Traitements fixes ──
     const im  = this.GRILLE[grade]?.[echelon] || 0
@@ -196,27 +201,36 @@ export default class extends Controller {
     const sft    = this._calcSft(nbEnf, tib, alternee)
 
     // ── Planning ──
-    const baseH  = (tib + ir) * 12 / 1820
-    const jma    = baseH * 0.25 * hNuit
-    const dimjf  = (hDim + hFerie) * 7.50
-    const hsTotal = baseH * (hsJour * 1.26 + hsNuit * 2.52 + hsDimJf * 2.10)
+    const baseH    = (tib + ir) * 12 / 1820
+    const jma      = baseH * 0.25 * hNuit
+    const dimjf    = (hDim + hFerie) * 7.50
+    const hsTotal  = baseH * (hsJour * 1.26 + hsNuit * 2.52 + hsDimJf * 2.10)
+    const tauxHsN  = baseH * 1.26 * 2
+    const gardes   = nbGardes * hGarde * tauxHsN
+
+    // ── Primes variables ──
+    const pertePsr = jAbsPsr > 0 ? mPsr * jAbsPsr / 140 : 0
+    const psr      = Math.max(0, mPsr - pertePsr)
+    const lsu      = mLsu
 
     // ── Brut ──
-    const brut = tib + cti + veil + iade - iba + ir + nbi + irNbi + iss + sft + jma + dimjf + hsTotal
+    const brut = tib + cti + veil + iade - iba + ir + nbi + irNbi + iss + sft +
+                 jma + dimjf + hsTotal + gardes + psr + lsu
 
     // ── Cotisations estimées ──
     let cnracl = 0, rafp = 0
     if (statut !== "contractuel") {
       cnracl = 0.111 * (tib + cti)
       if (nbiPts > 0) cnracl += 0.111 * nbi
-      const primesApresIba = Math.max(0, cti + veil + iade - iba + iss + jma + dimjf)
+      const primesApresIba = Math.max(0, cti + veil + iade - iba + iss + jma + dimjf + psr + lsu)
       const plafondRafp    = tib * 12 * 0.20
       rafp = Math.min(primesApresIba, plafondRafp) * 0.05
     } else {
-      cnracl = 0.0401 * (tib + cti + brut)   // IRCANTEC approximation
+      cnracl = 0.0401 * (tib + cti + brut)
     }
     const baseCsg  = brut * 0.9825
-    const csgTotal = baseCsg * (0.029 + 0.068) + (hsTotal > 0 ? hsTotal * 0.068 : 0)
+    const hsGardes = hsTotal + gardes
+    const csgTotal = baseCsg * (0.029 + 0.068) + (hsGardes > 0 ? hsGardes * 0.068 : 0)
     const totalAv  = cnracl + rafp + csgTotal
     const netAvPas = brut - totalAv
     const pas      = netAvPas * (tausPas / 100)
@@ -245,11 +259,17 @@ export default class extends Controller {
       this._sbLineShow("sft", false)
     }
 
-    const hasPlanning = jma > 0 || dimjf > 0 || hsTotal > 0
+    const hasPlanning = jma > 0 || dimjf > 0 || hsTotal > 0 || gardes > 0
     this._sbLineShow("planning", hasPlanning)
-    this._sbLineShow("jma",   jma   > 0); if (jma   > 0) this._sbAmt("jma",   jma)
-    this._sbLineShow("dimjf", dimjf > 0); if (dimjf > 0) this._sbAmt("dimjf", dimjf)
-    this._sbLineShow("hs",    hsTotal > 0); if (hsTotal > 0) this._sbAmt("hs", hsTotal)
+    this._sbLineShow("jma",    jma    > 0); if (jma    > 0) this._sbAmt("jma",    jma)
+    this._sbLineShow("dimjf",  dimjf  > 0); if (dimjf  > 0) this._sbAmt("dimjf",  dimjf)
+    this._sbLineShow("hs",     hsTotal > 0); if (hsTotal > 0) this._sbAmt("hs",   hsTotal)
+    this._sbLineShow("gardes", gardes > 0); if (gardes > 0) this._sbAmt("gardes", gardes)
+
+    const hasPrimesVar = psr > 0 || lsu > 0
+    this._sbLineShow("primes-var", hasPrimesVar)
+    this._sbLineShow("psr", psr > 0); if (psr > 0) this._sbAmt("psr", psr)
+    this._sbLineShow("lsu", lsu > 0); if (lsu > 0) this._sbAmt("lsu", lsu)
 
     this._sbTotal("brut",   brut)
     this._sbNeg("cnracl",   cnracl + rafp, true)

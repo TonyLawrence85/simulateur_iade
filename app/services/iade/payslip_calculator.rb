@@ -61,6 +61,9 @@ module Iade
       add_dim_jf
       add_tp7_it7_dhn
       add_heures_sup
+      add_gardes
+      add_psr
+      add_lsu
     end
 
     def add_tib
@@ -228,6 +231,38 @@ module Iade
       end
     end
 
+    def add_gardes
+      nb = @p[:nb_gardes].to_f
+      return if nb.zero?
+
+      heures_equiv = (@p[:heures_par_garde].presence&.to_f || 4.0)
+      taux = taux_hs_nuit
+      montant = (nb * heures_equiv * taux).round(2)
+      add_line(code: "GAR", label: "GARDES (éq. HS nuit)", category: :var_m2,
+               montant: BigDecimal(montant.to_s),
+               detail: "#{nb.to_i} garde(s) × #{heures_equiv.to_i}h × #{taux}€/h (M−2)", pay_lag: :mois_m2)
+    end
+
+    def add_psr
+      montant_ref = @p[:montant_psr].to_f
+      return if montant_ref.zero?
+
+      jours = @p[:jours_absence_psr].to_i
+      perte = jours.positive? ? (montant_ref * jours / 140.0).round(2) : 0.0
+      montant = [montant_ref - perte, 0.0].max
+      detail = jours.positive? ? "#{montant_ref}€ − abatt. #{jours}j/140 (−#{perte}€)" : "Montant saisi"
+      add_line(code: "PSR", label: "PRIME DE SERVICE", category: :prime_variable,
+               montant: BigDecimal(montant.to_s), detail: detail)
+    end
+
+    def add_lsu
+      montant = @p[:montant_lsu].to_f
+      return if montant.zero?
+
+      add_line(code: "LSU", label: "INDEM. EXCEP.", category: :prime_variable,
+               montant: BigDecimal(montant.to_s), detail: "Montant saisi")
+    end
+
     # ---------------- DÉDUCTIONS ----------------
 
     def add_retraite_principale
@@ -359,14 +394,22 @@ module Iade
     end
 
     def brut_primes_total
-      # IBA inclus (montant négatif) → réduit l'assiette RAFP automatiquement (PDF §8)
-      codes = %w[CW1 LP1 LPN IS1 JMA JW0 TP7/IT7/DHN IBA]
+      # IBA (négatif) réduit l'assiette RAFP ; PSR/LSU soumis RAFP selon plafond (PDF §8)
+      codes = %w[CW1 LP1 LPN IS1 JMA JW0 TP7/IT7/DHN IBA PSR LSU]
       total = @lines.select { |l| codes.include?(l[:code]) && l[:type] == :brut }.sum { |l| l[:montant] }
       [total, BigDecimal("0")].max
     end
 
     def hs_montant_total
-      @lines.select { |l| l[:code].start_with?("HS") && l[:type] == :brut }.sum { |l| l[:montant] }
+      # GAR = gardes équivalent HS nuit → même régime UC8/VR7
+      @lines.select { |l| l[:type] == :brut }
+            .select { |l| l[:code].start_with?("HS") || l[:code] == "GAR" }
+            .sum { |l| l[:montant] }
+    end
+
+    def taux_hs_nuit
+      base_horaire = (tib_montant + (@ir_montant || BigDecimal("0"))) * 12 / BigDecimal("1820")
+      (base_horaire * BigDecimal("1.26") * 2).round(2)
     end
 
     def base_imposable_mensuelle

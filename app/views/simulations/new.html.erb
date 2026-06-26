@@ -15,7 +15,8 @@
       <%= render "shared/step_item", num: "2", label: "Résidence", step: 2, current: @current_step %>
       <%= render "shared/step_item", num: "3", label: "Indemnités",step: 3, current: @current_step %>
       <%= render "shared/step_item", num: "4", label: "Activité",  step: 4, current: @current_step %>
-      <%= render "shared/step_item", num: "5", label: "Retenues",  step: 5, current: @current_step %>
+      <%= render "shared/step_item", num: "5", label: "Primes",    step: 5, current: @current_step %>
+      <%= render "shared/step_item", num: "6", label: "Retenues",  step: 6, current: @current_step %>
     </nav>
 
     <div class="progress-label">
@@ -55,6 +56,10 @@
 
         <div data-simulation-target="panel" data-step="5" class="hidden">
           <%= render "simulations/steps/step_5", f: f %>
+        </div>
+
+        <div data-simulation-target="panel" data-step="6" class="hidden">
+          <%= render "simulations/steps/step_6", f: f %>
         </div>
 
       <% end %>

@@ -1,42 +1,89 @@
 <div class="step-panel">
   <div class="panel-header">
-    <div class="panel-icon">🧾</div>
+    <div class="panel-icon">💰</div>
     <div class="panel-titles">
-      <h2 class="panel-title">Retenues personnelles</h2>
+      <h2 class="panel-title">Primes variables</h2>
       <p class="panel-desc">
-        CNRACL/IRCANTEC, CSG et RAFP sont calculées automatiquement. Saisissez votre taux PAS.
+        Prime de service (PSR), indemnité exceptionnelle (LSU) et gardes — saisie directe ou calculée.
       </p>
     </div>
-    <span class="panel-step-counter">Étape 5 / 6</span>
+    <span class="panel-step-counter">Étape 5 / 7</span>
   </div>
 
   <div class="panel-body">
 
-    <div class="section-label">Prélèvement à la source</div>
+    <%# PSR - Prime de service (13e mois) %>
+    <div class="section-label">
+      Prime de service / 13<sup>e</sup> mois <span class="badge badge--var">PSR</span>
+    </div>
+    <div class="alert alert--info" style="margin-bottom:1rem">
+      <span>ℹ</span>
+      <div>Versée en <strong>juin</strong> et <strong>décembre</strong> à l'AP-HP. Saisissez le montant brut prévu ou observé sur votre bulletin. Les absences maladie ordinaires entraînent un abattement de <strong>1/140</strong> par jour abattable.</div>
+    </div>
 
     <div class="field-grid field-grid--2">
       <div class="field-group">
-        <%= f.label :taux_pas, class: "field-label" do %>
-          Taux PAS personnalisé <span class="req">*</span> <span class="badge badge--var">Q60</span>
-        <% end %>
-        <%= f.number_field :taux_pas, placeholder: "Ex : 6.20", step: 0.01, min: 0, max: 100, required: true %>
-        <span class="field-hint">Votre taux personnalisé — ligne Q60 du bulletin</span>
+        <%= f.label :montant_psr, "Montant PSR brut (€)", class: "field-label" %>
+        <%= f.number_field :montant_psr, placeholder: "Ex : 1167.00", step: 0.01, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Laisser vide si le mois n'est pas juin/décembre</span>
+      </div>
+      <div class="field-group">
+        <%= f.label :jours_absence_psr, "Jours d'absence abattables", class: "field-label" %>
+        <%= f.number_field :jours_absence_psr, placeholder: "0", step: 1, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Jours CMO abattables → abatt. montant × jours / 140</span>
       </div>
     </div>
 
-    <div class="section-label">Retenues facultatives</div>
+    <%# LSU - Indemnité exceptionnelle %>
+    <div class="section-label" style="margin-top:1.25rem">
+      Indemnité exceptionnelle <span class="badge badge--var">LSU</span>
+    </div>
+    <div class="alert alert--warn" style="margin-bottom:1rem">
+      <span>⚠</span>
+      <div>Versée en <strong>juin</strong> et <strong>décembre</strong> (à confirmer selon agent). Montant saisi directement — niveau de confiance à valider sur votre bulletin.</div>
+    </div>
 
     <div class="field-grid field-grid--2">
       <div class="field-group">
-        <%= f.label :mutuelle, "Mutuelle / prévoyance", class: "field-label" %>
-        <%= f.number_field :mutuelle, placeholder: "0,00", step: 0.01, min: 0 %>
-        <span class="field-hint">Pour coller exactement au net à payer</span>
+        <%= f.label :montant_lsu, "Montant LSU brut (€)", class: "field-label" %>
+        <%= f.number_field :montant_lsu, placeholder: "Ex : 531.79", step: 0.01, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Laisser vide si absent du bulletin ce mois-ci</span>
       </div>
     </div>
+
+    <%# Gardes %>
+    <div class="section-label" style="margin-top:1.25rem">
+      Gardes (équivalent heures sup. de nuit) <span class="badge badge--var">GAR</span>
+    </div>
+    <div class="alert alert--info" style="margin-bottom:1rem">
+      <span>ℹ</span>
+      <div>
+        À Bichat, une garde = <strong>4 h HS nuit</strong> (par défaut). Taux calculé automatiquement : <code>(TIB + IR) × 12 / 1820 × 1,26 × 2</code>. Payées en <strong>M+2</strong> comme les HS.
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--2">
+      <div class="field-group">
+        <%= f.label :nb_gardes, "Nombre de gardes (M−2)", class: "field-label" %>
+        <%= f.number_field :nb_gardes, placeholder: "0", step: 1, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint field-hint--warn">Saisir l'activité du mois M−2</span>
+      </div>
+      <div class="field-group">
+        <%= f.label :heures_par_garde, "Heures équivalentes / garde", class: "field-label" %>
+        <%= f.number_field :heures_par_garde, placeholder: "4", step: 0.5, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Par défaut : 4 h (Bichat) — à adapter selon votre service</span>
+      </div>
+    </div>
+
   </div>
 
   <div class="panel-footer">
     <button type="button" class="btn btn--secondary" data-action="click->simulation#prevStep">← Précédent</button>
-    <button type="submit" class="btn btn--success btn--lg">Lancer la simulation →</button>
+    <button type="button" class="btn btn--primary" data-action="click->simulation#nextStep">Suivant →</button>
   </div>
 </div>

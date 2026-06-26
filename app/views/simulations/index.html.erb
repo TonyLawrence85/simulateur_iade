@@ -35,7 +35,7 @@
         <tbody>
           <% @simulations.each do |sim| %>
             <tr>
-              <td><%= Date.strptime(sim.mois_paie, "%Y-%m").strftime("%B %Y").capitalize %></td>
+              <td><%= I18n.l(Date.strptime(sim.mois_paie, "%Y-%m"), format: "%B %Y").capitalize %></td>
               <td><%= sim.grade == "grade1" ? "1er grade" : "2ème grade" %> — éch. <%= sim.echelon %></td>
               <td class="td-num"><%= number_to_currency(sim.result_brut_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
               <td class="td-num"><%= number_to_currency(sim.result_net_paye, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>

@@ -9,7 +9,7 @@
   <div class="sim-header">
     <h1 class="sim-title">Comparer avec votre bulletin</h1>
     <p class="sim-subtitle">
-      <%= Date.strptime(@simulation.mois_paie, "%Y-%m").strftime("%B %Y").capitalize %> ·
+      <%= I18n.l(Date.strptime(@simulation.mois_paie, "%Y-%m"), format: "%B %Y").capitalize %> ·
       Saisissez les montants de votre bulletin pour détecter les anomalies.
     </p>
   </div>

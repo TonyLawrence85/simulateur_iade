@@ -165,7 +165,7 @@ class SimulationsController < ApplicationController
 
   def simulation_params
     params.require(:simulation_session).permit(
-      :mois_paie, :statut, :grade, :echelon, :quotite, :type_cycle,
+      :mois_paie, :profession, :statut, :grade, :echelon, :quotite, :type_cycle,
       :departement_code,
       :nb_enfants_sft, :garde_alternee,
       :nbi_points, :iss_montant, :dtc_montant, :wt1_montant,

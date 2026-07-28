@@ -11,6 +11,25 @@
   </div>
 
   <div class="panel-body">
+    <div class="field-grid field-grid--1" style="margin-bottom:1rem">
+      <div class="field-group">
+        <%= f.label :profession, class: "field-label" do %>
+          Profession <span class="req">*</span>
+        <% end %>
+        <%= f.select :profession,
+              [["IADE — Infirmier Anesthésiste", "iade"],
+               ["IDE — Infirmier Diplômé d'État", "ide"],
+               ["AS — Aide-Soignant(e)", "as"]],
+              { selected: @simulation.profession || "iade" },
+              required: true %>
+        <% if @simulation.profession.present? && @simulation.profession != "iade" %>
+          <div class="alert alert--warn" style="margin-top:.5rem">
+            <span>⚠</span><span>Le simulateur est actuellement calibré pour les IADE AP-HP. Les grilles IDE et AS seront disponibles prochainement.</span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
     <div class="field-grid field-grid--3">
       <div class="field-group">
         <%= f.label :statut, class: "field-label" do %>

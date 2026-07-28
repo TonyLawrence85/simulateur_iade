@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_20_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_143050) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -110,6 +110,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_130000) do
     t.integer "nb_enfants_sft"
     t.decimal "nb_gardes", precision: 6, scale: 2
     t.integer "nbi_points"
+    t.string "profession", default: "iade", null: false
     t.decimal "quotite"
     t.decimal "real_brut_total"
     t.jsonb "real_lines"

@@ -2,10 +2,12 @@ class SimulationSession < ApplicationRecord
   belongs_to :user
   has_one_attached :bulletin_pdf
 
-  STATUTS = %w[titulaire stagiaire contractuel].freeze
-  GRADES  = %w[grade1 grade2].freeze
+  STATUTS     = %w[titulaire stagiaire contractuel].freeze
+  GRADES      = %w[grade1 grade2].freeze
+  PROFESSIONS = %w[iade ide as].freeze
 
   validates :mois_paie,        presence: true, format: { with: /\A\d{4}-\d{2}\z/ }
+  validates :profession,       presence: true, inclusion: { in: PROFESSIONS }
   validates :statut,           presence: true, inclusion: { in: STATUTS }
   validates :grade,            presence: true, inclusion: { in: GRADES }
   validates :echelon,          presence: true, inclusion: { in: 1..11 }
@@ -25,7 +27,7 @@ class SimulationSession < ApplicationRecord
 
   def simulation_params
     attributes.symbolize_keys.slice(
-      :mois_paie, :statut, :grade, :echelon, :quotite,
+      :mois_paie, :profession, :statut, :grade, :echelon, :quotite,
       :departement_code, :nb_enfants_sft, :nbi_points,
       :iss_montant, :dtc_montant, :wt1_montant,
       :taux_pas, :mutuelle, :garde_alternee,

@@ -80,10 +80,14 @@ export default class extends Controller {
     const raw = this.hasMoisPaieTarget ? this.moisPaieTarget.value : null
     if (!raw) return
     const [year, month] = raw.split("-").map(Number)
-    const toValue = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`
-    if (this.hasMoisMTarget)  this.moisMTarget.value  = toValue(new Date(year, month-1, 1))
-    if (this.hasMoisM1Target) this.moisM1Target.value = toValue(new Date(year, month-2, 1))
-    if (this.hasMoisM2Target) this.moisM2Target.value = toValue(new Date(year, month-3, 1))
+    const fmt = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" })
+    const toLabel = d => {
+      const s = fmt.format(d)
+      return s.charAt(0).toUpperCase() + s.slice(1)
+    }
+    if (this.hasMoisMTarget)  this.moisMTarget.value  = toLabel(new Date(year, month-1, 1))
+    if (this.hasMoisM1Target) this.moisM1Target.value = toLabel(new Date(year, month-2, 1))
+    if (this.hasMoisM2Target) this.moisM2Target.value = toLabel(new Date(year, month-3, 1))
   }
 
   // ── Changement de grade ───────────────────────────────────────

@@ -22,6 +22,25 @@
       </div>
     </div>
 
+    <div class="section-label" style="margin-top:1rem">
+      Planning mensuel — répartition des vacations
+    </div>
+
+    <div class="field-grid field-grid--3">
+      <div class="field-group">
+        <%= f.label :nb_matins, "Nombre de matins", class: "field-label" %>
+        <%= f.number_field :nb_matins, placeholder: "0", step: 1, min: 0 %>
+      </div>
+      <div class="field-group">
+        <%= f.label :nb_apres_midi, "Nombre d'après-midi", class: "field-label" %>
+        <%= f.number_field :nb_apres_midi, placeholder: "0", step: 1, min: 0 %>
+      </div>
+      <div class="field-group">
+        <%= f.label :nb_soirs, "Nombre de soirs", class: "field-label" %>
+        <%= f.number_field :nb_soirs, placeholder: "0", step: 1, min: 0 %>
+      </div>
+    </div>
+
     <div class="confirm-row" style="margin-top:.75rem">
       <%= f.check_box :confirm_decalage, required: true %>
       <label for="simulation_session_confirm_decalage">

@@ -1,8 +1,11 @@
 class GradeScale < ApplicationRecord
-  GRADES = %w[grade1 grade2].freeze
+  GRADES = %w[grade1 grade2 as_grade1 as_grade2 ide_grade1 ide_grade2].freeze
 
-  # Grade 1 : 10 échelons / Grade 2 : 8 échelons (grille vérifiée 18/04/2026)
-  MAX_ECHELON = { "grade1" => 10, "grade2" => 8 }.freeze
+  MAX_ECHELON = {
+    "grade1" => 10, "grade2" => 8,
+    "as_grade1" => 11, "as_grade2" => 11,
+    "ide_grade1" => 10, "ide_grade2" => 8
+  }.freeze
 
   validates :grade,         presence: true, inclusion: { in: GRADES }
   validates :indice_majore, presence: true, numericality: { greater_than: 0 }

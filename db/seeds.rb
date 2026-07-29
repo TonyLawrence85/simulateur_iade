@@ -63,6 +63,58 @@ zones.each do |code, (zone, nom)|
   dz.save!
 end
 
+puts "🌱 Seeding grille indiciaire AS — Classe normale (11 échelons)…"
+
+grille_as_grade1 = {
+  1 => 373, 2 => 375, 3 => 377, 4 => 388, 5 => 401,
+  6 => 414, 7 => 429, 8 => 444, 9 => 461, 10 => 485, 11 => 517
+}
+grille_as_grade1.each do |echelon, im|
+  gs = GradeScale.find_or_initialize_by(grade: "as_grade1", echelon: echelon, date_debut: Date.new(2023, 7, 1))
+  gs.indice_majore = im
+  gs.source        = "emploi-collectivites.fr — vérifié le 19/05/2026"
+  gs.save!
+end
+
+puts "🌱 Seeding grille indiciaire AS — Classe supérieure (11 échelons)…"
+
+grille_as_grade2 = {
+  1 => 387, 2 => 399, 3 => 411, 4 => 424, 5 => 442,
+  6 => 460, 7 => 480, 8 => 499, 9 => 519, 10 => 539, 11 => 560
+}
+grille_as_grade2.each do |echelon, im|
+  gs = GradeScale.find_or_initialize_by(grade: "as_grade2", echelon: echelon, date_debut: Date.new(2023, 7, 1))
+  gs.indice_majore = im
+  gs.source        = "emploi-collectivites.fr — vérifié le 19/05/2026"
+  gs.save!
+end
+
+puts "🌱 Seeding grille indiciaire IDE — Grade normal (10 échelons)…"
+
+grille_ide_grade1 = {
+  1 => 376, 2 => 394, 3 => 413, 4 => 439, 5 => 466,
+  6 => 496, 7 => 527, 8 => 553, 9 => 578, 10 => 610
+}
+grille_ide_grade1.each do |echelon, im|
+  gs = GradeScale.find_or_initialize_by(grade: "ide_grade1", echelon: echelon, date_debut: Date.new(2023, 7, 1))
+  gs.indice_majore = im
+  gs.source        = "FPH PPCR 2024 — grille Infirmier en soins généraux"
+  gs.save!
+end
+
+puts "🌱 Seeding grille indiciaire IDE — Classe supérieure (8 échelons)…"
+
+grille_ide_grade2 = {
+  1 => 446, 2 => 463, 3 => 487, 4 => 514,
+  5 => 543, 6 => 572, 7 => 601, 8 => 626
+}
+grille_ide_grade2.each do |echelon, im|
+  gs = GradeScale.find_or_initialize_by(grade: "ide_grade2", echelon: echelon, date_debut: Date.new(2023, 7, 1))
+  gs.indice_majore = im
+  gs.source        = "FPH PPCR 2024 — grille Infirmier classe supérieure"
+  gs.save!
+end
+
 puts "✅ Seed terminé !"
 puts "   #{PointValue.count} valeur(s) de point"
 puts "   #{GradeScale.count} échelons de grille indiciaire"

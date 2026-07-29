@@ -15,6 +15,35 @@ module Iade
       6 => 36, 7 => 48, 8 => nil
     }.freeze
 
+    DUREES_AS_GRADE1 = {
+      1 => 18, 2 => 18, 3 => 24, 4 => 24, 5 => 30,
+      6 => 36, 7 => 36, 8 => 36, 9 => 36, 10 => 48, 11 => nil
+    }.freeze
+
+    DUREES_AS_GRADE2 = {
+      1 => 18, 2 => 24, 3 => 24, 4 => 24, 5 => 24,
+      6 => 30, 7 => 36, 8 => 36, 9 => 36, 10 => 48, 11 => nil
+    }.freeze
+
+    DUREES_IDE_GRADE1 = {
+      1 => 12, 2 => 24, 3 => 24, 4 => 30, 5 => 36,
+      6 => 36, 7 => 36, 8 => 48, 9 => 48, 10 => nil
+    }.freeze
+
+    DUREES_IDE_GRADE2 = {
+      1 => 12, 2 => 24, 3 => 24, 4 => 24, 5 => 36,
+      6 => 36, 7 => 48, 8 => nil
+    }.freeze
+
+    DUREES_PAR_GRADE = {
+      "grade1"     => :DUREES_GRADE1,
+      "grade2"     => :DUREES_GRADE2,
+      "as_grade1"  => :DUREES_AS_GRADE1,
+      "as_grade2"  => :DUREES_AS_GRADE2,
+      "ide_grade1" => :DUREES_IDE_GRADE1,
+      "ide_grade2" => :DUREES_IDE_GRADE2
+    }.freeze
+
     Result = Struct.new(
       :echelon_actuel, :im_actuel, :tib_actuel,
       :echelon_suivant, :im_suivant, :tib_suivant, :delta_tib,
@@ -39,7 +68,7 @@ module Iade
       tib_actuel = tib(im_actuel)
       taux_actuel = taux_hs_nuit(tib_actuel)
 
-      durees     = @grade == "grade1" ? DUREES_GRADE1 : DUREES_GRADE2
+      durees     = self.class.const_get(DUREES_PAR_GRADE[@grade] || :DUREES_GRADE1)
       duree_mois = durees[@echelon]
 
       if duree_mois.nil?
@@ -77,7 +106,7 @@ module Iade
         date_estimee: date_estimee,
         taux_hs_nuit_actuel: taux_actuel.round(2),
         taux_hs_nuit_suivant: taux_suivant.round(2),
-        passage_grade2_possible: @grade == "grade1" && @echelon >= 6
+        passage_grade2_possible: @grade.end_with?("grade1") && @echelon >= 6
       )
     end
 

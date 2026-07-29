@@ -21,12 +21,8 @@
                ["IDE — Infirmier Diplômé d'État", "ide"],
                ["AS — Aide-Soignant(e)", "as"]],
               { selected: @simulation.profession || "iade" },
-              required: true %>
-        <% if @simulation.profession.present? && @simulation.profession != "iade" %>
-          <div class="alert alert--warn" style="margin-top:.5rem">
-            <span>⚠</span><span>Le simulateur est actuellement calibré pour les IADE AP-HP. Les grilles IDE et AS seront disponibles prochainement.</span>
-          </div>
-        <% end %>
+              required: true,
+              data: { action: "change->simulation#professionChanged" } %>
       </div>
     </div>
 
@@ -40,9 +36,10 @@
 
       <div class="field-group">
         <%= f.label :grade, class: "field-label" do %>
-          Grade IADE <span class="req">*</span>
+          Grade <span class="req">*</span>
         <% end %>
-        <%= f.select :grade, [["1er grade", "grade1"], ["2ème grade", "grade2"]], { selected: @simulation.grade }, required: true, data: { action: "change->simulation#gradeChanged" } %> <%# herb:disable all %>
+        <%= f.select :grade, [], { selected: @simulation.grade }, required: true,
+              data: { action: "change->simulation#gradeChanged", simulation_target: "gradeSelect" } %> <%# herb:disable all %>
       </div>
 
       <div class="field-group">

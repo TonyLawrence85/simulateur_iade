@@ -3,7 +3,7 @@ class SimulationSession < ApplicationRecord
   has_one_attached :bulletin_pdf
 
   STATUTS     = %w[titulaire stagiaire contractuel].freeze
-  GRADES      = %w[grade1 grade2].freeze
+  GRADES      = %w[grade1 grade2 as_grade1 as_grade2 ide_grade1 ide_grade2].freeze
   PROFESSIONS = %w[iade ide as].freeze
 
   validates :mois_paie,        presence: true, format: { with: /\A\d{4}-\d{2}\z/ }

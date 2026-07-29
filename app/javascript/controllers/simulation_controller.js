@@ -6,7 +6,8 @@ export default class extends Controller {
     "moisPaie", "moisM", "moisM1", "moisM2",
     "imDisplay", "tibDisplay", "tauxHoraireDisplay",
     "progressFill", "confidenceLabel",
-    "form", "zoneDisplay", "irDisplay", "sftDisplay", "nbiDisplay"
+    "form", "zoneDisplay", "irDisplay", "sftDisplay", "nbiDisplay",
+    "gradeSelect"
   ]
 
   static values = {
@@ -20,11 +21,21 @@ export default class extends Controller {
   PRIME_IADE   = 180.00
 
   GRILLE = {
-    grade1: { 1:450, 2:478, 3:506, 4:534, 5:563, 6:593, 7:624, 8:656, 9:690, 10:727 },
-    grade2: { 1:558, 2:582, 3:615, 4:648, 5:681, 6:714, 7:743, 8:769 }
+    grade1:    { 1:450, 2:478, 3:506, 4:534, 5:563, 6:593, 7:624, 8:656, 9:690, 10:727 },
+    grade2:    { 1:558, 2:582, 3:615, 4:648, 5:681, 6:714, 7:743, 8:769 },
+    as_grade1: { 1:373, 2:375, 3:377, 4:388, 5:401, 6:414, 7:429, 8:444, 9:461, 10:485, 11:517 },
+    as_grade2: { 1:387, 2:399, 3:411, 4:424, 5:442, 6:460, 7:480, 8:499, 9:519, 10:539, 11:560 },
+    ide_grade1:{ 1:376, 2:394, 3:413, 4:439, 5:466, 6:496, 7:527, 8:553, 9:578, 10:610 },
+    ide_grade2:{ 1:446, 2:463, 3:487, 4:514, 5:543, 6:572, 7:601, 8:626 }
   }
 
-  MAX_ECHELON = { grade1: 10, grade2: 8 }
+  MAX_ECHELON = { grade1: 10, grade2: 8, as_grade1: 11, as_grade2: 11, ide_grade1: 10, ide_grade2: 8 }
+
+  GRADE_OPTIONS = {
+    iade: [["1er grade", "grade1"], ["2ème grade", "grade2"]],
+    as:   [["Classe normale", "as_grade1"], ["Classe supérieure", "as_grade2"]],
+    ide:  [["Grade normal", "ide_grade1"], ["Classe supérieure", "ide_grade2"]]
+  }
 
   IR_ZONES = { "75":1, "92":1, "93":1, "94":1, "77":2, "78":2, "91":2, "95":2 }
   IR_TAUX  = { 1: 0.03, 2: 0.01, 3: 0.00 }
@@ -33,6 +44,7 @@ export default class extends Controller {
   connect() {
     this._render(this.currentStepValue)
     this.updateDates()
+    this._initGradeOptions()
     this.updateTib()
     this.updateProgress()
   }
@@ -90,9 +102,39 @@ export default class extends Controller {
     if (this.hasMoisM2Target) this.moisM2Target.value = toLabel(new Date(year, month-3, 1))
   }
 
+  // ── Changement de profession ──────────────────────────────────
+  professionChanged(e) {
+    this._initGradeOptions(e.target.value)
+    this.updateTib()
+  }
+
+  _initGradeOptions(profession) {
+    if (!this.hasGradeSelectTarget) return
+    const prof    = profession || this._fv("profession") || "iade"
+    const options = this.GRADE_OPTIONS[prof] || this.GRADE_OPTIONS.iade
+    const current = this.gradeSelectTarget.value
+    this.gradeSelectTarget.innerHTML = ""
+    options.forEach(([label, value]) => {
+      const opt = document.createElement("option")
+      opt.value = value
+      opt.textContent = label
+      if (value === current) opt.selected = true
+      this.gradeSelectTarget.appendChild(opt)
+    })
+    if (!this.gradeSelectTarget.value) {
+      this.gradeSelectTarget.options[0].selected = true
+    }
+    this._updateEchelonMax()
+  }
+
   // ── Changement de grade ───────────────────────────────────────
   gradeChanged(e) {
-    const grade  = e.target.value
+    this._updateEchelonMax()
+    this.updateTib()
+  }
+
+  _updateEchelonMax() {
+    const grade  = this._fv("grade") || "grade1"
     const maxEch = this.MAX_ECHELON[grade] || 11
     const sel    = this.formTarget.querySelector("[name='simulation_session[echelon]']")
     if (!sel) return
@@ -104,7 +146,6 @@ export default class extends Controller {
       if (i === Math.min(cur, maxEch)) opt.selected = true
       sel.appendChild(opt)
     }
-    this.updateTib()
   }
 
   // ── Mises à jour des affichages dans le formulaire ────────────

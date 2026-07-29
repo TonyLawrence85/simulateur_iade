@@ -7,7 +7,7 @@ export default class extends Controller {
     "imDisplay", "tibDisplay", "tauxHoraireDisplay",
     "progressFill", "confidenceLabel",
     "form", "zoneDisplay", "irDisplay", "sftDisplay", "nbiDisplay",
-    "gradeSelect"
+    "gradeSelect", "dtcMontantRow"
   ]
 
   static values = {
@@ -196,6 +196,17 @@ export default class extends Controller {
     const pts = parseInt(this._fv("nbi_points")) || 0
     const nbi = (pts * this.VALEUR_POINT).toFixed(2)
     if (this.hasNbiDisplayTarget) this.nbiDisplayTarget.value = `${this.fmt(nbi)} €`
+    this.updateSidebar()
+  }
+
+  dtcToggle(e) {
+    if (!this.hasDtcMontantRowTarget) return
+    const show = e.target.value === "oui"
+    this.dtcMontantRowTarget.style.display = show ? "" : "none"
+    if (!show) {
+      const input = this.dtcMontantRowTarget.querySelector("input")
+      if (input) input.value = ""
+    }
     this.updateSidebar()
   }
 

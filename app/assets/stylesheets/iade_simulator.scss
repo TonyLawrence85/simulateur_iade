@@ -348,6 +348,34 @@
 .sim-app .badge--profile { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-mid); }
 .sim-app .badge--var     { background: var(--canvas);      color: var(--ink-soft); border: 1px solid var(--border); }
 .sim-app .badge--ret     { background: var(--red-light);   color: var(--red);   border: 1px solid var(--red-mid); }
+
+.sim-app .radio-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+.sim-app .radio-toggle__option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  background: var(--canvas);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.sim-app .radio-toggle__option:has(input:checked) {
+  border-color: var(--blue);
+  background: var(--blue-light, #eff6ff);
+  color: var(--blue);
+  font-weight: 500;
+}
+.sim-app .radio-toggle__option input[type="radio"] {
+  accent-color: var(--blue);
+}
 .sim-app .badge--missing,
 .sim-app .badge--under   { background: var(--red-light);   color: var(--red);   border: 1px solid var(--red-mid); }
 .sim-app .badge--over    { background: var(--amber-light);  color: var(--amber); border: 1px solid var(--amber-mid); }

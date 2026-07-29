@@ -66,13 +66,11 @@ module Iade
         lines << ret("50L", (@iss + @veil + @iade) * j / 30 * BigDecimal("0.50"), "#{@jours_cmo50}j × 50%")
       end
 
-      # ── DTR : retenue DTC proportionnelle ───────────────────────
+      # ── DTR : retenue DTC = DTC × 10% × nb_jours / 30 ─────────
       if @dtc.positive? && any?
-        proportion = BigDecimal("0")
-        proportion += BigDecimal(@jours_carence.to_s) / 30 if @jours_carence.positive?
-        proportion += BigDecimal(@jours_cmo90.to_s) / 30 * BigDecimal("0.10") if @jours_cmo90.positive?
-        proportion += BigDecimal(@jours_cmo50.to_s) / 30 * BigDecimal("0.50") if @jours_cmo50.positive?
-        lines << ret("DTR", @dtc * proportion, "DTC × proportion absence")
+        total_jours = BigDecimal((@jours_carence + @jours_cmo90 + @jours_cmo50).to_s)
+        lines << ret("DTR", @dtc * BigDecimal("0.10") * total_jours / 30,
+                     "DTC × 10% × #{total_jours.to_i}j / 30")
       end
 
       lines.select { |l| l[:montant].positive? }

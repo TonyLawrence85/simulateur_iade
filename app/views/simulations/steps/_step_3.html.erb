@@ -40,10 +40,29 @@
       </div>
 
       <div class="field-group">
-        <%= f.label :dtc_montant, class: "field-label" do %>
-          Ind. comp. CSG <span class="badge badge--profile">DTC</span>
-        <% end %>
-        <%= f.number_field :dtc_montant, placeholder: "Ex : 44,18", step: 0.01, min: 0 %>
+        <label class="field-label">
+          Ligne DTC ou DTF sur bulletin <span class="badge badge--profile">DTC</span>
+        </label>
+        <div class="radio-toggle">
+          <label class="radio-toggle__option">
+            <input type="radio" name="has_dtc" value="non"
+              data-action="change->simulation#dtcToggle"
+              <%= @simulation.dtc_montant.present? ? "" : "checked" %>>
+            Non
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="has_dtc" value="oui"
+              data-action="change->simulation#dtcToggle"
+              <%= @simulation.dtc_montant.present? ? "checked" : "" %>>
+            Oui
+          </label>
+        </div>
+        <span class="field-hint">Avez-vous une ligne DTC ou DTF sur votre bulletin de salaire ?</span>
+        <div data-simulation-target="dtcMontantRow"
+             style="<%= @simulation.dtc_montant.present? ? "" : "display:none" %>; margin-top:0.5rem">
+          <%= f.number_field :dtc_montant, placeholder: "Montant observé sur bulletin M−1 (ex : 44,18)", step: 0.01, min: 0 %>
+          <span class="field-hint field-hint--warn">Saisir le montant mensuel de votre dernier bulletin (M−1)</span>
+        </div>
       </div>
 
       <div class="field-group">

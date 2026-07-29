@@ -37,7 +37,8 @@ class SimulationSession < ApplicationRecord
       :montant_psr, :jours_absence_psr, :montant_lsu,
       :nb_gardes, :heures_par_garde,
       :jours_carence, :jours_cmo90, :jours_cmo50,
-      :date_entree_echelon
+      :date_entree_echelon,
+      :heure_debut_service, :heure_fin_service
     )
   end
 

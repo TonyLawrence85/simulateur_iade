@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_143050) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_29_150401) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -84,6 +84,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_143050) do
     t.integer "echelon"
     t.boolean "garde_alternee"
     t.string "grade"
+    t.string "heure_debut_service"
+    t.string "heure_fin_service"
     t.decimal "heures_dimanche"
     t.decimal "heures_ferie"
     t.decimal "heures_nuit"

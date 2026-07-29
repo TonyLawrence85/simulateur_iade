@@ -178,6 +178,7 @@ class SimulationsController < ApplicationController
       :nb_gardes, :heures_par_garde,
       :jours_carence, :jours_cmo90, :jours_cmo50,
       :date_entree_echelon,
+      :heure_debut_service, :heure_fin_service,
       :confirm_decalage
     )
   end

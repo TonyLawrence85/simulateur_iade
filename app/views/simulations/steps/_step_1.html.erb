@@ -66,6 +66,24 @@
 
     <div class="field-grid field-grid--2" style="margin-top:1rem">
       <div class="field-group">
+        <%= f.label :heure_debut_service, class: "field-label" do %>
+          Heure de début de service <span class="req">*</span>
+        <% end %>
+        <%= f.time_field :heure_debut_service, value: @simulation.heure_debut_service || "07:36", required: true %>
+        <span class="field-hint">Détermine si vos HS tombent en période de jour ou de nuit</span>
+      </div>
+
+      <div class="field-group">
+        <%= f.label :heure_fin_service, class: "field-label" do %>
+          Heure de fin de service <span class="req">*</span>
+        <% end %>
+        <%= f.time_field :heure_fin_service, value: @simulation.heure_fin_service || "19:12", required: true %>
+        <span class="field-hint">La période de nuit AP-HP est de 21h à 6h</span>
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--2" style="margin-top:1rem">
+      <div class="field-group">
         <%= f.label :date_entree_echelon, class: "field-label" do %>
           Date de prise d'effet de l'échelon actuel
         <% end %>

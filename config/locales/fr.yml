@@ -55,3 +55,56 @@ fr:
       long: "%d %B %Y %H:%M"
     am: "am"
     pm: "pm"
+
+  devise:
+    sessions:
+      signed_in: "Connexion réussie."
+      signed_out: "Déconnexion réussie."
+      already_signed_in: "Vous êtes déjà connecté(e)."
+      user:
+        signed_in: "Connexion réussie."
+        signed_out: "Déconnexion réussie."
+    registrations:
+      signed_up: "Inscription réussie. Bienvenue !"
+      signed_up_but_unconfirmed: "Un email de confirmation a été envoyé à votre adresse."
+      updated: "Votre compte a été mis à jour avec succès."
+      destroyed: "Votre compte a été supprimé avec succès."
+      update_needs_confirmation: "Votre compte a été mis à jour, mais vous devez confirmer votre nouvelle adresse email."
+    passwords:
+      send_instructions: "Vous allez recevoir les instructions de réinitialisation de mot de passe dans quelques minutes."
+      updated: "Votre mot de passe a été modifié avec succès."
+      updated_not_active: "Votre mot de passe a été modifié avec succès."
+      send_paranoid_instructions: "Si votre adresse email existe dans notre base, vous recevrez un email dans quelques minutes."
+      no_token: "Vous ne pouvez accéder à cette page sans venir d'un email de réinitialisation. Si vous venez d'un tel email, vérifiez que l'URL est complète."
+    confirmations:
+      send_instructions: "Vous allez recevoir les instructions de confirmation dans quelques minutes."
+      send_paranoid_instructions: "Si votre adresse email existe dans notre base, vous recevrez un email dans quelques minutes."
+      confirmed: "Votre compte a été confirmé avec succès. Vous êtes maintenant connecté(e)."
+    unlocks:
+      send_instructions: "Vous allez recevoir les instructions de déverrouillage dans quelques minutes."
+      send_paranoid_instructions: "Si votre adresse email existe dans notre base, vous recevrez un email dans quelques minutes."
+      unlocked: "Votre compte a été déverrouillé. Vous êtes maintenant connecté(e)."
+    omniauth_callbacks:
+      success: "Connexion via %{kind} réussie."
+      failure: "Impossible de vous authentifier via %{kind} : %{reason}."
+    mailer:
+      confirmation_instructions:
+        subject: "Instructions de confirmation"
+      reset_password_instructions:
+        subject: "Instructions de réinitialisation du mot de passe"
+      unlock_instructions:
+        subject: "Instructions de déverrouillage"
+      email_changed:
+        subject: "Email modifié"
+      password_change:
+        subject: "Mot de passe modifié"
+    failure:
+      already_authenticated: "Vous êtes déjà connecté(e)."
+      unauthenticated: "Vous devez vous connecter ou vous inscrire pour continuer."
+      unconfirmed: "Vous devez confirmer votre email pour continuer."
+      locked: "Votre compte est verrouillé."
+      invalid: "Email ou mot de passe incorrect."
+      last_attempt: "Encore une tentative avant que votre compte soit verrouillé."
+      timeout: "Votre session a expiré. Veuillez vous reconnecter."
+      inactive: "Votre compte n'est pas encore activé."
+      not_found_in_database: "Email ou mot de passe incorrect."

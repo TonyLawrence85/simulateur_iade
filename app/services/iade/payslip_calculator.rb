@@ -57,6 +57,7 @@ module Iade
       add_abattement_ppcr       # IBA (déduction PPCR, réduit le brut et l'assiette RAFP)
       add_dtc
       add_wt1
+      add_fmd
       add_jma
       add_dim_jf
       add_tp7_it7_dhn
@@ -173,10 +174,56 @@ module Iade
     end
 
     def add_wt1
-      return if @p[:wt1_montant].blank? || @p[:wt1_montant].to_f.zero?
+      base = wt1_base
+      return unless base
 
+      total_absence = @p[:jours_carence].to_i + @p[:jours_cmo90].to_i + @p[:jours_cmo50].to_i
+      return if total_absence > 60
+
+      taux_label = agent_nuit? ? "100% nuit" : "75% jour"
+      montant    = wt1_montant_net(base)
       add_line(code: "WT1", label: "REMBOUR. TRANSPORT", category: :profile,
-               montant: BigDecimal(@p[:wt1_montant].to_s), detail: "75% abonnement")
+               montant: montant.round(2), detail: taux_label)
+    end
+
+    def add_fmd
+      return unless @p[:simulate_fmd].to_s.in?(%w[1 true])
+
+      jours = @p[:fmd_jours_annee].to_i
+      return if jours < 30
+
+      mois = @p[:mois_paie].to_s.split("-").last.to_i
+      return unless mois.in?([10, 11])
+
+      add_line(code: "FMD", label: "FORFAIT MOBILITES DUR.", category: :profile,
+               montant: fmd_montant(jours), detail: "#{jours}j (#{@p[:fmd_mode]})")
+    end
+
+    def agent_nuit?
+      debut = @p[:heure_debut_service].to_s.match(/(\d{2}:\d{2})/)&.[](1) || "07:36"
+      debut >= "19:00"
+    end
+
+    def wt1_base
+      if @p[:type_navigo] == "annuel" && @p[:navigo_montant_annuel].to_f.positive?
+        BigDecimal(@p[:navigo_montant_annuel].to_s) / 12
+      elsif @p[:wt1_montant].to_f.positive?
+        BigDecimal(@p[:wt1_montant].to_s)
+      end
+    end
+
+    def wt1_montant_net(base)
+      taux   = agent_nuit? ? BigDecimal("1.00") : BigDecimal("0.75")
+      result = base * taux
+      result /= 2 if quotite < BigDecimal("0.5")
+      result
+    end
+
+    def fmd_montant(jours)
+      if jours < 60 then BigDecimal("100")
+      elsif jours < 100 then BigDecimal("200")
+      else BigDecimal("300")
+      end
     end
 
     def add_jma
@@ -235,7 +282,7 @@ module Iade
       nb = @p[:nb_gardes].to_f
       return if nb.zero?
 
-      heures_equiv = (@p[:heures_par_garde].presence&.to_f || 4.0)
+      heures_equiv = @p[:heures_par_garde].presence&.to_f || 4.0
       taux = taux_hs_nuit
       montant = (nb * heures_equiv * taux).round(2)
       add_line(code: "GAR", label: "GARDES (éq. HS nuit)", category: :var_m2,

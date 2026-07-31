@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_29_151731) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_31_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -82,6 +82,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_29_151731) do
     t.decimal "dhn_heures"
     t.decimal "dtc_montant"
     t.integer "echelon"
+    t.integer "fmd_jours_annee"
+    t.string "fmd_mode"
     t.boolean "garde_alternee"
     t.string "grade"
     t.string "heure_debut_service"
@@ -109,6 +111,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_29_151731) do
     t.decimal "montant_lsu", precision: 10, scale: 2
     t.decimal "montant_psr", precision: 10, scale: 2
     t.decimal "mutuelle"
+    t.decimal "navigo_montant_annuel", precision: 8, scale: 2
     t.integer "nb_apres_midi"
     t.integer "nb_enfants_sft"
     t.decimal "nb_gardes", precision: 6, scale: 2
@@ -125,11 +128,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_29_151731) do
     t.jsonb "result_lines"
     t.decimal "result_net_avant_pas"
     t.decimal "result_net_paye"
+    t.boolean "simulate_fmd", default: false
     t.string "statut"
     t.decimal "taux_pas"
     t.string "token"
     t.integer "tp7_qty"
     t.string "type_cycle"
+    t.string "type_navigo", default: "mensuel"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.decimal "wt1_montant"

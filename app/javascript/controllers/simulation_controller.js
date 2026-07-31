@@ -7,7 +7,9 @@ export default class extends Controller {
     "imDisplay", "tibDisplay", "tauxHoraireDisplay",
     "progressFill", "confidenceLabel",
     "form", "zoneDisplay", "irDisplay", "sftDisplay", "nbiDisplay",
-    "gradeSelect", "dtcMontantRow"
+    "gradeSelect", "dtcMontantRow",
+    "navigoMensuelRow", "navigoAnnuelRow", "wt1Display",
+    "fmdRow", "fmdEstimate"
   ]
 
   static values = {
@@ -210,6 +212,34 @@ export default class extends Controller {
     this.updateSidebar()
   }
 
+  navigoTypeToggle(e) {
+    const annuel = e.target.value === "annuel"
+    if (this.hasNavigoMensuelRowTarget) this.navigoMensuelRowTarget.style.display = annuel ? "none" : ""
+    if (this.hasNavigoAnnuelRowTarget)  this.navigoAnnuelRowTarget.style.display  = annuel ? "" : "none"
+    this.updateSidebar()
+  }
+
+  fmdToggle(e) {
+    const show = e.target.value === "1"
+    if (this.hasFmdRowTarget) this.fmdRowTarget.style.display = show ? "" : "none"
+    this.updateFmd()
+  }
+
+  updateFmd() {
+    const jours = parseInt(this._fv("fmd_jours_annee")) || 0
+    let fmd = 0
+    if (jours >= 30) {
+      if (jours < 60)       fmd = 100
+      else if (jours < 100) fmd = 200
+      else                  fmd = 300
+    }
+    if (this.hasFmdEstimateTarget) {
+      this.fmdEstimateTarget.textContent = fmd > 0
+        ? `Estimation FMD : ${fmd} € (versé oct./nov. N+1)`
+        : jours > 0 ? "Moins de 30 jours — FMD non déclenché." : ""
+    }
+  }
+
   updateProgress() {
     const pct = Math.round((this.currentStepValue / 6) * 100)
     if (this.hasProgressFillTarget)    this.progressFillTarget.style.width = `${pct}%`
@@ -242,6 +272,16 @@ export default class extends Controller {
     const joursCarence = parseInt(this._fv("jours_carence")) || 0
     const joursCmo90   = parseInt(this._fv("jours_cmo90"))   || 0
     const joursCmo50   = parseInt(this._fv("jours_cmo50"))   || 0
+    const typeNavigo   = this._fv("type_navigo") || "mensuel"
+    const wt1Base      = typeNavigo === "annuel"
+      ? (parseFloat(this._fv("navigo_montant_annuel")) || 0) / 12
+      : (parseFloat(this._fv("wt1_montant")) || 0)
+    const heureDebut   = this._fv("heure_debut_service") || "07:36"
+    const isNuit       = heureDebut.slice(0, 5) >= "19:00"
+    const simulateFmd  = this._fv("simulate_fmd") === "1"
+    const fmdJours     = parseInt(this._fv("fmd_jours_annee")) || 0
+    const moisPaie     = this._fv("mois_paie") || ""
+    const moisNum      = parseInt(moisPaie.slice(-2)) || 0
 
     // ── Traitements fixes ──
     const im  = this.GRILLE[grade]?.[echelon] || 0
@@ -272,6 +312,22 @@ export default class extends Controller {
     const psr      = Math.max(0, mPsr - pertePsr)
     const lsu      = mLsu
 
+    // ── Transport (WT1) ──
+    const totalAbsence = joursCarence + joursCmo90 + joursCmo50
+    let wt1 = 0
+    if (wt1Base > 0 && totalAbsence <= 60) {
+      wt1 = wt1Base * (isNuit ? 1.0 : 0.75)
+      if (quotite < 0.5) wt1 /= 2
+    }
+
+    // ── FMD (versé oct./nov. seulement) ──
+    let fmd = 0
+    if (simulateFmd && fmdJours >= 30 && (moisNum === 10 || moisNum === 11)) {
+      if (fmdJours < 60)       fmd = 100
+      else if (fmdJours < 100) fmd = 200
+      else                     fmd = 300
+    }
+
     // ── Absences (retenues approchées — détail exact sur bulletin) ──
     const retCarence = joursCarence > 0 ? (tib + cti) * joursCarence / 30 : 0
     const retCmo90   = joursCmo90   > 0 ? (tib + cti) * 0.10 * joursCmo90 / 30 : 0
@@ -280,7 +336,7 @@ export default class extends Controller {
 
     // ── Brut ──
     const brut = tib + cti + veil + iade - iba + ir + nbi + irNbi + iss + sft +
-                 jma + dimjf + hsTotal + gardes + psr + lsu
+                 jma + dimjf + hsTotal + gardes + psr + lsu + wt1 + fmd
 
     // ── Cotisations estimées ──
     let cnracl = 0, rafp = 0
@@ -335,6 +391,15 @@ export default class extends Controller {
     this._sbLineShow("primes-var", hasPrimesVar)
     this._sbLineShow("psr", psr > 0); if (psr > 0) this._sbAmt("psr", psr)
     this._sbLineShow("lsu", lsu > 0); if (lsu > 0) this._sbAmt("lsu", lsu)
+
+    this._sbLineShow("wt1", wt1 > 0); if (wt1 > 0) this._sbAmt("wt1", wt1)
+    this._sbLineShow("fmd", fmd > 0); if (fmd > 0) this._sbAmt("fmd", fmd)
+
+    if (this.hasWt1DisplayTarget) {
+      this.wt1DisplayTarget.value = wt1 > 0
+        ? `${this.fmt(wt1.toFixed(2))} € (${isNuit ? "100% nuit" : "75% jour"}${quotite < 0.5 ? " ÷2" : ""})`
+        : totalAbsence > 60 ? "0 € (>60j absence)" : "—"
+    }
 
     const hasAbsences = retAbsTotal > 0
     this._sbLineShow("absences", hasAbsences)

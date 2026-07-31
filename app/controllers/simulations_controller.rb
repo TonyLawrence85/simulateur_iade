@@ -180,6 +180,8 @@ class SimulationsController < ApplicationController
       :date_entree_echelon,
       :heure_debut_service, :heure_fin_service,
       :nb_matins, :nb_apres_midi, :nb_soirs,
+      :type_navigo, :navigo_montant_annuel,
+      :simulate_fmd, :fmd_mode, :fmd_jours_annee,
       :confirm_decalage
     )
   end

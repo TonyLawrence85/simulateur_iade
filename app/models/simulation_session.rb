@@ -39,7 +39,9 @@ class SimulationSession < ApplicationRecord
       :jours_carence, :jours_cmo90, :jours_cmo50,
       :date_entree_echelon,
       :heure_debut_service, :heure_fin_service,
-      :nb_matins, :nb_apres_midi, :nb_soirs
+      :nb_matins, :nb_apres_midi, :nb_soirs,
+      :type_navigo, :navigo_montant_annuel,
+      :simulate_fmd, :fmd_mode, :fmd_jours_annee
     )
   end
 

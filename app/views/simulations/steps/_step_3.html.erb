@@ -65,15 +65,116 @@
         </div>
       </div>
 
+    </div>
+
+    <div class="section-label" style="margin-top:1.25rem">
+      Transport — Remboursement Navigo <span class="badge badge--profile">WT1</span>
+    </div>
+
+    <div class="field-grid field-grid--1">
       <div class="field-group">
-        <%= f.label :wt1_montant, class: "field-label" do %>
-          Remboursement transport <span class="badge badge--profile">WT1</span>
-        <% end %>
-        <%= f.number_field :wt1_montant, placeholder: "Ex : 43,75", step: 0.01, min: 0 %>
+        <label class="field-label">Type de pass Navigo</label>
+        <div class="radio-toggle">
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[type_navigo]" value="mensuel"
+              data-action="change->simulation#navigoTypeToggle"
+              <%= (@simulation.type_navigo.blank? || @simulation.type_navigo == "mensuel") ? "checked" : "" %>>
+            Pass Mensuel
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[type_navigo]" value="annuel"
+              data-action="change->simulation#navigoTypeToggle"
+              <%= @simulation.type_navigo == "annuel" ? "checked" : "" %>>
+            Pass Annuel
+          </label>
+        </div>
       </div>
     </div>
 
-    <div class="section-label">Absences ce mois-ci</div>
+    <div class="field-grid field-grid--2" style="margin-top:0.75rem">
+      <div class="field-group" data-simulation-target="navigoMensuelRow"
+           style="<%= @simulation.type_navigo == 'annuel' ? 'display:none' : '' %>">
+        <%= f.label :wt1_montant, "Montant mensuel de l'abonnement", class: "field-label" %>
+        <%= f.number_field :wt1_montant, placeholder: "Ex : 86,40", step: 0.01, min: 0,
+              data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Prix mensuel de votre abonnement Navigo</span>
+      </div>
+
+      <div class="field-group" data-simulation-target="navigoAnnuelRow"
+           style="<%= @simulation.type_navigo == 'annuel' ? '' : 'display:none' %>">
+        <%= f.label :navigo_montant_annuel, "Montant annuel de l'abonnement", class: "field-label" %>
+        <%= f.number_field :navigo_montant_annuel, placeholder: "Ex : 1 036,80", step: 0.01, min: 0,
+              data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Prix annuel → divisé par 12 pour le mensuel simulé</span>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Remboursement estimé <span class="badge badge--calc">WT1</span></label>
+        <input type="text" disabled class="field-computed" data-simulation-target="wt1Display" value="—"> <%# herb:disable all %>
+        <span class="field-hint">Nuit = 100% · Jour = 75% (déduit de l'heure début service) · Quotité &lt; 50% → ÷2 · &gt;60j absence → 0 €</span>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:1.25rem">
+      Forfait Mobilités Durables <span class="badge badge--profile">FMD</span>
+    </div>
+
+    <div class="field-grid field-grid--1">
+      <div class="field-group">
+        <label class="field-label">Simuler le FMD de fin d'année ?</label>
+        <div class="radio-toggle">
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[simulate_fmd]" value="0"
+              data-action="change->simulation#fmdToggle"
+              <%= @simulation.simulate_fmd? ? "" : "checked" %>>
+            Non
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[simulate_fmd]" value="1"
+              data-action="change->simulation#fmdToggle"
+              <%= @simulation.simulate_fmd? ? "checked" : "" %>>
+            Oui
+          </label>
+        </div>
+        <span class="field-hint">Le FMD est versé sur le bulletin d'octobre ou novembre de l'année N+1</span>
+      </div>
+    </div>
+
+    <div data-simulation-target="fmdRow"
+         style="<%= @simulation.simulate_fmd? ? "" : "display:none" %>; margin-top:0.75rem">
+      <div class="field-grid field-grid--2">
+        <div class="field-group">
+          <%= f.label :fmd_mode, "Mode de déplacement utilisé", class: "field-label" %>
+          <%= f.select :fmd_mode,
+                [["Vélo / Vélo électrique", "velo"],
+                 ["Trottinette", "trottinette"],
+                 ["Covoiturage — conducteur", "covoit_conducteur"],
+                 ["Covoiturage — passager", "covoit_passager"],
+                 ["Service de mobilité partagée", "mobilite_partagee"],
+                 ["Autre", "autre"]],
+                { selected: @simulation.fmd_mode, include_blank: "— Choisir —" },
+                data: { action: "change->simulation#updateFmd" } %> <%# herb:disable all %>
+        </div>
+
+        <div class="field-group">
+          <%= f.label :fmd_jours_annee, "Nombre de jours/an avec ce mode", class: "field-label" %>
+          <%= f.number_field :fmd_jours_annee, placeholder: "Ex : 120", step: 1, min: 0, max: 260,
+                data: { action: "input->simulation#updateFmd" } %>
+          <span class="field-hint">Jours travaillés en utilisant ce mode de déplacement</span>
+        </div>
+      </div>
+
+      <div class="alert alert--info" style="margin-top:0.5rem">
+        <span>ℹ</span>
+        <div>
+          <strong>Barème FMD :</strong>
+          &lt;30j → 0 € · 30–59j → 100 € · 60–99j → 200 € · ≥100j → 300 €<br>
+          <span data-simulation-target="fmdEstimate"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:1.25rem">Absences ce mois-ci</div>
 
     <div class="field-grid field-grid--3">
       <div class="field-group">

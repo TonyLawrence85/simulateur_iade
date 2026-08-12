@@ -17,7 +17,7 @@
         <%= f.label :mois_paie, class: "field-label" do %>
           Mois et année de paie <span class="req">*</span>
         <% end %>
-        <%= f.month_field :mois_paie, value: mois_defaut, required: true, data: { simulation_target: "moisPaie", action: "change->simulation#updateDates" } %>
+        <%= f.month_field :mois_paie, value: mois_defaut, required: true, data: { simulation_target: "moisPaie", action: "change->simulation#updateDates change->simulation#updateAbsences" } %>
         <span class="field-hint">Ex : 2026-04 = bulletin d'avril 2026</span>
       </div>
 

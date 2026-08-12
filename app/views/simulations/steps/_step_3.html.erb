@@ -176,29 +176,35 @@
 
     <div class="section-label" style="margin-top:1.25rem">Absences ce mois-ci</div>
 
-    <div class="field-grid field-grid--3">
-      <div class="field-group">
-        <%= f.label :jours_carence, class: "field-label" do %>
-          Jours de carence <span class="badge badge--ret">CAR</span>
-        <% end %>
-        <%= f.number_field :jours_carence, min: 0, max: 30, step: 1, placeholder: "0" %>
-        <span class="field-hint">1er jour maladie = 100% retenue</span>
-      </div>
+    <div data-simulation-target="absencesList">
+      <% absences_seed = @simulation.absences.presence || [] %>
+      <% absences_seed.each do |absence| %>
+        <%= render "simulations/steps/absence_fields", absence: absence %>
+      <% end %>
+    </div>
 
-      <div class="field-group">
-        <%= f.label :jours_cmo90, class: "field-label" do %>
-          Jours CMO à 90% <span class="badge badge--ret">CMO</span>
-        <% end %>
-        <%= f.number_field :jours_cmo90, min: 0, max: 90, step: 1, placeholder: "0" %>
-        <span class="field-hint">Jours 2→90 de maladie (retenue 10%)</span>
-      </div>
+    <template data-simulation-target="absenceTemplate">
+      <%= render "simulations/steps/absence_fields", absence: {} %>
+    </template>
 
-      <div class="field-group">
-        <%= f.label :jours_cmo50, class: "field-label" do %>
-          Jours CMO à 50% <span class="badge badge--ret">CMO</span>
-        <% end %>
-        <%= f.number_field :jours_cmo50, min: 0, max: 90, step: 1, placeholder: "0" %>
-        <span class="field-hint">Jours 91→180 de maladie (retenue 50%)</span>
+    <div class="panel-footer" style="justify-content:flex-start; padding:0.75rem 0 0">
+      <button type="button" class="btn btn--secondary btn--sm" data-action="click->simulation#addAbsence">+ Ajouter une absence</button>
+    </div>
+
+    <span class="field-hint" data-simulation-target="absencesSummary">Aucune absence saisie ce mois-ci.</span>
+
+    <div class="alert alert--warn" style="margin-top:0.5rem">
+      <span>⚠</span>
+      <div>
+        Le calcul automatique des retenues couvre la <strong>maladie ordinaire</strong>
+        (carence + CMO 90/50%), le <strong>congé maternité</strong> et le
+        <strong>congé pathologique lié à la grossesse</strong> (maintien à 100%). Pour
+        l'<strong>accident de service/travail</strong>, l'<strong>accident de trajet</strong> et la
+        <strong>maladie professionnelle</strong> : maintien à 100% si l'imputabilité au service est
+        reconnue, sinon traitement provisoire identique à la maladie ordinaire en attendant la
+        décision. Pour le <strong>CLM/CLD</strong>, l'<strong>absence non rémunérée</strong> et
+        <strong>autre absence</strong>, les jours sont comptabilisés mais aucune retenue n'est
+        encore appliquée (pas de jour de carence dans tous les cas pour le CLM/CLD).
       </div>
     </div>
   </div>

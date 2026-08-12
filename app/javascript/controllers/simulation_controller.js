@@ -9,7 +9,8 @@ export default class extends Controller {
     "form", "zoneDisplay", "irDisplay", "sftDisplay", "nbiDisplay",
     "gradeSelect", "dtcMontantRow",
     "navigoMensuelRow", "navigoAnnuelRow", "wt1Display",
-    "fmdRow", "fmdEstimate"
+    "fmdRow", "fmdEstimate",
+    "absencesList", "absenceCard", "absenceTemplate", "absencesSummary"
   ]
 
   static values = {
@@ -49,6 +50,8 @@ export default class extends Controller {
     this._initGradeOptions()
     this.updateTib()
     this.updateProgress()
+    this.absenceCardTargets.forEach(card => this._syncAbsenceCard(card))
+    this.updateAbsences()
   }
 
   // ── Navigation ────────────────────────────────────────────────
@@ -240,6 +243,150 @@ export default class extends Controller {
     }
   }
 
+  // ── Absences ──────────────────────────────────────────────────
+  addAbsence(e) {
+    e.preventDefault()
+    const fragment = this.absenceTemplateTarget.content.cloneNode(true)
+    this.absencesListTarget.appendChild(fragment)
+    this._renumberAbsences()
+    this.updateAbsences()
+  }
+
+  removeAbsence(e) {
+    e.preventDefault()
+    const card = e.target.closest('[data-simulation-target~="absenceCard"]')
+    if (card) card.remove()
+    this._renumberAbsences()
+    this.updateAbsences()
+  }
+
+  absenceChanged(e) {
+    const card = e.target.closest('[data-simulation-target~="absenceCard"]')
+    if (card) this._syncAbsenceCard(card)
+    this.updateAbsences()
+  }
+
+  _renumberAbsences() {
+    this.absenceCardTargets.forEach((card, i) => {
+      const label = card.querySelector('[data-role="absence-index"]')
+      if (label) label.textContent = `n°${i + 1}`
+    })
+  }
+
+  // Affiche/masque les questions 3/4 (maladie ordinaire) et 5 (imputabilité au service)
+  _syncAbsenceCard(card) {
+    const typeSelect = card.querySelector(".absence-field--type")
+    const family = typeSelect?.selectedOptions[0]?.dataset.family
+    const isProlongationType = typeSelect?.value === "prolongation_maladie_ordinaire"
+    const isMaladieOrdinaire = family === "maladie_ordinaire"
+    const isImputabilite = family === "imputabilite"
+    const q3 = card.querySelector(".absence-q3")
+    const q4 = card.querySelector(".absence-q4")
+    const q5 = card.querySelector(".absence-q5")
+    if (q3) q3.style.display = (isMaladieOrdinaire && !isProlongationType) ? "" : "none"
+    if (q4) q4.style.display = isMaladieOrdinaire ? "" : "none"
+    if (q5) q5.style.display = isImputabilite ? "" : "none"
+  }
+
+  _parseDateInput(value) {
+    if (!value) return null
+    const [y, m, d] = value.split("-").map(Number)
+    if (!y || !m || !d) return null
+    return new Date(Date.UTC(y, m - 1, d))
+  }
+
+  // Calcule (en aperçu) jours de carence / CMO 90% / CMO 50% à partir des absences saisies.
+  // Le calcul faisant foi reste côté serveur (Iade::AbsenceEntriesResolver).
+  updateAbsences() {
+    const moisPaie = this._fv("mois_paie") || ""
+    const [y, m] = moisPaie.split("-").map(Number)
+    const monthStart = (y && m) ? new Date(Date.UTC(y, m - 1, 1)) : null
+    const monthEnd   = (y && m) ? new Date(Date.UTC(y, m, 0)) : null
+
+    let carence = 0, cmo90 = 0, cmo50 = 0, maintenu100 = 0, nonCalcule = 0
+
+    this.absenceCardTargets.forEach(card => {
+      const resultEl = card.querySelector(".absence-field--result")
+      const debut = this._parseDateInput(card.querySelector(".absence-field--debut")?.value)
+      const fin   = this._parseDateInput(card.querySelector(".absence-field--fin")?.value)
+
+      if (!debut || !fin || !monthStart || fin < debut) {
+        if (resultEl) resultEl.value = "—"
+        return
+      }
+
+      const clipDebut = debut > monthStart ? debut : monthStart
+      const clipFin   = fin   < monthEnd   ? fin   : monthEnd
+      if (clipFin < clipDebut) {
+        if (resultEl) resultEl.value = "0 j (hors mois simulé)"
+        return
+      }
+
+      const joursInMonth = Math.round((clipFin - clipDebut) / 86400000) + 1
+      const typeSelect = card.querySelector(".absence-field--type")
+      const family = typeSelect?.selectedOptions[0]?.dataset.family
+
+      const applyMaladieOrdinaire = (continuationOverride, compteurOverride) => {
+        const isProlongationType = typeSelect.value === "prolongation_maladie_ordinaire"
+        const continuation = continuationOverride || (isProlongationType
+          ? "prolongation"
+          : (card.querySelector(".absence-field--continuation")?.value || "nouvel_arret"))
+        const carenceApplies = !["prolongation", "reprise_48h"].includes(continuation)
+        const carenceDays = (carenceApplies && debut >= monthStart) ? Math.min(1, joursInMonth) : 0
+        const remaining = joursInMonth - carenceDays
+        const compteur = compteurOverride || (card.querySelector(".absence-field--compteur")?.value || "non")
+
+        carence += carenceDays
+        if (compteur === "oui") { cmo50 += remaining } else { cmo90 += remaining }
+
+        if (resultEl) {
+          const parts = []
+          if (carenceDays > 0) parts.push(`${carenceDays}j carence`)
+          if (remaining > 0)   parts.push(`${remaining}j à ${compteur === "oui" ? "50%" : "90%"}`)
+          resultEl.value = parts.length ? parts.join(" · ") : "—"
+        }
+      }
+
+      if (family === "maladie_ordinaire") {
+        applyMaladieOrdinaire()
+      } else if (family === "imputabilite") {
+        const imputabilite = card.querySelector(".absence-field--imputabilite")?.value || "en_attente"
+        if (imputabilite === "oui") {
+          maintenu100 += joursInMonth
+          if (resultEl) resultEl.value = `${joursInMonth}j maintenus à 100% (imputabilité reconnue)`
+        } else {
+          applyMaladieOrdinaire("nouvel_arret", "non")
+          if (resultEl) resultEl.value += " (provisoire, imputabilité non reconnue)"
+        }
+      } else if (family === "maintenu_100") {
+        maintenu100 += joursInMonth
+        if (resultEl) resultEl.value = `${joursInMonth}j maintenus à 100%`
+      } else {
+        nonCalcule += joursInMonth
+        if (resultEl) resultEl.value = `${joursInMonth}j — calcul non disponible`
+      }
+    })
+
+    this._absenceTotals = { carence, cmo90, cmo50 }
+
+    if (this.hasAbsencesSummaryTarget) {
+      const total = carence + cmo90 + cmo50 + maintenu100 + nonCalcule
+      if (total === 0) {
+        this.absencesSummaryTarget.textContent = "Aucune absence saisie ce mois-ci."
+      } else {
+        const parts = [`${total}j au total`]
+        if (carence)     parts.push(`${carence}j carence`)
+        if (cmo90)       parts.push(`${cmo90}j à 90%`)
+        if (cmo50)       parts.push(`${cmo50}j à 50%`)
+        if (maintenu100) parts.push(`${maintenu100}j maintenus à 100%`)
+        if (nonCalcule)  parts.push(`${nonCalcule}j non calculés`)
+        this.absencesSummaryTarget.textContent = parts.join(" · ")
+      }
+    }
+
+    this.updateSidebar()
+  }
+
   updateProgress() {
     const pct = Math.round((this.currentStepValue / 6) * 100)
     if (this.hasProgressFillTarget)    this.progressFillTarget.style.width = `${pct}%`
@@ -269,9 +416,7 @@ export default class extends Controller {
     const mLsu     = parseFloat(this._fv("montant_lsu")) || 0
     const nbGardes    = parseFloat(this._fv("nb_gardes")) || 0
     const hGarde      = parseFloat(this._fv("heures_par_garde")) || 4
-    const joursCarence = parseInt(this._fv("jours_carence")) || 0
-    const joursCmo90   = parseInt(this._fv("jours_cmo90"))   || 0
-    const joursCmo50   = parseInt(this._fv("jours_cmo50"))   || 0
+    const { carence: joursCarence = 0, cmo90: joursCmo90 = 0, cmo50: joursCmo50 = 0 } = this._absenceTotals || {}
     const typeNavigo   = this._fv("type_navigo") || "mensuel"
     const wt1Base      = typeNavigo === "annuel"
       ? (parseFloat(this._fv("navigo_montant_annuel")) || 0) / 12

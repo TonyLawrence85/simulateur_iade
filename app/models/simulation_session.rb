@@ -18,6 +18,7 @@ class SimulationSession < ApplicationRecord
   validates :token,             presence: true, uniqueness: true
 
   before_validation :generate_token, on: :create
+  before_validation :compute_absence_totals
 
   scope :recent, -> { order(created_at: :desc) }
 
@@ -53,5 +54,12 @@ class SimulationSession < ApplicationRecord
 
   def generate_token
     self.token ||= SecureRandom.urlsafe_base64(16)
+  end
+
+  def compute_absence_totals
+    result = Iade::AbsenceEntriesResolver.new(absences: absences, mois_paie: mois_paie).call
+    self.jours_carence = result.jours_carence
+    self.jours_cmo90   = result.jours_cmo90
+    self.jours_cmo50   = result.jours_cmo50
   end
 end

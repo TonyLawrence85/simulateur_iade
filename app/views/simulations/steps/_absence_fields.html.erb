@@ -1,0 +1,102 @@
+<%
+  absence = (absence || {}).stringify_keys
+%>
+<div class="absence-card" data-simulation-target="absenceCard">
+  <div class="absence-card__header">
+    <strong class="absence-card__title">Absence <span data-role="absence-index">n°1</span></strong>
+    <button type="button" class="btn btn--secondary btn--sm" data-action="click->simulation#removeAbsence">✕ Retirer</button>
+  </div>
+
+  <div class="field-grid field-grid--2">
+    <div class="field-group">
+      <label class="field-label">Type d'absence</label>
+      <%= select_tag nil, options_for_select(Iade::AbsenceEntriesResolver.select_options, absence["type"]),
+            name: "simulation_session[absences][][type]",
+            class: "absence-field absence-field--type",
+            data: { action: "change->simulation#absenceChanged" } %> <%# herb:disable all %>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Jours retenus ce mois <span class="badge badge--calc">auto</span></label>
+      <input type="text" disabled class="field-computed absence-field--result" value="—"> <%# herb:disable all %>
+    </div>
+  </div>
+
+  <div class="field-grid field-grid--2" style="margin-top:0.5rem">
+    <div class="field-group">
+      <label class="field-label">Date de début <span class="req">*</span></label>
+      <input type="date" name="simulation_session[absences][][date_debut]" required
+             class="absence-field absence-field--debut" value="<%= absence["date_debut"] %>"
+             data-action="change->simulation#absenceChanged">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Date de fin <span class="req">*</span></label>
+      <input type="date" name="simulation_session[absences][][date_fin]" required
+             class="absence-field absence-field--fin" value="<%= absence["date_fin"] %>"
+             data-action="change->simulation#absenceChanged">
+    </div>
+  </div>
+  <span class="field-hint">
+    Saisissez les vraies dates même si l'arrêt déborde du mois simulé : seuls les jours qui tombent
+    dans le mois simulé sont retenus dans le calcul.
+  </span>
+
+  <div class="absence-q3" style="margin-top:0.75rem; display:none">
+    <label class="field-label">Cet arrêt est-il la suite d'un arrêt précédent ?</label>
+    <%= select_tag nil,
+          options_for_select(
+            [["Non, c'est un nouvel arrêt", "nouvel_arret"],
+             ["Oui, c'est une prolongation", "prolongation"],
+             ["Oui, reprise ≤ 48 h puis nouvel arrêt", "reprise_48h"],
+             ["Je ne sais pas", "ne_sais_pas"]],
+            absence["continuation"]
+          ),
+          name: "simulation_session[absences][][continuation]",
+          class: "absence-field absence-field--continuation",
+          data: { action: "change->simulation#absenceChanged" } %> <%# herb:disable all %>
+    <span class="field-hint">
+      Le jour de carence ne s'applique pas en cas de prolongation, ni en cas de nouvel arrêt lié à
+      la même affection après une reprise n'ayant pas dépassé 48 h.
+    </span>
+  </div>
+
+  <div class="absence-q4" style="margin-top:0.75rem; display:none">
+    <label class="field-label">
+      Avez-vous déjà dépassé 90 jours de maladie ordinaire rémunérée sur votre compteur actuel
+      (12 mois glissants) ?
+    </label>
+    <%= select_tag nil,
+          options_for_select(
+            [["Non, je suis dans les 90 premiers jours", "non"],
+             ["Oui, je suis passé à demi-traitement", "oui"],
+             ["Je ne sais pas", "ne_sais_pas"]],
+            absence["compteur_90j_depasse"]
+          ),
+          name: "simulation_session[absences][][compteur_90j_depasse]",
+          class: "absence-field absence-field--compteur",
+          data: { action: "change->simulation#absenceChanged" } %> <%# herb:disable all %>
+    <span class="field-hint">
+      Maintien à 90% pendant les 3 premiers mois, puis à 50% pendant les 9 mois suivants. Par
+      défaut nous supposons que vous êtes dans les 90 premiers jours.
+    </span>
+  </div>
+
+  <div class="absence-q5" style="margin-top:0.75rem; display:none">
+    <label class="field-label">L'accident ou la maladie professionnelle est-il reconnu imputable au service ?</label>
+    <%= select_tag nil,
+          options_for_select(
+            [["En attente de reconnaissance", "en_attente"],
+             ["Oui, imputabilité reconnue", "oui"],
+             ["Non, non reconnue", "non"]],
+            absence["imputabilite_service"].presence || "en_attente"
+          ),
+          name: "simulation_session[absences][][imputabilite_service]",
+          class: "absence-field absence-field--imputabilite",
+          data: { action: "change->simulation#absenceChanged" } %> <%# herb:disable all %>
+    <span class="field-hint">
+      Si reconnue (CITIS), le traitement est maintenu à 100% sans carence ni CMO. Tant que la
+      reconnaissance est en attente ou refusée, l'absence est traitée provisoirement comme une
+      maladie ordinaire (carence + 90%), à régulariser une fois la décision connue.
+    </span>
+  </div>
+</div>

@@ -176,13 +176,13 @@ class SimulationsController < ApplicationController
       :hs_jour, :hs_nuit, :hs_dim_jf,
       :montant_psr, :jours_absence_psr, :montant_lsu,
       :nb_gardes, :heures_par_garde,
-      :jours_carence, :jours_cmo90, :jours_cmo50,
       :date_entree_echelon,
       :heure_debut_service, :heure_fin_service,
       :nb_matins, :nb_apres_midi, :nb_soirs,
       :type_navigo, :navigo_montant_annuel,
       :simulate_fmd, :fmd_mode, :fmd_jours_annee,
-      :confirm_decalage
+      :confirm_decalage,
+      absences: %i[type date_debut date_fin continuation compteur_90j_depasse imputabilite_service]
     )
   end
 end

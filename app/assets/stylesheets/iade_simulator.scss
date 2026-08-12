@@ -689,6 +689,22 @@
 .sim-app .btn--lg { font-size: 1rem; padding: 11px 22px; }
 
 /* ----------------------------------------------------------------
+   ABSENCES (cartes répétables)
+   ---------------------------------------------------------------- */
+.sim-app .absence-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+.sim-app .absence-card__header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.sim-app .absence-card__title { color: var(--ink); font-size: 0.9375rem; }
+
+/* ----------------------------------------------------------------
    ANOMALIES (page compare)
    ---------------------------------------------------------------- */
 .sim-app .anomaly-block {

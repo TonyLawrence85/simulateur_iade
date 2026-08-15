@@ -33,11 +33,12 @@ class SimulationSession < ApplicationRecord
       :iss_montant, :dtc_montant, :wt1_montant,
       :taux_pas, :mutuelle, :garde_alternee,
       :heures_nuit, :heures_dimanche, :heures_ferie,
-      :tp7_qty, :it7_qty, :dhn_heures,
-      :hs_jour, :hs_nuit, :hs_dim_jf,
+      :hs_m2_nuit, :hs_m2_dimanche, :hs_m2_ferie, :hs_m2_jour,
+      :tp7_heures, :tp8_heures,
       :montant_psr, :jours_absence_psr, :montant_lsu,
       :nb_gardes, :heures_par_garde,
       :jours_carence, :jours_cmo90, :jours_cmo50,
+      :jours_clm_cld_plein, :jours_clm_cld_demi, :jours_anr,
       :date_entree_echelon,
       :heure_debut_service, :heure_fin_service,
       :nb_matins, :nb_apres_midi, :nb_soirs,
@@ -58,8 +59,11 @@ class SimulationSession < ApplicationRecord
 
   def compute_absence_totals
     result = Iade::AbsenceEntriesResolver.new(absences: absences, mois_paie: mois_paie).call
-    self.jours_carence = result.jours_carence
-    self.jours_cmo90   = result.jours_cmo90
-    self.jours_cmo50   = result.jours_cmo50
+    self.jours_carence       = result.jours_carence
+    self.jours_cmo90         = result.jours_cmo90
+    self.jours_cmo50         = result.jours_cmo50
+    self.jours_clm_cld_plein = result.jours_clm_cld_plein
+    self.jours_clm_cld_demi  = result.jours_clm_cld_demi
+    self.jours_anr           = result.jours_anr
   end
 end

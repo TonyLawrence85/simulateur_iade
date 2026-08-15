@@ -99,4 +99,23 @@
       maladie ordinaire (carence + 90%), à régulariser une fois la décision connue.
     </span>
   </div>
+
+  <div class="absence-q6" style="margin-top:0.75rem; display:none">
+    <label class="field-label">Êtes-vous actuellement à plein traitement ou à demi-traitement sur ce congé ?</label>
+    <%= select_tag nil,
+          options_for_select(
+            [["Demi-traitement", "demi"],
+             ["Plein traitement", "plein"],
+             ["Je ne sais pas", "ne_sais_pas"]],
+            absence["palier"].presence || "demi"
+          ),
+          name: "simulation_session[absences][][palier]",
+          class: "absence-field absence-field--palier",
+          data: { action: "change->simulation#absenceChanged" } %> <%# herb:disable all %>
+    <span class="field-hint">
+      Pas de jour de carence. CLM : plein traitement pendant 12 mois puis demi-traitement (jusqu'à
+      3 ans au total). CLD : plein traitement pendant 5 ans puis demi-traitement (jusqu'à 8 ans au
+      total). Les primes sont coupées à 100% dans les deux cas, quel que soit le palier.
+    </span>
+  </div>
 </div>

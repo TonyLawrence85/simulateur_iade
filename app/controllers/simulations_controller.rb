@@ -172,8 +172,8 @@ class SimulationsController < ApplicationController
       :taux_pas, :mutuelle,
       :heures_nuit,
       :heures_dimanche, :heures_ferie,
-      :tp7_qty, :it7_qty, :dhn_heures,
-      :hs_jour, :hs_nuit, :hs_dim_jf,
+      :hs_m2_nuit, :hs_m2_dimanche, :hs_m2_ferie, :hs_m2_jour,
+      :tp7_heures, :tp8_heures,
       :montant_psr, :jours_absence_psr, :montant_lsu,
       :nb_gardes, :heures_par_garde,
       :date_entree_echelon,
@@ -182,7 +182,7 @@ class SimulationsController < ApplicationController
       :type_navigo, :navigo_montant_annuel,
       :simulate_fmd, :fmd_mode, :fmd_jours_annee,
       :confirm_decalage,
-      absences: %i[type date_debut date_fin continuation compteur_90j_depasse imputabilite_service]
+      absences: %i[type date_debut date_fin continuation compteur_90j_depasse imputabilite_service palier]
     )
   end
 end

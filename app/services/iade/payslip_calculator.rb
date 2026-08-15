@@ -60,8 +60,7 @@ module Iade
       add_fmd
       add_jma
       add_dim_jf
-      add_tp7_it7_dhn
-      add_heures_sup
+      add_heures_sup_m2
       add_gardes
       add_psr
       add_lsu
@@ -248,34 +247,24 @@ module Iade
       @warnings << "JW0 : vérifier que vous avez saisi l'activité de M-1" if montant.positive?
     end
 
-    def add_tp7_it7_dhn # rubocop:disable Metrics/MethodLength
-      tp7 = @p[:tp7_qty].to_i
-      it7 = @p[:it7_qty].to_i
-      dhn = @p[:dhn_heures].to_f
-      return if tp7.zero? && it7.zero? && dhn.zero?
-
-      montant = Iade::PlanningCalculator.rappels_m2(
-        tp7_qty: tp7, it7_qty: it7, dhn_heures: dhn,
-        tib_mensuel: tib_montant, ir_mensuel: @ir_montant || 0
-      )
-      add_line(code: "TP7/IT7/DHN", label: "RAPPELS TP7/IT7/DHN", category: :var_m2,
-               montant: montant, detail: "Activité M-2", pay_lag: :mois_m2)
-      @warnings << "TP7/IT7/DHN : vérifier l'activité de M-2" if montant.positive?
-    end
-
-    def add_heures_sup # rubocop:disable Metrics/MethodLength
-      result = Iade::HeuresSupCalculator.new(
+    def add_heures_sup_m2 # rubocop:disable Metrics/MethodLength
+      result = Iade::HeuresSupM2Calculator.new(
         tib_mensuel: tib_montant,
         ir_mensuel: @ir_montant || 0,
-        hs_jour: @p[:hs_jour].to_f,
-        hs_nuit: @p[:hs_nuit].to_f,
-        hs_dim_jf: @p[:hs_dim_jf].to_f
+        hs_m2_nuit: @p[:hs_m2_nuit].to_f,
+        hs_m2_dimanche: @p[:hs_m2_dimanche].to_f,
+        hs_m2_ferie: @p[:hs_m2_ferie].to_f,
+        hs_m2_jour: @p[:hs_m2_jour].to_f,
+        tp7_heures: @p[:tp7_heures].to_f,
+        tp8_heures: @p[:tp8_heures].to_f
       ).compute
       return if result[:total].zero?
 
-      result[:lines].each do |hs|
-        add_line(code: hs[:code], label: hs[:label], category: :var_m, montant: hs[:montant], detail: hs[:detail])
+      result[:lines].each do |l|
+        add_line(code: l[:code], label: l[:label], category: :var_m2, montant: l[:montant], detail: l[:detail],
+                 pay_lag: :mois_m2)
       end
+      @warnings << "Heures sup. M-2 : vérifier l'activité de M-2"
     end
 
     def add_gardes
@@ -322,7 +311,10 @@ module Iade
     def absence_jours?
       @p[:jours_carence].to_i.positive? ||
         @p[:jours_cmo90].to_i.positive? ||
-        @p[:jours_cmo50].to_i.positive?
+        @p[:jours_cmo50].to_i.positive? ||
+        @p[:jours_clm_cld_plein].to_i.positive? ||
+        @p[:jours_clm_cld_demi].to_i.positive? ||
+        @p[:jours_anr].to_i.positive?
     end
 
     def absence_calc_args
@@ -331,7 +323,14 @@ module Iade
         ir: line_montant("BR0"), nbi: line_montant("KB1"),
         ir_nbi: line_montant("KR0"), ks1: line_montant("KS1"),
         iss: line_montant("IS1"), veil: line_montant("LP1"),
-        iade: line_montant("LPN"), dtc: line_montant("DTC") }
+        iade: line_montant("LPN"), dtc: line_montant("DTC"),
+        brut_total: @brut_lines_total, jours_calendaires: jours_calendaires_du_mois }
+    end
+
+    def jours_calendaires_du_mois
+      Date.strptime(@p[:mois_paie].to_s, "%Y-%m").end_of_month.day
+    rescue ArgumentError, TypeError
+      30
     end
 
     # ---------------- DÉDUCTIONS ----------------
@@ -471,15 +470,16 @@ module Iade
 
     def brut_primes_total
       # IBA (négatif) réduit l'assiette RAFP ; PSR/LSU soumis RAFP selon plafond (PDF §8)
-      codes = %w[CW1 LP1 LPN IS1 JMA JW0 TP7/IT7/DHN IBA PSR LSU]
+      codes = %w[CW1 LP1 LPN IS1 JMA JW0 IT7 DHN TP7 TP8 IBA PSR LSU]
       total = @lines.select { |l| codes.include?(l[:code]) && l[:type] == :brut }.sum { |l| l[:montant] }
       [total, BigDecimal("0")].max
     end
 
     def hs_montant_total
-      # GAR = gardes équivalent HS nuit → même régime UC8/VR7
+      # GAR = gardes équivalent HS nuit ; IT7/DHN = heures sup M-2 → même régime UC8/VR7
+      # (TP7/TP8 = greffe/transplantation, hors régime heures sup)
       @lines.select { |l| l[:type] == :brut }
-            .select { |l| l[:code].start_with?("HS") || l[:code] == "GAR" }
+            .select { |l| l[:code].start_with?("HS") || %w[GAR IT7 DHN].include?(l[:code]) }
             .sum { |l| l[:montant] }
     end
 

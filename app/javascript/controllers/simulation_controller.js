@@ -273,19 +273,22 @@ export default class extends Controller {
     })
   }
 
-  // Affiche/masque les questions 3/4 (maladie ordinaire) et 5 (imputabilité au service)
+  // Affiche/masque les questions 3/4 (maladie ordinaire), 5 (imputabilité) et 6 (palier CLM/CLD)
   _syncAbsenceCard(card) {
     const typeSelect = card.querySelector(".absence-field--type")
     const family = typeSelect?.selectedOptions[0]?.dataset.family
     const isProlongationType = typeSelect?.value === "prolongation_maladie_ordinaire"
     const isMaladieOrdinaire = family === "maladie_ordinaire"
     const isImputabilite = family === "imputabilite"
+    const isLongueMaladie = family === "longue_maladie"
     const q3 = card.querySelector(".absence-q3")
     const q4 = card.querySelector(".absence-q4")
     const q5 = card.querySelector(".absence-q5")
+    const q6 = card.querySelector(".absence-q6")
     if (q3) q3.style.display = (isMaladieOrdinaire && !isProlongationType) ? "" : "none"
     if (q4) q4.style.display = isMaladieOrdinaire ? "" : "none"
     if (q5) q5.style.display = isImputabilite ? "" : "none"
+    if (q6) q6.style.display = isLongueMaladie ? "" : "none"
   }
 
   _parseDateInput(value) {
@@ -304,6 +307,7 @@ export default class extends Controller {
     const monthEnd   = (y && m) ? new Date(Date.UTC(y, m, 0)) : null
 
     let carence = 0, cmo90 = 0, cmo50 = 0, maintenu100 = 0, nonCalcule = 0
+    let clmCldPlein = 0, clmCldDemi = 0, anr = 0
 
     this.absenceCardTargets.forEach(card => {
       const resultEl = card.querySelector(".absence-field--result")
@@ -358,6 +362,18 @@ export default class extends Controller {
           applyMaladieOrdinaire("nouvel_arret", "non")
           if (resultEl) resultEl.value += " (provisoire, imputabilité non reconnue)"
         }
+      } else if (family === "longue_maladie") {
+        const palier = card.querySelector(".absence-field--palier")?.value || "demi"
+        if (palier === "plein") {
+          clmCldPlein += joursInMonth
+          if (resultEl) resultEl.value = `${joursInMonth}j à plein traitement (primes coupées)`
+        } else {
+          clmCldDemi += joursInMonth
+          if (resultEl) resultEl.value = `${joursInMonth}j à demi-traitement (primes coupées)`
+        }
+      } else if (family === "anr") {
+        anr += joursInMonth
+        if (resultEl) resultEl.value = `${joursInMonth}j — retenue intégrale`
       } else if (family === "maintenu_100") {
         maintenu100 += joursInMonth
         if (resultEl) resultEl.value = `${joursInMonth}j maintenus à 100%`
@@ -367,10 +383,10 @@ export default class extends Controller {
       }
     })
 
-    this._absenceTotals = { carence, cmo90, cmo50 }
+    this._absenceTotals = { carence, cmo90, cmo50, clmCldPlein, clmCldDemi, anr, joursCalendaires: monthEnd ? monthEnd.getUTCDate() : 30 }
 
     if (this.hasAbsencesSummaryTarget) {
-      const total = carence + cmo90 + cmo50 + maintenu100 + nonCalcule
+      const total = carence + cmo90 + cmo50 + maintenu100 + nonCalcule + clmCldPlein + clmCldDemi + anr
       if (total === 0) {
         this.absencesSummaryTarget.textContent = "Aucune absence saisie ce mois-ci."
       } else {
@@ -378,6 +394,9 @@ export default class extends Controller {
         if (carence)     parts.push(`${carence}j carence`)
         if (cmo90)       parts.push(`${cmo90}j à 90%`)
         if (cmo50)       parts.push(`${cmo50}j à 50%`)
+        if (clmCldPlein) parts.push(`${clmCldPlein}j CLM/CLD plein`)
+        if (clmCldDemi)  parts.push(`${clmCldDemi}j CLM/CLD demi`)
+        if (anr)         parts.push(`${anr}j non rémunérés`)
         if (maintenu100) parts.push(`${maintenu100}j maintenus à 100%`)
         if (nonCalcule)  parts.push(`${nonCalcule}j non calculés`)
         this.absencesSummaryTarget.textContent = parts.join(" · ")
@@ -408,9 +427,12 @@ export default class extends Controller {
     const hNuit    = parseFloat(this._fv("heures_nuit")) || 0
     const hDim     = parseFloat(this._fv("heures_dimanche")) || 0
     const hFerie   = parseFloat(this._fv("heures_ferie")) || 0
-    const hsJour   = parseFloat(this._fv("hs_jour")) || 0
-    const hsNuit   = parseFloat(this._fv("hs_nuit")) || 0
-    const hsDimJf  = parseFloat(this._fv("hs_dim_jf")) || 0
+    const hsM2Nuit     = parseFloat(this._fv("hs_m2_nuit")) || 0
+    const hsM2Dimanche = parseFloat(this._fv("hs_m2_dimanche")) || 0
+    const hsM2Ferie    = parseFloat(this._fv("hs_m2_ferie")) || 0
+    const hsM2Jour     = parseFloat(this._fv("hs_m2_jour")) || 0
+    const tp7Heures    = parseFloat(this._fv("tp7_heures")) || 0
+    const tp8Heures    = parseFloat(this._fv("tp8_heures")) || 0
     const mPsr     = parseFloat(this._fv("montant_psr")) || 0
     const jAbsPsr  = parseInt(this._fv("jours_absence_psr")) || 0
     const mLsu     = parseFloat(this._fv("montant_lsu")) || 0
@@ -448,7 +470,9 @@ export default class extends Controller {
     const baseH    = (tib + ir) * 12 / 1820
     const jma      = baseH * 0.25 * hNuit
     const dimjf    = (hDim + hFerie) * 7.50
-    const hsTotal  = baseH * (hsJour * 1.26 + hsNuit * 2.52 + hsDimJf * 2.10)
+    const hsSupMontant  = this._calcHeuresSupM2(baseH, hsM2Nuit, hsM2Dimanche, hsM2Ferie, hsM2Jour)
+    const greffeMontant = baseH * (2.52 * tp7Heures + 2.10 * tp8Heures)
+    const hsTotal  = hsSupMontant + greffeMontant
     const tauxHsN  = baseH * 1.26 * 2
     const gardes   = nbGardes * hGarde * tauxHsN
 
@@ -473,15 +497,21 @@ export default class extends Controller {
       else                     fmd = 300
     }
 
-    // ── Absences (retenues approchées — détail exact sur bulletin) ──
-    const retCarence = joursCarence > 0 ? (tib + cti) * joursCarence / 30 : 0
-    const retCmo90   = joursCmo90   > 0 ? (tib + cti) * 0.10 * joursCmo90 / 30 : 0
-    const retCmo50   = joursCmo50   > 0 ? (tib + cti) * 0.50 * joursCmo50 / 30 : 0
-    const retAbsTotal = retCarence + retCmo90 + retCmo50
-
     // ── Brut ──
     const brut = tib + cti + veil + iade - iba + ir + nbi + irNbi + iss + sft +
                  jma + dimjf + hsTotal + gardes + psr + lsu + wt1 + fmd
+
+    // ── Absences (retenues approchées — détail exact sur bulletin) ──
+    const { clmCldPlein = 0, clmCldDemi = 0, anr = 0, joursCalendaires = 30 } = this._absenceTotals || {}
+    const retCarence  = joursCarence > 0 ? (tib + cti) * joursCarence / 30 : 0
+    const retCmo90    = joursCmo90   > 0 ? (tib + cti) * 0.10 * joursCmo90 / 30 : 0
+    const retCmo50    = joursCmo50   > 0 ? (tib + cti) * 0.50 * joursCmo50 / 30 : 0
+    const clmCldJours = clmCldPlein + clmCldDemi
+    const retClmCld   = clmCldJours > 0
+      ? (iss + veil + iade) * clmCldJours / 30 + (tib + cti + ir) * 0.50 * clmCldDemi / 30
+      : 0
+    const retAnr      = anr > 0 ? brut * anr / joursCalendaires : 0
+    const retAbsTotal = retCarence + retCmo90 + retCmo50 + retClmCld + retAnr
 
     // ── Cotisations estimées ──
     let cnracl = 0, rafp = 0
@@ -495,7 +525,7 @@ export default class extends Controller {
       cnracl = 0.0401 * (tib + cti + brut)
     }
     const baseCsg  = brut * 0.9825
-    const hsGardes = hsTotal + gardes
+    const hsGardes = hsSupMontant + gardes
     const csgTotal = baseCsg * (0.029 + 0.068) + (hsGardes > 0 ? hsGardes * 0.068 : 0)
     const totalAv  = cnracl + rafp + csgTotal
     const netAvPas = brut - totalAv - retAbsTotal
@@ -551,6 +581,8 @@ export default class extends Controller {
     this._sbLineShow("carence", retCarence > 0); if (retCarence > 0) this._sbNeg("carence", retCarence, true)
     this._sbLineShow("cmo90",   retCmo90   > 0); if (retCmo90   > 0) this._sbNeg("cmo90",   retCmo90,   true)
     this._sbLineShow("cmo50",   retCmo50   > 0); if (retCmo50   > 0) this._sbNeg("cmo50",   retCmo50,   true)
+    this._sbLineShow("clmcld",  retClmCld  > 0); if (retClmCld  > 0) this._sbNeg("clmcld",  retClmCld,  true)
+    this._sbLineShow("anr",     retAnr     > 0); if (retAnr     > 0) this._sbNeg("anr",     retAnr,     true)
 
     this._sbTotal("brut",   brut)
     this._sbNeg("cnracl",   cnracl + rafp, true)
@@ -603,6 +635,22 @@ export default class extends Controller {
     else if (nb === 2) sft = Math.max(73.04, 10.67 + tib * 0.03)
     else if (nb >= 3)  sft = Math.max(181.56 + (nb-3)*129.10, 15.24 + tib*0.08 + (nb-3)*(4.57 + tib*0.06))
     return alternee && sft > 0 ? sft / 2 : sft
+  }
+
+  // Contingent mensuel de 20h (nuit puis dimanche puis férié puis jour) au tarif de la
+  // catégorie (IT7), au-delà taux réduit ×0,25 (DHN). Miroir de HeuresSupM2Calculator.
+  _calcHeuresSupM2(baseH, hNuit, hDimanche, hFerie, hJour) {
+    const taux = { nuit: 2.52, dimanche: 2.10, ferie: 2.10, jour: 1.26 }
+    let contingentRestant = 20
+    let montant = 0
+    ;[["nuit", hNuit], ["dimanche", hDimanche], ["ferie", hFerie], ["jour", hJour]].forEach(([cat, h]) => {
+      const hIt7 = Math.min(h, contingentRestant)
+      const hDhn = h - hIt7
+      contingentRestant -= hIt7
+      montant += baseH * taux[cat] * hIt7
+      montant += baseH * 0.25 * hDhn
+    })
+    return montant
   }
 
   // Montant positif dans la sidebar

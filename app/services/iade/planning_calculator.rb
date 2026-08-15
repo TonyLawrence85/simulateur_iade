@@ -5,6 +5,11 @@ module Iade
     HEURES_ANNUELLES_FPH = BigDecimal("1820")
     TAUX_HORAIRE_IDJF    = BigDecimal("7.50")
 
+    # Taux IHTS FPH (Décret heures supplémentaires) — base = (TIB + IR) × 12 / 1820
+    TAUX_JOUR   = BigDecimal("1.26")
+    TAUX_NUIT   = BigDecimal("2.52")  # 1.26 × 2
+    TAUX_DIM_JF = BigDecimal("2.10")  # 1.26 × (1 + 2/3)
+
     # Base horaire FPH = (TIB + IR) × 12 / 1820
     def self.base_horaire(tib_mensuel:, ir_mensuel: 0)
       (BigDecimal(tib_mensuel.to_s) + BigDecimal(ir_mensuel.to_s)) * 12 / HEURES_ANNUELLES_FPH
@@ -22,19 +27,6 @@ module Iade
     def self.dimanche_ferie(heures_dim:, heures_ferie:)
       total_heures = BigDecimal(heures_dim.to_s) + BigDecimal(heures_ferie.to_s)
       (total_heures * TAUX_HORAIRE_IDJF).round(2)
-    end
-
-    def self.rappels_m2(tp7_qty:, it7_qty:, dhn_heures:, tib_mensuel:, ir_mensuel: 0)
-      base = base_horaire(tib_mensuel: tib_mensuel, ir_mensuel: ir_mensuel)
-      montant_tp7 = base * BigDecimal("7") * BigDecimal(tp7_qty.to_s)
-      montant_it7 = base * BigDecimal("7") * BigDecimal(it7_qty.to_s)
-      montant_dhn = base * BigDecimal("0.25") * BigDecimal(dhn_heures.to_s)
-      (montant_tp7 + montant_it7 + montant_dhn).round(2)
-    end
-
-    # Conservé pour compatibilité avec HeuresSupCalculator
-    def self.taux_horaire_from_tib(tib_mensuel, ir_mensuel = 0)
-      base_horaire(tib_mensuel: tib_mensuel, ir_mensuel: ir_mensuel)
     end
   end
 end

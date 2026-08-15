@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_194804) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_14_213601) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -105,7 +105,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_194804) do
     t.decimal "iss_montant"
     t.integer "it7_qty"
     t.integer "jours_absence_psr", default: 0
+    t.integer "jours_anr", default: 0
     t.integer "jours_carence", default: 0
+    t.integer "jours_clm_cld_demi", default: 0
+    t.integer "jours_clm_cld_plein", default: 0
     t.integer "jours_cmo50", default: 0
     t.integer "jours_cmo90", default: 0
     t.string "mois_paie"

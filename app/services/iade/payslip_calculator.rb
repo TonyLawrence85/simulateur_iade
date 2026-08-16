@@ -484,8 +484,7 @@ module Iade
     end
 
     def taux_hs_nuit
-      base_horaire = (tib_montant + (@ir_montant || BigDecimal("0"))) * 12 / BigDecimal("1820")
-      (base_horaire * BigDecimal("1.26") * 2).round(2)
+      Iade::PlanningCalculator.taux_hs(:nuit, tib_mensuel: tib_montant, ir_mensuel: @ir_montant || BigDecimal("0"))
     end
 
     def base_imposable_mensuelle

@@ -471,9 +471,9 @@ export default class extends Controller {
     const jma      = baseH * 0.25 * hNuit
     const dimjf    = (hDim + hFerie) * 7.50
     const hsSupMontant  = this._calcHeuresSupM2(baseH, hsM2Nuit, hsM2Dimanche, hsM2Ferie, hsM2Jour)
-    const greffeMontant = baseH * (2.52 * tp7Heures + 2.10 * tp8Heures)
+    const greffeMontant = this._tronquerTaux(baseH * 2.52) * tp7Heures + this._tronquerTaux(baseH * 2.10) * tp8Heures
     const hsTotal  = hsSupMontant + greffeMontant
-    const tauxHsN  = baseH * 1.26 * 2
+    const tauxHsN  = this._tronquerTaux(baseH * 2.52)
     const gardes   = nbGardes * hGarde * tauxHsN
 
     // ── Primes variables ──
@@ -640,17 +640,28 @@ export default class extends Controller {
   // Contingent mensuel de 20h (nuit puis dimanche puis férié puis jour) au tarif de la
   // catégorie (IT7), au-delà taux réduit ×0,25 (DHN). Miroir de HeuresSupM2Calculator.
   _calcHeuresSupM2(baseH, hNuit, hDimanche, hFerie, hJour) {
-    const taux = { nuit: 2.52, dimanche: 2.10, ferie: 2.10, jour: 1.26 }
+    const taux = {
+      nuit: this._tronquerTaux(baseH * 2.52),
+      dimanche: this._tronquerTaux(baseH * 2.10),
+      ferie: this._tronquerTaux(baseH * 2.10),
+      jour: this._tronquerTaux(baseH * 1.26)
+    }
+    const tauxDhn = this._tronquerTaux(baseH * 0.25)
     let contingentRestant = 20
     let montant = 0
     ;[["nuit", hNuit], ["dimanche", hDimanche], ["ferie", hFerie], ["jour", hJour]].forEach(([cat, h]) => {
       const hIt7 = Math.min(h, contingentRestant)
       const hDhn = h - hIt7
       contingentRestant -= hIt7
-      montant += baseH * taux[cat] * hIt7
-      montant += baseH * 0.25 * hDhn
+      montant += taux[cat] * hIt7
+      montant += tauxDhn * hDhn
     })
     return montant
+  }
+
+  // Règle moteur AP-HP : taux horaire tronqué au multiple inférieur de 0,02 € (pas arrondi)
+  _tronquerTaux(taux) {
+    return Math.floor(taux / 0.02) * 0.02
   }
 
   // Montant positif dans la sidebar

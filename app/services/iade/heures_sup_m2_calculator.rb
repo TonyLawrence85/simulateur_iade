@@ -12,23 +12,24 @@ module Iade
   # payées respectivement au tarif nuit et au tarif dimanche/JF, sans plafond de contingent.
   class HeuresSupM2Calculator
     CONTINGENT_MENSUEL = BigDecimal("20")
-    TAUX_DHN            = BigDecimal("0.25")
 
     CATEGORIES = %i[nuit dimanche ferie jour].freeze
-    TAUX_PAR_CATEGORIE = {
-      nuit: PlanningCalculator::TAUX_NUIT,
-      dimanche: PlanningCalculator::TAUX_DIM_JF,
-      ferie: PlanningCalculator::TAUX_DIM_JF,
-      jour: PlanningCalculator::TAUX_JOUR
-    }.freeze
+    CATEGORIE_TAUX_HS = { nuit: :nuit, dimanche: :dim_jf, ferie: :dim_jf, jour: :jour }.freeze
 
     def initialize(tib_mensuel:, ir_mensuel: 0, hs_m2_nuit: 0, hs_m2_dimanche: 0, hs_m2_ferie: 0, hs_m2_jour: 0,
                    tp7_heures: 0, tp8_heures: 0)
-      @base = PlanningCalculator.base_horaire(tib_mensuel: tib_mensuel, ir_mensuel: ir_mensuel)
       @heures = { nuit: hs_m2_nuit, dimanche: hs_m2_dimanche, ferie: hs_m2_ferie, jour: hs_m2_jour }
                 .transform_values { |v| BigDecimal(v.to_s) }
       @tp7_heures = BigDecimal(tp7_heures.to_s)
       @tp8_heures = BigDecimal(tp8_heures.to_s)
+
+      # Taux horaires tronqués au multiple inférieur de 0,02 € (règle moteur AP-HP)
+      @taux = {
+        jour: PlanningCalculator.taux_hs(:jour, tib_mensuel: tib_mensuel, ir_mensuel: ir_mensuel),
+        nuit: PlanningCalculator.taux_hs(:nuit, tib_mensuel: tib_mensuel, ir_mensuel: ir_mensuel),
+        dim_jf: PlanningCalculator.taux_hs(:dim_jf, tib_mensuel: tib_mensuel, ir_mensuel: ir_mensuel),
+        dhn: PlanningCalculator.taux_hs(:dhn, tib_mensuel: tib_mensuel, ir_mensuel: ir_mensuel)
+      }
     end
 
     def compute
@@ -54,12 +55,12 @@ module Iade
         contingent_restant -= h_it7
 
         if h_it7.positive?
-          it7_montant += @base * TAUX_PAR_CATEGORIE[cat] * h_it7
+          it7_montant += @taux[CATEGORIE_TAUX_HS[cat]] * h_it7
           it7_detail << "#{cat} #{h_it7}h"
         end
         next unless h_dhn.positive?
 
-        dhn_montant += @base * TAUX_DHN * h_dhn
+        dhn_montant += @taux[:dhn] * h_dhn
         dhn_detail << "#{cat} #{h_dhn}h"
       end
 
@@ -85,12 +86,12 @@ module Iade
     end
 
     def tp7_line
-      montant = (@base * PlanningCalculator::TAUX_NUIT * @tp7_heures).round(2)
+      montant = (@taux[:nuit] * @tp7_heures).round(2)
       { code: "TP7", label: "GREFFE/TRANSPLANT. NUIT (M-2)", montant: montant, detail: "#{@tp7_heures}h × tarif nuit" }
     end
 
     def tp8_line
-      montant = (@base * PlanningCalculator::TAUX_DIM_JF * @tp8_heures).round(2)
+      montant = (@taux[:dim_jf] * @tp8_heures).round(2)
       { code: "TP8", label: "GREFFE/TRANSPLANT. DIM./FÉRIÉS (M-2)", montant: montant,
         detail: "#{@tp8_heures}h × tarif dim./fériés" }
     end

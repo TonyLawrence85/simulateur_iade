@@ -459,6 +459,7 @@ export default class extends Controller {
     const ft9Montant  = parseFloat(this._fv("ft9_montant")) || 190
     const nbGardes    = parseFloat(this._fv("nb_gardes")) || 0
     const hGarde      = parseFloat(this._fv("heures_par_garde")) || 4
+    const heuresWeekendGarde = parseFloat(this._fv("heures_weekend_garde")) || 0
     const { carence: joursCarence = 0, cmo90: joursCmo90 = 0, cmo50: joursCmo50 = 0 } = this._absenceTotals || {}
     const typeNavigo   = this._fv("type_navigo") || "mensuel"
     const wt1Base      = typeNavigo === "annuel"
@@ -491,11 +492,11 @@ export default class extends Controller {
     const baseH    = (tib + ir) * 12 / 1820
     const jma      = baseH * 0.25 * hNuit
     const dimjf    = (hDim + hFerie) * 7.50
-    const hsSupMontant  = this._calcHeuresSupM2(baseH, hsM2Nuit, hsM2Dimanche, hsM2Ferie, hsM2Jour)
+    const hsSupMontant  = this._calcHeuresSupM2(baseH, hsM2Nuit + nbGardes * hGarde, hsM2Dimanche, hsM2Ferie, hsM2Jour)
     const greffeMontant = this._tronquerTaux(baseH * 2.52) * tp7Heures + this._tronquerTaux(baseH * 2.10) * tp8Heures
     const hsTotal  = hsSupMontant + greffeMontant
     const tauxHsN  = this._tronquerTaux(baseH * 2.52)
-    const gardes   = nbGardes * hGarde * tauxHsN
+    const gardes   = heuresWeekendGarde * tauxHsN
 
     // ── Primes variables ──
     const pertePsr = jAbsPsr > 0 ? mPsr * jAbsPsr / 140 : 0

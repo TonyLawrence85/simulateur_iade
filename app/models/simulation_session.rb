@@ -39,7 +39,7 @@ class SimulationSession < ApplicationRecord
       :montant_primes_diverses,
       :ft1_mode, :ft1_montant, :ft1_semaines,
       :ft9_actif, :ft9_montant,
-      :nb_gardes, :heures_par_garde,
+      :nb_gardes, :heures_par_garde, :heures_weekend_garde,
       :jours_carence, :jours_cmo90, :jours_cmo50,
       :jours_clm_cld_plein, :jours_clm_cld_demi, :jours_anr,
       :date_entree_echelon,

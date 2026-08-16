@@ -145,18 +145,24 @@
 
     <%# Gardes %>
     <div class="section-label" style="margin-top:1.25rem">
-      Gardes (équivalent heures sup. de nuit) <span class="badge badge--var">GAR</span>
+      Gardes <span class="badge badge--var">IT7 / DHN</span>
     </div>
     <div class="alert alert--info" style="margin-bottom:1rem">
       <span>ℹ</span>
       <div>
-        À Bichat, une garde = <strong>4 h HS nuit</strong> (par défaut). Taux calculé automatiquement : <code>(TIB + IR) × 12 / 1820 × 1,26 × 2</code>. Payées en <strong>M+2</strong> comme les HS.
+        À Bichat, une garde = <strong>4 h de heures sup. de nuit</strong> (par défaut). Ces heures
+        rejoignent le contingent mensuel de 20h partagé avec les heures sup de nuit saisies en
+        étape 4 : payées au tarif nuit tant que le contingent n'est pas dépassé (code
+        <code>IT7</code>), puis au tarif réduit au-delà (code <code>DHN</code>). Payées en
+        <strong>M+2</strong>.
       </div>
     </div>
 
     <div class="field-grid field-grid--2">
       <div class="field-group">
-        <%= f.label :nb_gardes, "Nombre de gardes (M−2)", class: "field-label" %>
+        <%= f.label :nb_gardes, class: "field-label" do %>
+          Nombre de gardes (M−2)
+        <% end %>
         <%= f.number_field :nb_gardes, placeholder: "0", step: 1, min: 0,
             data: { action: "input->simulation#updateSidebar" } %>
         <span class="field-hint field-hint--warn">Saisir l'activité du mois M−2</span>
@@ -166,6 +172,29 @@
         <%= f.number_field :heures_par_garde, placeholder: "4", step: 0.5, min: 0,
             data: { action: "input->simulation#updateSidebar" } %>
         <span class="field-hint">Par défaut : 4 h (Bichat) — à adapter selon votre service</span>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:1.25rem">
+      Heures de weekend de garde <span class="badge badge--var">GAR</span>
+    </div>
+    <div class="alert alert--info" style="margin-bottom:1rem">
+      <span>ℹ</span>
+      <div>
+        Calcul : nombre d'heures × tarif HS nuit. Contrairement aux gardes ci-dessus, ces heures
+        sont payées <strong>hors contingent</strong>, toujours au tarif plein. Activité de
+        <strong>M−2</strong>.
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--2">
+      <div class="field-group">
+        <%= f.label :heures_weekend_garde, class: "field-label" do %>
+          Heures de weekend de garde (M-2)
+        <% end %>
+        <%= f.number_field :heures_weekend_garde, placeholder: "0", step: 0.5, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint field-hint--warn">Saisir l'activité du mois M−2</span>
       </div>
     </div>
 

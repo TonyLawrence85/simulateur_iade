@@ -178,7 +178,7 @@ class SimulationsController < ApplicationController
       :montant_primes_diverses,
       :ft1_mode, :ft1_montant, :ft1_semaines,
       :ft9_actif, :ft9_montant,
-      :nb_gardes, :heures_par_garde,
+      :nb_gardes, :heures_par_garde, :heures_weekend_garde,
       :date_entree_echelon,
       :heure_debut_service, :heure_fin_service,
       :nb_matins, :nb_apres_midi, :nb_soirs,

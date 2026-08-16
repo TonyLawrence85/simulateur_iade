@@ -61,7 +61,7 @@ module Iade
       add_jma
       add_dim_jf
       add_heures_sup_m2
-      add_gardes
+      add_gardes_weekend
       add_psr
       add_lsu
       add_primes_diverses
@@ -251,6 +251,9 @@ module Iade
     end
 
     def add_heures_sup_m2 # rubocop:disable Metrics/MethodLength
+      nb = @p[:nb_gardes].to_f
+      heures_equiv = @p[:heures_par_garde].presence&.to_f || 4.0
+
       result = Iade::HeuresSupM2Calculator.new(
         tib_mensuel: tib_montant,
         ir_mensuel: @ir_montant || 0,
@@ -258,6 +261,7 @@ module Iade
         hs_m2_dimanche: @p[:hs_m2_dimanche].to_f,
         hs_m2_ferie: @p[:hs_m2_ferie].to_f,
         hs_m2_jour: @p[:hs_m2_jour].to_f,
+        garde_heures: nb * heures_equiv,
         tp7_heures: @p[:tp7_heures].to_f,
         tp8_heures: @p[:tp8_heures].to_f
       ).compute
@@ -270,16 +274,17 @@ module Iade
       @warnings << "Heures sup. M-2 : vérifier l'activité de M-2"
     end
 
-    def add_gardes
-      nb = @p[:nb_gardes].to_f
-      return if nb.zero?
+    # Heures de garde faites le weekend : rémunérées directement au tarif HS nuit, hors
+    # contingent (contrairement aux gardes de semaine, poolées avec les heures sup de nuit).
+    def add_gardes_weekend
+      heures = @p[:heures_weekend_garde].to_f
+      return if heures.zero?
 
-      heures_equiv = @p[:heures_par_garde].presence&.to_f || 4.0
       taux = taux_hs_nuit
-      montant = (nb * heures_equiv * taux).round(2)
-      add_line(code: "GAR", label: "GARDES (éq. HS nuit)", category: :var_m2,
+      montant = (heures * taux).round(2)
+      add_line(code: "GAR", label: "GARDES WEEKEND (éq. HS nuit)", category: :var_m2,
                montant: BigDecimal(montant.to_s),
-               detail: "#{nb.to_i} garde(s) × #{heures_equiv.to_i}h × #{taux}€/h (M−2)", pay_lag: :mois_m2)
+               detail: "#{heures}h × #{taux}€/h, hors contingent (M−2)", pay_lag: :mois_m2)
     end
 
     def add_psr

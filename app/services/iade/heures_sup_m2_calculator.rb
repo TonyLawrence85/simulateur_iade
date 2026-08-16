@@ -10,16 +10,19 @@ module Iade
   #
   # TP7 (greffe/transplantation de nuit) et TP8 (greffe/transplantation dimanche/JF) sont
   # payées respectivement au tarif nuit et au tarif dimanche/JF, sans plafond de contingent.
+  #
+  # Les gardes (nombre de gardes × heures équivalentes, ex. 1 garde = 4h) sont assimilées à
+  # des heures sup de nuit et rejoignent le même contingent (même tarif que la catégorie nuit).
   class HeuresSupM2Calculator
     CONTINGENT_MENSUEL = BigDecimal("20")
 
-    CATEGORIES = %i[nuit dimanche ferie jour].freeze
-    CATEGORIE_TAUX_HS = { nuit: :nuit, dimanche: :dim_jf, ferie: :dim_jf, jour: :jour }.freeze
+    CATEGORIES = %i[nuit garde dimanche ferie jour].freeze
+    CATEGORIE_TAUX_HS = { nuit: :nuit, garde: :nuit, dimanche: :dim_jf, ferie: :dim_jf, jour: :jour }.freeze
 
     def initialize(tib_mensuel:, ir_mensuel: 0, hs_m2_nuit: 0, hs_m2_dimanche: 0, hs_m2_ferie: 0, hs_m2_jour: 0,
-                   tp7_heures: 0, tp8_heures: 0)
-      @heures = { nuit: hs_m2_nuit, dimanche: hs_m2_dimanche, ferie: hs_m2_ferie, jour: hs_m2_jour }
-                .transform_values { |v| BigDecimal(v.to_s) }
+                   garde_heures: 0, tp7_heures: 0, tp8_heures: 0)
+      @heures = { nuit: hs_m2_nuit, garde: garde_heures, dimanche: hs_m2_dimanche, ferie: hs_m2_ferie,
+                  jour: hs_m2_jour }.transform_values { |v| BigDecimal(v.to_s) }
       @tp7_heures = BigDecimal(tp7_heures.to_s)
       @tp8_heures = BigDecimal(tp8_heures.to_s)
 

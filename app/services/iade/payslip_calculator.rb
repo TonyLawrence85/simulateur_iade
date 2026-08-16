@@ -64,6 +64,9 @@ module Iade
       add_gardes
       add_psr
       add_lsu
+      add_primes_diverses
+      add_ft1
+      add_ft9
     end
 
     def add_tib
@@ -299,6 +302,40 @@ module Iade
                montant: BigDecimal(montant.to_s), detail: "Montant saisi")
     end
 
+    def add_primes_diverses
+      montant = @p[:montant_primes_diverses].to_f
+      return if montant.zero?
+
+      add_line(code: "DIV", label: "PRIMES DIVERSES", category: :prime_variable,
+               montant: BigDecimal(montant.to_s), detail: "Montant saisi")
+    end
+
+    # FT1 : indemnité de tutorat de stagiaire (54 €/semaine), soumise CSG/CRDS + RAFP plafonnée,
+    # hors assiette CNRACL, hors exonération HS (Règle donnée au codeur, cahier §FT1).
+    def add_ft1
+      mode = @p[:ft1_mode].presence || "semaines"
+      montant, detail = if mode == "montant"
+                          [@p[:ft1_montant].to_f, "Montant saisi"]
+                        else
+                          semaines = @p[:ft1_semaines].to_i
+                          [semaines * 54.0, "#{semaines} semaine(s) × 54 €"]
+                        end
+      return if montant.zero?
+
+      add_line(code: "FT1", label: "IND. TUTORAT STAGIAIRE", category: :prime_variable,
+               montant: BigDecimal(montant.to_s).round(2), detail: detail)
+    end
+
+    # FT9 : prime tutorat soignant, 190 €/mois fixe, mêmes règles de cotisation que FT1.
+    # Non automatique : seuls les agents désignés tuteurs la perçoivent.
+    def add_ft9
+      return unless @p[:ft9_actif].to_s.in?(%w[1 true])
+
+      montant = @p[:ft9_montant].presence&.to_f || 190.0
+      add_line(code: "FT9", label: "PRIME TUTORAT SOIGNANT", category: :prime_variable,
+               montant: BigDecimal(montant.to_s), detail: "Prime mensuelle fixe")
+    end
+
     def add_retenues_absence
       return unless absence_jours?
 
@@ -470,7 +507,7 @@ module Iade
 
     def brut_primes_total
       # IBA (négatif) réduit l'assiette RAFP ; PSR/LSU soumis RAFP selon plafond (PDF §8)
-      codes = %w[CW1 LP1 LPN IS1 JMA JW0 IT7 DHN TP7 TP8 IBA PSR LSU]
+      codes = %w[CW1 LP1 LPN IS1 JMA JW0 IT7 DHN TP7 TP8 IBA PSR LSU DIV FT1 FT9]
       total = @lines.select { |l| codes.include?(l[:code]) && l[:type] == :brut }.sum { |l| l[:montant] }
       [total, BigDecimal("0")].max
     end

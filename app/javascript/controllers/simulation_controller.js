@@ -10,7 +10,8 @@ export default class extends Controller {
     "gradeSelect", "dtcMontantRow",
     "navigoMensuelRow", "navigoAnnuelRow", "wt1Display",
     "fmdRow", "fmdEstimate",
-    "absencesList", "absenceCard", "absenceTemplate", "absencesSummary"
+    "absencesList", "absenceCard", "absenceTemplate", "absencesSummary",
+    "ft1SemainesRow", "ft1MontantRow", "ft9MontantRow"
   ]
 
   static values = {
@@ -212,6 +213,20 @@ export default class extends Controller {
       const input = this.dtcMontantRowTarget.querySelector("input")
       if (input) input.value = ""
     }
+    this.updateSidebar()
+  }
+
+  ft1ModeToggle(e) {
+    const montant = e.target.value === "montant"
+    if (this.hasFt1SemainesRowTarget) this.ft1SemainesRowTarget.style.display = montant ? "none" : ""
+    if (this.hasFt1MontantRowTarget)  this.ft1MontantRowTarget.style.display  = montant ? "" : "none"
+    this.updateSidebar()
+  }
+
+  ft9Toggle(e) {
+    if (!this.hasFt9MontantRowTarget) return
+    const show = e.target.value === "1"
+    this.ft9MontantRowTarget.style.display = show ? "" : "none"
     this.updateSidebar()
   }
 
@@ -436,6 +451,12 @@ export default class extends Controller {
     const mPsr     = parseFloat(this._fv("montant_psr")) || 0
     const jAbsPsr  = parseInt(this._fv("jours_absence_psr")) || 0
     const mLsu     = parseFloat(this._fv("montant_lsu")) || 0
+    const mDiv     = parseFloat(this._fv("montant_primes_diverses")) || 0
+    const ft1Mode  = this._fv("ft1_mode") || "semaines"
+    const ft1Semaines = parseInt(this._fv("ft1_semaines")) || 0
+    const ft1Montant  = parseFloat(this._fv("ft1_montant")) || 0
+    const ft9Actif    = this._fv("ft9_actif") === "1"
+    const ft9Montant  = parseFloat(this._fv("ft9_montant")) || 190
     const nbGardes    = parseFloat(this._fv("nb_gardes")) || 0
     const hGarde      = parseFloat(this._fv("heures_par_garde")) || 4
     const { carence: joursCarence = 0, cmo90: joursCmo90 = 0, cmo50: joursCmo50 = 0 } = this._absenceTotals || {}
@@ -480,6 +501,9 @@ export default class extends Controller {
     const pertePsr = jAbsPsr > 0 ? mPsr * jAbsPsr / 140 : 0
     const psr      = Math.max(0, mPsr - pertePsr)
     const lsu      = mLsu
+    const div      = mDiv
+    const ft1      = ft1Mode === "montant" ? ft1Montant : ft1Semaines * 54
+    const ft9      = ft9Actif ? ft9Montant : 0
 
     // ── Transport (WT1) ──
     const totalAbsence = joursCarence + joursCmo90 + joursCmo50
@@ -499,7 +523,7 @@ export default class extends Controller {
 
     // ── Brut ──
     const brut = tib + cti + veil + iade - iba + ir + nbi + irNbi + iss + sft +
-                 jma + dimjf + hsTotal + gardes + psr + lsu + wt1 + fmd
+                 jma + dimjf + hsTotal + gardes + psr + lsu + div + ft1 + ft9 + wt1 + fmd
 
     // ── Absences (retenues approchées — détail exact sur bulletin) ──
     const { clmCldPlein = 0, clmCldDemi = 0, anr = 0, joursCalendaires = 30 } = this._absenceTotals || {}
@@ -518,7 +542,7 @@ export default class extends Controller {
     if (statut !== "contractuel") {
       cnracl = 0.111 * (tib + cti)
       if (nbiPts > 0) cnracl += 0.111 * nbi
-      const primesApresIba = Math.max(0, cti + veil + iade - iba + iss + jma + dimjf + psr + lsu)
+      const primesApresIba = Math.max(0, cti + veil + iade - iba + iss + jma + dimjf + hsTotal + psr + lsu + div + ft1 + ft9)
       const plafondRafp    = tib * 12 * 0.20
       rafp = Math.min(primesApresIba, plafondRafp) * 0.05
     } else {
@@ -562,10 +586,13 @@ export default class extends Controller {
     this._sbLineShow("hs",     hsTotal > 0); if (hsTotal > 0) this._sbAmt("hs",   hsTotal)
     this._sbLineShow("gardes", gardes > 0); if (gardes > 0) this._sbAmt("gardes", gardes)
 
-    const hasPrimesVar = psr > 0 || lsu > 0
+    const hasPrimesVar = psr > 0 || lsu > 0 || div > 0 || ft1 > 0 || ft9 > 0
     this._sbLineShow("primes-var", hasPrimesVar)
     this._sbLineShow("psr", psr > 0); if (psr > 0) this._sbAmt("psr", psr)
     this._sbLineShow("lsu", lsu > 0); if (lsu > 0) this._sbAmt("lsu", lsu)
+    this._sbLineShow("div", div > 0); if (div > 0) this._sbAmt("div", div)
+    this._sbLineShow("ft1", ft1 > 0); if (ft1 > 0) this._sbAmt("ft1", ft1)
+    this._sbLineShow("ft9", ft9 > 0); if (ft9 > 0) this._sbAmt("ft9", ft9)
 
     this._sbLineShow("wt1", wt1 > 0); if (wt1 > 0) this._sbAmt("wt1", wt1)
     this._sbLineShow("fmd", fmd > 0); if (fmd > 0) this._sbAmt("fmd", fmd)
@@ -617,8 +644,13 @@ export default class extends Controller {
 
   // ── Helpers ───────────────────────────────────────────────────
 
+  // Pour un groupe de boutons radio (plusieurs éléments partagent le name), renvoie la valeur
+  // de celui qui est coché plutôt que le premier du DOM.
   _fv(name) {
-    return this.formTarget.querySelector(`[name='simulation_session[${name}]']`)?.value
+    const els = this.formTarget.querySelectorAll(`[name='simulation_session[${name}]']`)
+    if (els.length <= 1) return els[0]?.value
+    const checked = Array.from(els).find(el => el.checked)
+    return (checked || els[0]).value
   }
 
   _fv_tib() {

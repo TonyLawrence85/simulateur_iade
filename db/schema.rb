@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_14_213601) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_16_212519) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -85,6 +85,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_213601) do
     t.integer "echelon"
     t.integer "fmd_jours_annee"
     t.string "fmd_mode"
+    t.string "ft1_mode"
+    t.decimal "ft1_montant", precision: 10, scale: 2
+    t.integer "ft1_semaines"
+    t.boolean "ft9_actif", default: false
+    t.decimal "ft9_montant", precision: 10, scale: 2
     t.boolean "garde_alternee"
     t.string "grade"
     t.string "heure_debut_service"
@@ -113,6 +118,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_213601) do
     t.integer "jours_cmo90", default: 0
     t.string "mois_paie"
     t.decimal "montant_lsu", precision: 10, scale: 2
+    t.decimal "montant_primes_diverses", precision: 10, scale: 2
     t.decimal "montant_psr", precision: 10, scale: 2
     t.decimal "mutuelle"
     t.decimal "navigo_montant_annuel", precision: 8, scale: 2

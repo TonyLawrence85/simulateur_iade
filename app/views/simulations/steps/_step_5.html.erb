@@ -54,6 +54,95 @@
       </div>
     </div>
 
+    <%# Primes diverses %>
+    <div class="section-label" style="margin-top:1.25rem">
+      Primes diverses <span class="badge badge--var">DIV</span>
+    </div>
+    <div class="field-grid field-grid--2">
+      <div class="field-group">
+        <%= f.label :montant_primes_diverses, "Montant (€)", class: "field-label" %>
+        <%= f.number_field :montant_primes_diverses, placeholder: "Ex : 50.00", step: 0.01, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Toute autre prime ou indemnité non couverte ci-dessus (montant brut observé sur bulletin)</span>
+      </div>
+    </div>
+
+    <%# FT1 - Indemnité tutorat stagiaire %>
+    <div class="section-label" style="margin-top:1.25rem">
+      Indemnité tutorat stagiaire IDE/IADE <span class="badge badge--var">FT1</span>
+    </div>
+    <div class="field-grid field-grid--1">
+      <div class="field-group">
+        <label class="field-label">Comment souhaitez-vous saisir l'indemnité tutorat ?</label>
+        <div class="radio-toggle">
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[ft1_mode]" value="semaines"
+              data-action="change->simulation#ft1ModeToggle"
+              <%= @simulation.ft1_mode == "montant" ? "" : "checked" %>>
+            Nombre de semaines (× 54 €)
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[ft1_mode]" value="montant"
+              data-action="change->simulation#ft1ModeToggle"
+              <%= @simulation.ft1_mode == "montant" ? "checked" : "" %>>
+            Montant observé sur bulletin
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--2" style="margin-top:0.5rem">
+      <div class="field-group" data-simulation-target="ft1SemainesRow"
+           style="<%= @simulation.ft1_mode == "montant" ? "display:none" : "" %>">
+        <%= f.label :ft1_semaines, "Nombre de semaines de tutorat", class: "field-label" %>
+        <%= f.number_field :ft1_semaines, placeholder: "0", step: 1, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">54 € par semaine de tutorat validée</span>
+      </div>
+      <div class="field-group" data-simulation-target="ft1MontantRow"
+           style="<%= @simulation.ft1_mode == "montant" ? "" : "display:none" %>">
+        <%= f.label :ft1_montant, "Montant FT1 brut (€)", class: "field-label" %>
+        <%= f.number_field :ft1_montant, placeholder: "Ex : 216.00", step: 0.01, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Montant observé sur votre bulletin</span>
+      </div>
+    </div>
+
+    <%# FT9 - Prime tutorat soignant %>
+    <div class="section-label" style="margin-top:1.25rem">
+      Prime tutorat soignant <span class="badge badge--var">FT9</span>
+    </div>
+    <div class="field-grid field-grid--1">
+      <div class="field-group">
+        <label class="field-label">Êtes-vous tuteur de service et bénéficiez-vous de la prime tutorat soignant ?</label>
+        <div class="radio-toggle">
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[ft9_actif]" value="0"
+              data-action="change->simulation#ft9Toggle"
+              <%= @simulation.ft9_actif? ? "" : "checked" %>>
+            Non
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[ft9_actif]" value="1"
+              data-action="change->simulation#ft9Toggle"
+              <%= @simulation.ft9_actif? ? "checked" : "" %>>
+            Oui
+          </label>
+        </div>
+        <span class="field-hint">Prime mensuelle fixe de 190 € bruts (≈ 172 € nets)</span>
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--2" data-simulation-target="ft9MontantRow"
+         style="margin-top:0.5rem; <%= @simulation.ft9_actif? ? "" : "display:none" %>">
+      <div class="field-group">
+        <%= f.label :ft9_montant, "Montant FT9 brut (€)", class: "field-label" %>
+        <%= f.number_field :ft9_montant, placeholder: "190.00", step: 0.01, min: 0, value: @simulation.ft9_montant || 190,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Pré-rempli à 190 € (montant fixe communiqué par l'AP-HP)</span>
+      </div>
+    </div>
+
     <%# Gardes %>
     <div class="section-label" style="margin-top:1.25rem">
       Gardes (équivalent heures sup. de nuit) <span class="badge badge--var">GAR</span>

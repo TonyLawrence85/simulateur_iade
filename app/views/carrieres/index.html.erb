@@ -1,0 +1,71 @@
+<% content_for :title, "Simulateur de carrière" %>
+
+<div class="sim-app">
+  <div class="sim-header">
+    <h1 class="sim-title">Simulateur de carrière et reclassements</h1>
+    <p class="sim-subtitle">Estimez votre promouvabilité ou votre reclassement — indicatif, à confirmer par votre gestionnaire RH</p>
+  </div>
+
+  <div class="field-grid field-grid--3" style="margin-bottom:1.5rem">
+    <div class="step-panel">
+      <div class="panel-body">
+        <div class="section-label">Promotion IADE</div>
+        <p class="panel-desc">1er grade → 2e grade : à partir de quelle année suis-je promouvable ?</p>
+        <%= link_to "Simuler →", new_carriere_promotion_path, class: "btn btn--primary" %>
+      </div>
+    </div>
+    <div class="step-panel">
+      <div class="panel-body">
+        <div class="section-label">Reclassement IDE → IADE</div>
+        <p class="panel-desc">À quel échelon IADE serais-je reclassé, et quel serait mon net avant PAS ?</p>
+        <%= link_to "Simuler →", new_carriere_reclassement_ide_path, class: "btn btn--primary" %>
+      </div>
+    </div>
+    <div class="step-panel">
+      <div class="panel-body">
+        <div class="section-label">Reclassement AS → IDE</div>
+        <p class="panel-desc">À quel échelon IDE serais-je reclassé, et quel serait mon net avant PAS ?</p>
+        <%= link_to "Simuler →", new_carriere_reclassement_as_path, class: "btn btn--primary" %>
+      </div>
+    </div>
+  </div>
+
+  <% if @carriere_simulations.empty? %>
+    <div class="step-panel">
+      <div class="panel-body" style="text-align:center; padding: 2rem">
+        <p style="color: var(--ink-soft)">Aucune simulation de carrière pour l'instant.</p>
+      </div>
+    </div>
+  <% else %>
+    <div class="step-panel">
+      <table class="diff-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Résultat</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @carriere_simulations.each do |cs| %>
+            <tr>
+              <td><%= CarrieresController::KIND_LABELS[cs.kind] %></td>
+              <td>
+                <% if cs.result.blank? || cs.result["incomplet"] %>
+                  <span style="color:var(--ink-mute)">Incomplet</span>
+                <% elsif cs.kind == "promotion_2e_grade" %>
+                  Promouvable <%= cs.result["annee_promouvabilite"] %>
+                <% else %>
+                  Échelon <%= cs.result.dig("reclassement", "echelon") %>
+                <% end %>
+              </td>
+              <td><%= I18n.l(cs.created_at.to_date, format: "%d/%m/%Y") %></td>
+              <td><%= link_to "Voir →", carriere_path(cs), class: "btn btn--secondary btn--sm" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>

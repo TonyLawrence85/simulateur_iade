@@ -1,0 +1,34 @@
+<div class="step-panel">
+  <div class="panel-body">
+    <div class="section-label">Votre situation prévue au mois de nomination</div>
+    <% if result["projection"] %>
+      <p>
+        <%= grade_label(result.dig("projection", "grade")) %>, échelon <%= result.dig("projection", "echelon") %>,
+        ancienneté <%= result.dig("projection", "anciennete_mois") %> mois — au <%= result.dig("projection", "au") %>
+      </p>
+    <% else %>
+      <p><%= grade_label(result.dig("situation_actuelle", "grade")) %>, échelon <%= result.dig("situation_actuelle", "echelon") %></p>
+    <% end %>
+
+    <div class="section-label" style="margin-top:1.25rem">Votre reclassement estimé</div>
+    <div class="result-kpis" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+      <div class="result-kpi">
+        <p class="rk-label">Classement</p>
+        <p class="rk-value rk-positive">
+          <%= grade_label(result.dig("reclassement", "grade")) %> — Éch. <%= result.dig("reclassement", "echelon") %>
+        </p>
+        <p class="rk-sub"><%= result.dig("reclassement", "anciennete") %></p>
+      </div>
+
+      <% if result["net_avant_pas"] %>
+        <div class="result-kpi">
+          <p class="rk-label">Net avant PAS estimé (35h simple)</p>
+          <p class="rk-value"><%= number_to_currency(result["net_avant_pas"], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+          <p class="rk-sub">Hors heures sup., nuit, dimanche/JF, transport, PSR/LSU, tutorat</p>
+        </div>
+      <% end %>
+    </div>
+
+    <%= render "alerts", result: result %>
+  </div>
+</div>

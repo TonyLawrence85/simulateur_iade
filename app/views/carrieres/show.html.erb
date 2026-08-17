@@ -1,0 +1,29 @@
+<% content_for :title, CarrieresController::KIND_LABELS[@carriere_simulation.kind] %>
+
+<div class="sim-app">
+  <div class="sim-header">
+    <h1 class="sim-title"><%= CarrieresController::KIND_LABELS[@carriere_simulation.kind] %></h1>
+    <p class="sim-subtitle">Simulé le <%= I18n.l(@carriere_simulation.created_at.to_date, format: "%d/%m/%Y") %> — estimation indicative, à confirmer par votre gestionnaire RH</p>
+  </div>
+
+  <% result = @carriere_simulation.result || {} %>
+
+  <% if result.blank? || result["incomplet"] %>
+    <div class="step-panel">
+      <div class="panel-body">
+        <div class="alert alert--error">
+          <span>⚠</span>
+          <div>Cette simulation n'a pas pu être calculée (informations manquantes ou invalides).</div>
+        </div>
+      </div>
+    </div>
+  <% elsif @carriere_simulation.kind == "promotion_2e_grade" %>
+    <%= render "result_promotion", result: result %>
+  <% else %>
+    <%= render "result_reclassement", result: result, carriere_simulation: @carriere_simulation %>
+  <% end %>
+
+  <div style="margin-top:1rem">
+    <%= link_to "← Retour au simulateur de carrière", carrieres_path, class: "btn btn--secondary" %>
+  </div>
+</div>

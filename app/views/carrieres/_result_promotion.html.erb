@@ -1,0 +1,41 @@
+<div class="step-panel">
+  <div class="panel-body">
+    <div class="section-label">Situation actuelle</div>
+    <p>IADE 1er grade, échelon <%= result.dig("situation_actuelle", "echelon") %>, depuis <%= result.dig("situation_actuelle", "depuis") %></p>
+
+    <div class="result-kpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); margin-top:1rem">
+      <div class="result-kpi">
+        <p class="rk-label">Condition d'échelon</p>
+        <p class="rk-value" style="font-size:1rem"><%= result["condition_echelon"] %></p>
+      </div>
+      <div class="result-kpi">
+        <p class="rk-label">Condition des 10 ans catégorie A</p>
+        <p class="rk-value" style="font-size:1rem"><%= result["condition_10_ans"] %></p>
+      </div>
+    </div>
+
+    <% if result["annee_promouvabilite"] %>
+      <div class="alert alert--ok" style="margin-top:1rem">
+        <span>✓</span>
+        <div>
+          <strong><%= result["resultat"] %></strong><br>
+          <%= result["conseil"] %>
+        </div>
+      </div>
+    <% end %>
+
+    <% reclassement = result["reclassement_2e_grade"] %>
+    <% if reclassement && reclassement["disponible"] %>
+      <div class="section-label" style="margin-top:1.25rem">Si promotion accordée à votre échelon actuel</div>
+      <div class="result-kpis" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="result-kpi">
+          <p class="rk-label">Classement 2e grade</p>
+          <p class="rk-value rk-positive">Éch. <%= reclassement["echelon"] %></p>
+          <p class="rk-sub"><%= reclassement["anciennete"] %></p>
+        </div>
+      </div>
+    <% end %>
+
+    <%= render "alerts", result: result %>
+  </div>
+</div>

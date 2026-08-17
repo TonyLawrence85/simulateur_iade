@@ -3,6 +3,7 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   has_many :simulation_sessions, dependent: :destroy
+  has_many :carriere_simulations, dependent: :destroy
 
   def simulation_defaults # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity
     {

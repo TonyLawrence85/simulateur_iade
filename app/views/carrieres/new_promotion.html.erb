@@ -1,0 +1,82 @@
+<% content_for :title, "Promotion IADE 2e grade" %>
+
+<div class="sim-app">
+  <div class="sim-header">
+    <h1 class="sim-title">Promotion IADE 1er → 2e grade</h1>
+    <p class="sim-subtitle">Donne une année de promouvabilité indicative — pas une promesse de promotion automatique</p>
+  </div>
+
+  <%= form_with model: @carriere_simulation, url: carrieres_path, method: :post, local: true do |f| %>
+    <%= hidden_field_tag :kind, "promotion_2e_grade" %>
+
+    <div class="step-panel">
+      <div class="panel-body">
+        <div class="section-label">Votre situation actuelle</div>
+
+        <div class="field-grid field-grid--2">
+          <div class="field-group">
+            <%= f.label :echelon_actuel, class: "field-label" do %>
+              Quel est votre échelon IADE 1er grade actuel ? <span class="req">*</span>
+            <% end %>
+            <%= f.select :echelon_actuel, (1..10).map { |e| [e, e] }, { include_blank: "— Choisir —" }, required: true %>
+            <%= render "aide_visuelle" %>
+          </div>
+
+          <div class="field-group">
+            <%= f.label :mois_echelon_actuel, class: "field-label" do %>
+              Depuis quel mois êtes-vous à cet échelon ? <span class="req">*</span>
+            <% end %>
+            <%= f.month_field :mois_echelon_actuel, required: true %>
+          </div>
+        </div>
+
+        <div class="field-grid field-grid--1" style="margin-top:0.75rem">
+          <div class="field-group">
+            <%= f.label :mois_debut_cat_a, class: "field-label" do %>
+              Depuis quel mois êtes-vous catégorie A paramédical dans le public ? <span class="req">*</span>
+            <% end %>
+            <%= f.month_field :mois_debut_cat_a, required: true %>
+            <span class="field-hint">Exemple : IDE, IADE, IBODE, IPDE — service public uniquement</span>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top:1.25rem">Période longue non comptée (facultatif)</div>
+        <div class="field-grid field-grid--1" data-controller="carriere-form">
+          <div class="field-group">
+            <label class="field-label">Avez-vous eu une période longue non comptée dans votre carrière ? (disponibilité, congé parental long...)</label>
+            <div class="radio-toggle">
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[periode_exclue]" value="non" data-action="change->carriere-form#toggle" checked>
+                Non
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[periode_exclue]" value="oui" data-action="change->carriere-form#toggle">
+                Oui
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[periode_exclue]" value="ne_sais_pas" data-action="change->carriere-form#toggle">
+                Je ne sais pas
+              </label>
+            </div>
+          </div>
+
+          <div class="field-grid field-grid--2 hidden" data-carriere-form-target="revealable" data-show-when="oui" style="margin-top:0.5rem">
+            <div class="field-group">
+              <%= f.label :periode_debut, "Début de la période", class: "field-label" %>
+              <%= f.month_field :periode_debut %>
+            </div>
+            <div class="field-group">
+              <%= f.label :periode_fin, "Fin de la période", class: "field-label" %>
+              <%= f.month_field :periode_fin %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <%= link_to "← Annuler", carrieres_path, class: "btn btn--secondary" %>
+        <%= f.submit "Calculer ma promouvabilité →", class: "btn btn--primary" %>
+      </div>
+    </div>
+  <% end %>
+</div>

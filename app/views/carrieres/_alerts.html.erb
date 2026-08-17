@@ -1,0 +1,8 @@
+<% if result["alertes"].present? %>
+  <% result["alertes"].each do |texte| %>
+    <div class="alert alert--warn" style="margin-top:0.5rem">
+      <span>⚠</span>
+      <div><%= texte %></div>
+    </div>
+  <% end %>
+<% end %>

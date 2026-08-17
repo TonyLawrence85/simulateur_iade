@@ -1,0 +1,137 @@
+<% content_for :title, "Reclassement AS vers IDE" %>
+
+<div class="sim-app">
+  <div class="sim-header">
+    <h1 class="sim-title">Reclassement Aide-soignant → IDE AP-HP</h1>
+    <p class="sim-subtitle">Projette votre carrière AS jusqu'au mois de nomination IDE, puis calcule votre reclassement</p>
+  </div>
+
+  <%= form_with model: @carriere_simulation, url: carrieres_path, method: :post, local: true do |f| %>
+    <%= hidden_field_tag :kind, "reclassement_as_ide" %>
+
+    <div class="step-panel">
+      <div class="panel-body">
+
+        <div class="section-label">Votre situation actuelle</div>
+        <div class="field-grid field-grid--1" data-controller="carriere-form">
+          <div class="field-group">
+            <label class="field-label">Êtes-vous actuellement aide-soignant ?</label>
+            <div class="radio-toggle">
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[situation_actuelle]" value="aphp" data-action="change->carriere-form#toggle" checked>
+                Oui, AS AP-HP
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[situation_actuelle]" value="public" data-action="change->carriere-form#toggle">
+                Oui, AS public hors AP-HP
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[situation_actuelle]" value="prive" data-action="change->carriere-form#toggle">
+                Oui, AS privé
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[situation_actuelle]" value="ne_sais_pas" data-action="change->carriere-form#toggle">
+                Je ne sais pas
+              </label>
+            </div>
+            <span class="field-hint">Si vous êtes en secteur privé sans reprise d'ancienneté validée, un classement simplifié (IDE grade 1 échelon 1) sera appliqué.</span>
+          </div>
+
+          <div class="field-grid field-grid--2 hidden" data-carriere-form-target="revealable" data-show-when="aphp,public" style="margin-top:0.75rem">
+            <div class="field-group">
+              <%= f.label :statut_administratif, "Quel est votre statut actuel ?", class: "field-label" %>
+              <%= f.select :statut_administratif,
+                    [["Titulaire", "titulaire"], ["Stagiaire", "stagiaire"], ["Contractuel", "contractuel"]],
+                    { include_blank: "— Choisir —" } %>
+            </div>
+            <div class="field-group">
+              <%= f.label :grade_source, class: "field-label" do %>
+                Quel est votre grade AS actuel ? <span class="req">*</span>
+              <% end %>
+              <%= f.select :grade_source, [["Classe normale", "as_grade1"], ["Classe supérieure", "as_grade2"]], { include_blank: "— Choisir —" } %>
+            </div>
+            <div class="field-group">
+              <%= f.label :echelon_source, class: "field-label" do %>
+                Quel est votre échelon AS actuel ? <span class="req">*</span>
+              <% end %>
+              <%= f.select :echelon_source, (1..11).map { |e| [e, e] }, { include_blank: "— Choisir —" } %>
+              <%= render "aide_visuelle" %>
+            </div>
+            <div class="field-group">
+              <%= f.label :mois_echelon_source, class: "field-label" do %>
+                Depuis quel mois êtes-vous à cet échelon ? <span class="req">*</span>
+              <% end %>
+              <%= f.month_field :mois_echelon_source %>
+            </div>
+            <div class="field-group">
+              <%= f.label :mois_nomination, class: "field-label" do %>
+                À quel mois pensez-vous devenir IDE AP-HP ? <span class="req">*</span>
+              <% end %>
+              <%= f.month_field :mois_nomination %>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top:1.25rem">Pour le net avant PAS futur</div>
+        <div class="field-grid field-grid--2" data-controller="carriere-form">
+          <div class="field-group">
+            <label class="field-label">Lieu de travail IDE prévu : AP-HP Paris (indemnité de résidence 3%) ?</label>
+            <div class="radio-toggle">
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[zone_paris]" value="oui" checked>
+                Oui
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[zone_paris]" value="non">
+                Non
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[zone_paris]" value="ne_sais_pas">
+                Je ne sais pas
+              </label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <%= f.label :nb_enfants_sft, "Enfants ouvrant droit au SFT", class: "field-label" %>
+            <%= f.select :nb_enfants_sft, [["0", 0], ["1", 1], ["2", 2], ["3 ou plus", 3]], { selected: 0 } %>
+          </div>
+        </div>
+
+        <div class="field-grid field-grid--1" data-controller="carriere-form" style="margin-top:0.75rem">
+          <div class="field-group">
+            <label class="field-label">Avez-vous une ligne DTC ou DTF sur votre bulletin AS actuel ?</label>
+            <div class="radio-toggle">
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[dtc_choix]" value="non" data-action="change->carriere-form#toggle" checked>
+                Non
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[dtc_choix]" value="dtc" data-action="change->carriere-form#toggle">
+                Oui, DTC
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[dtc_choix]" value="dtf" data-action="change->carriere-form#toggle">
+                Oui, DTF
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[dtc_choix]" value="ne_sais_pas" data-action="change->carriere-form#toggle">
+                Je ne sais pas
+              </label>
+            </div>
+          </div>
+          <div class="field-group hidden" data-carriere-form-target="revealable" data-show-when="dtc,dtf">
+            <%= f.label :dtc_montant, "Montant mensuel observé (€)", class: "field-label" %>
+            <%= f.number_field :dtc_montant, step: 0.01, min: 0 %>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel-footer">
+        <%= link_to "← Annuler", carrieres_path, class: "btn btn--secondary" %>
+        <%= f.submit "Calculer mon reclassement →", class: "btn btn--primary" %>
+      </div>
+    </div>
+  <% end %>
+</div>

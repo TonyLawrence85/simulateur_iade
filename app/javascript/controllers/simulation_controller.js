@@ -487,11 +487,13 @@ export default class extends Controller {
     const moisNum      = parseInt(moisPaie.slice(-2)) || 0
 
     // ── Traitements fixes ──
+    const profession = this._fv("profession") || "iade"
     const im  = this.GRILLE[grade]?.[echelon] || 0
     const tib = im * this.VALEUR_POINT * quotite
     const cti = this.CTI_POINTS * this.VALEUR_POINT * quotite
-    const veil = this.PRIME_VEIL * quotite
-    const iade = this.PRIME_IADE * quotite
+    // Prime Veil : IADE + IDE. Prime IADE (LPN) : IADE uniquement.
+    const veil = (profession === "iade" || profession === "ide") ? this.PRIME_VEIL * quotite : 0
+    const iade = profession === "iade" ? this.PRIME_IADE * quotite : 0
     const iba  = statut === "contractuel" ? 0 : (389 * quotite / 12)
 
     const zone   = this.IR_ZONES[dept] || 3

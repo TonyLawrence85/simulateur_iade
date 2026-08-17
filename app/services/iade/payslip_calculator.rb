@@ -82,13 +82,19 @@ module Iade
                detail: "#{Iade::AutoPrimesCalculator::CTI_POINTS} pts × valeur_point × #{quotite_pct}")
     end
 
+    # Prime infirmière (Ségur/Veil) : professions infirmières (IADE + IDE), pas AS.
     def add_prime_veil
+      return unless @p[:profession].to_s.in?(%w[iade ide])
+
       add_line(code: "LP1", label: "PRIME INFIRMIERE (Veil)", category: :auto,
                montant: Iade::AutoPrimesCalculator.prime_veil(quotite),
                detail: "90,00 € × #{quotite_pct}")
     end
 
+    # Prime spécifique infirmier anesthésiste : réservée aux IADE.
     def add_prime_iade
+      return unless @p[:profession].to_s == "iade"
+
       add_line(code: "LPN", label: "PRIME SP INF ANEST (IADE)", category: :auto,
                montant: Iade::AutoPrimesCalculator.prime_iade(quotite), detail: "180,00 € × #{quotite_pct}")
     end

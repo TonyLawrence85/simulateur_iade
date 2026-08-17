@@ -11,7 +11,11 @@ export default class extends Controller {
     "navigoMensuelRow", "navigoAnnuelRow", "wt1Display",
     "fmdRow", "fmdEstimate",
     "absencesList", "absenceCard", "absenceTemplate", "absencesSummary",
-    "ft1SemainesRow", "ft1MontantRow", "ft9MontantRow"
+    "ft1SemainesRow", "ft1MontantRow", "ft9MontantRow",
+    "carriereEchelonActuel", "carriereTibActuelSub",
+    "carriereBlockSuivant", "carriereEchelonSuivant", "carriereDeltaTibSub",
+    "carriereBlockDate", "carriereDateEstimee", "carriereMoisRestantsSub",
+    "carriereBlockTerminal", "carriereNoDateHint"
   ]
 
   static values = {
@@ -34,6 +38,16 @@ export default class extends Controller {
   }
 
   MAX_ECHELON = { grade1: 10, grade2: 8, as_grade1: 11, as_grade2: 11, ide_grade1: 10, ide_grade2: 8 }
+
+  // Durée minimale en mois par échelon avant avancement (Décret n° 2012-1483) — miroir de CarriereCalculator
+  DUREES = {
+    grade1:     { 1:12, 2:24, 3:24, 4:24, 5:24, 6:24, 7:24, 8:36, 9:48, 10:null },
+    grade2:     { 1:12, 2:24, 3:24, 4:24, 5:30, 6:36, 7:48, 8:null },
+    as_grade1:  { 1:18, 2:18, 3:24, 4:24, 5:30, 6:36, 7:36, 8:36, 9:36, 10:48, 11:null },
+    as_grade2:  { 1:18, 2:24, 3:24, 4:24, 5:24, 6:30, 7:36, 8:36, 9:36, 10:48, 11:null },
+    ide_grade1: { 1:12, 2:24, 3:24, 4:30, 5:36, 6:36, 7:36, 8:48, 9:48, 10:null },
+    ide_grade2: { 1:12, 2:24, 3:24, 4:24, 5:36, 6:36, 7:48, 8:null }
+  }
 
   GRADE_OPTIONS = {
     iade: [["1er grade", "grade1"], ["2ème grade", "grade2"]],
@@ -617,6 +631,78 @@ export default class extends Controller {
     this._sbNeg("csg",      csgTotal,      true)
     this._sbNeg("pas",      pas,           tausPas > 0)
     this._sbTotal("net",    net)
+
+    this.updateCarriere(grade, echelon, quotite, tauxIr)
+  }
+
+  // ── Carrière — prochain échelon (étape 6) ───────────────────────
+  updateCarriere(grade, echelon, quotite, tauxIr) {
+    const dateStr = this._fv("date_entree_echelon")
+    const c = this._calcCarriere(grade, echelon, quotite, tauxIr, dateStr)
+    if (!c) return
+
+    if (this.hasCarriereEchelonActuelTarget) this.carriereEchelonActuelTarget.textContent = `Éch. ${c.echelonActuel}`
+    if (this.hasCarriereTibActuelSubTarget)
+      this.carriereTibActuelSubTarget.textContent = `IM ${c.imActuel} · ${this.fmt(c.tibActuel.toFixed(2))} €/mois`
+
+    const terminal = !c.echelonSuivant
+    if (this.hasCarriereBlockSuivantTarget) this.carriereBlockSuivantTarget.classList.toggle("hidden", terminal)
+    if (this.hasCarriereBlockTerminalTarget) this.carriereBlockTerminalTarget.classList.toggle("hidden", !terminal)
+    if (this.hasCarriereBlockDateTarget) this.carriereBlockDateTarget.classList.toggle("hidden", terminal)
+    if (this.hasCarriereNoDateHintTarget)
+      this.carriereNoDateHintTarget.style.display = (!terminal && !dateStr) ? "" : "none"
+
+    if (terminal) return
+
+    if (this.hasCarriereEchelonSuivantTarget) this.carriereEchelonSuivantTarget.textContent = `Éch. ${c.echelonSuivant}`
+    if (this.hasCarriereDeltaTibSubTarget)
+      this.carriereDeltaTibSubTarget.textContent = `IM ${c.imSuivant} · +${this.fmt(c.deltaTib.toFixed(2))} €/mois`
+
+    if (c.moisRestants == null) {
+      if (this.hasCarriereDateEstimeeTarget) this.carriereDateEstimeeTarget.textContent = "—"
+      if (this.hasCarriereMoisRestantsSubTarget) this.carriereMoisRestantsSubTarget.textContent = ""
+      return
+    }
+
+    const fmtMois = new Intl.DateTimeFormat("fr-FR", { month: "short", year: "numeric" })
+    if (this.hasCarriereDateEstimeeTarget) this.carriereDateEstimeeTarget.textContent = fmtMois.format(c.dateEstimee)
+    if (this.hasCarriereMoisRestantsSubTarget) {
+      this.carriereMoisRestantsSubTarget.textContent = c.moisRestants === 0
+        ? "Avancement possible maintenant"
+        : `Dans ${c.moisRestants} mois`
+    }
+  }
+
+  _calcCarriere(grade, echelon, quotite, tauxIr, dateEntreeEchelonStr) {
+    const im = this.GRILLE[grade]?.[echelon]
+    if (!im) return null
+
+    const tibActuel = im * this.VALEUR_POINT * quotite
+    const durees = this.DUREES[grade] || this.DUREES.grade1
+    const dureeMois = durees[echelon]
+    const echelonSuivant = echelon + 1
+    const imSuivant = this.GRILLE[grade]?.[echelonSuivant]
+
+    if (dureeMois == null || !imSuivant) {
+      return { echelonActuel: echelon, imActuel: im, tibActuel, echelonSuivant: null }
+    }
+
+    const tibSuivant = imSuivant * this.VALEUR_POINT * quotite
+
+    let moisRestants = null, dateEstimee = null
+    const d = this._parseDateInput(dateEntreeEchelonStr)
+    if (d) {
+      const today = new Date()
+      const moisEcoules = (today.getFullYear() - d.getFullYear()) * 12 + (today.getMonth() - d.getMonth())
+      moisRestants = Math.max(dureeMois - moisEcoules, 0)
+      dateEstimee = new Date(today.getFullYear(), today.getMonth() + moisRestants, today.getDate())
+    }
+
+    return {
+      echelonActuel: echelon, imActuel: im, tibActuel,
+      echelonSuivant, imSuivant, tibSuivant, deltaTib: tibSuivant - tibActuel,
+      moisRestants, dateEstimee
+    }
   }
 
   // ── Validation par étape ──────────────────────────────────────

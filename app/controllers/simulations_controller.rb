@@ -17,6 +17,7 @@ class SimulationsController < ApplicationController
                                         ))
     @current_step = 0
     @tib_preview  = compute_tib_preview(@simulation)
+    @carriere     = compute_carriere_preview(@simulation)
   end
 
   def create
@@ -29,6 +30,7 @@ class SimulationsController < ApplicationController
         flash.now[:alert] = result.errors.join(", ")
         @current_step = 0
         @tib_preview = compute_tib_preview(@simulation)
+        @carriere    = compute_carriere_preview(@simulation)
         render :new, status: :unprocessable_entity
       else
         @simulation.update!(
@@ -43,6 +45,7 @@ class SimulationsController < ApplicationController
     else
       @current_step = 0
       @tib_preview = compute_tib_preview(@simulation)
+      @carriere    = compute_carriere_preview(@simulation)
       flash.now[:alert] = @simulation.errors.full_messages.join(" · ")
       render :new, status: :unprocessable_entity
     end
@@ -159,6 +162,18 @@ class SimulationsController < ApplicationController
     calc = Iade::TibCalculator.new(grade: sim.grade, echelon: sim.echelon, quotite: sim.quotite || 1.0)
     tib  = calc.compute
     { indice_majore: calc.indice_majore, tib: tib, taux_horaire: calc.taux_horaire }
+  rescue StandardError
+    nil
+  end
+
+  def compute_carriere_preview(sim)
+    Iade::CarriereCalculator.new(
+      grade: sim.grade,
+      echelon: sim.echelon,
+      quotite: sim.quotite || 1.0,
+      ir_taux: ir_taux_for(sim),
+      date_entree_echelon: sim.date_entree_echelon
+    ).compute
   rescue StandardError
     nil
   end

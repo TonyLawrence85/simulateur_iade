@@ -87,7 +87,7 @@
         <%= f.label :date_entree_echelon, class: "field-label" do %>
           Date de prise d'effet de l'échelon actuel
         <% end %>
-        <%= f.date_field :date_entree_echelon, max: Date.today %>
+        <%= f.date_field :date_entree_echelon, max: Date.today, data: { action: "change->simulation#updateSidebar" } %>
         <span class="field-hint">Optionnel — sert à estimer la date du prochain échelon</span>
       </div>
     </div>

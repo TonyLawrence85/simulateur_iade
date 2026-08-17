@@ -33,6 +33,38 @@
         <span class="field-hint">Pour coller exactement au net à payer</span>
       </div>
     </div>
+
+    <div class="section-label" style="margin-top:1.25rem">
+      Prochaine évolution de carrière <span class="badge badge--calc">indicatif</span>
+    </div>
+    <div class="result-kpis" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <div class="result-kpi">
+        <p class="rk-label">Échelon actuel</p>
+        <p class="rk-value" data-simulation-target="carriereEchelonActuel">—</p>
+        <p class="rk-sub" data-simulation-target="carriereTibActuelSub"></p>
+      </div>
+
+      <div class="result-kpi" data-simulation-target="carriereBlockSuivant">
+        <p class="rk-label">Prochain échelon</p>
+        <p class="rk-value rk-positive" data-simulation-target="carriereEchelonSuivant">—</p>
+        <p class="rk-sub" data-simulation-target="carriereDeltaTibSub"></p>
+      </div>
+
+      <div class="result-kpi" data-simulation-target="carriereBlockDate">
+        <p class="rk-label">Date estimée</p>
+        <p class="rk-value" data-simulation-target="carriereDateEstimee">—</p>
+        <p class="rk-sub" data-simulation-target="carriereMoisRestantsSub"></p>
+      </div>
+
+      <div class="result-kpi hidden" data-simulation-target="carriereBlockTerminal">
+        <p class="rk-label">Avancement</p>
+        <p class="rk-value" style="font-size:1rem">Échelon terminal</p>
+        <p class="rk-sub">Dernier échelon de votre grade</p>
+      </div>
+    </div>
+    <span class="field-hint" data-simulation-target="carriereNoDateHint" style="display:none">
+      Saisissez la date de prise d'effet de l'échelon actuel (étape « Situation ») pour estimer la date du prochain échelon.
+    </span>
   </div>
 
   <div class="panel-footer">

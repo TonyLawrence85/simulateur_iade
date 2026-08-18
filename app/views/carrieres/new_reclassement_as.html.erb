@@ -96,6 +96,11 @@
             <%= f.label :nb_enfants_sft, "Enfants ouvrant droit au SFT", class: "field-label" %>
             <%= f.select :nb_enfants_sft, [["0", 0], ["1", 1], ["2", 2], ["3 ou plus", 3]], { selected: 0 } %>
           </div>
+
+          <div class="field-group">
+            <%= f.label :quotite, "Quotité de travail prévue comme IDE", class: "field-label" %>
+            <%= f.select :quotite, [["100%", 1.0], ["90%", 0.9], ["80%", 0.8], ["50%", 0.5]], { selected: 1.0 } %>
+          </div>
         </div>
 
         <div class="field-grid field-grid--1" data-controller="carriere-form" style="margin-top:0.75rem">

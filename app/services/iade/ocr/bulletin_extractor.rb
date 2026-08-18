@@ -23,6 +23,7 @@ module Iade
         "CS0" => { label: "S.F.T. PERCU",         type: :brut },
         "DTC" => { label: "IND COMP CSG",         type: :brut },
         "WT1" => { label: "REMBOUR. TRANSPORT",   type: :brut },
+        "XRN" => { label: "RET. RESTAU. NUIT",    type: :deduction },
         "JMA" => { label: "IND. NUIT MAJOREE",    type: :brut },
         "TP7" => { label: "TP7",                  type: :brut },
         "IT7" => { label: "IT7",                  type: :brut },

@@ -71,47 +71,106 @@
       Transport — Remboursement Navigo <span class="badge badge--profile">WT1</span>
     </div>
 
+    <%# Question A — gate %>
     <div class="field-grid field-grid--1">
       <div class="field-group">
-        <label class="field-label">Type de pass Navigo</label>
+        <label class="field-label">Avez-vous un abonnement de transport en commun pour venir travailler ?</label>
         <div class="radio-toggle">
           <label class="radio-toggle__option">
-            <input type="radio" name="simulation_session[type_navigo]" value="mensuel"
-              data-action="change->simulation#navigoTypeToggle"
-              <%= (@simulation.type_navigo.blank? || @simulation.type_navigo == "mensuel") ? "checked" : "" %>>
-            Pass Mensuel
+            <input type="radio" name="simulation_session[wt1_a_abonnement]" value="non"
+              data-action="change->simulation#wt1AbonnementToggle"
+              <%= @simulation.wt1_a_abonnement.in?(%w[oui nsp]) ? "" : "checked" %>>
+            Non
           </label>
           <label class="radio-toggle__option">
-            <input type="radio" name="simulation_session[type_navigo]" value="annuel"
-              data-action="change->simulation#navigoTypeToggle"
-              <%= @simulation.type_navigo == "annuel" ? "checked" : "" %>>
-            Pass Annuel
+            <input type="radio" name="simulation_session[wt1_a_abonnement]" value="oui"
+              data-action="change->simulation#wt1AbonnementToggle"
+              <%= @simulation.wt1_a_abonnement == "oui" ? "checked" : "" %>>
+            Oui
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[wt1_a_abonnement]" value="nsp"
+              data-action="change->simulation#wt1AbonnementToggle"
+              <%= @simulation.wt1_a_abonnement == "nsp" ? "checked" : "" %>>
+            Je ne sais pas
           </label>
         </div>
+        <span class="field-hint" data-simulation-target="wt1NspHint" style="<%= @simulation.wt1_a_abonnement == "nsp" ? "" : "display:none" %>">
+          Seuls les abonnements éligibles sont remboursés ; les tickets à l'unité ne le sont pas.
+        </span>
       </div>
     </div>
 
-    <div class="field-grid field-grid--2" style="margin-top:0.75rem">
-      <div class="field-group" data-simulation-target="navigoMensuelRow"
-           style="<%= @simulation.type_navigo == 'annuel' ? 'display:none' : '' %>">
-        <%= f.label :wt1_montant, "Montant mensuel de l'abonnement", class: "field-label" %>
-        <%= f.number_field :wt1_montant, placeholder: "Ex : 86,40", step: 0.01, min: 0,
-              data: { action: "input->simulation#updateSidebar" } %>
-        <span class="field-hint">Prix mensuel de votre abonnement Navigo</span>
+    <div data-simulation-target="wt1DetailRows" style="<%= @simulation.wt1_a_abonnement == "oui" ? "" : "display:none" %>">
+      <%# Question B — type d'abonnement %>
+      <div class="field-grid field-grid--1" style="margin-top:0.75rem">
+        <div class="field-group">
+          <%= f.label :type_navigo, "Quel abonnement utilisez-vous ?", class: "field-label" %>
+          <%= f.select :type_navigo,
+                [["Navigo annuel", "annuel"], ["Navigo mois", "mensuel"], ["Navigo semaine", "semaine"], ["Autre abonnement", "autre"]],
+                { selected: @simulation.type_navigo.presence || "mensuel" },
+                data: { action: "change->simulation#navigoTypeToggle" } %>
+        </div>
       </div>
 
-      <div class="field-group" data-simulation-target="navigoAnnuelRow"
-           style="<%= @simulation.type_navigo == 'annuel' ? '' : 'display:none' %>">
-        <%= f.label :navigo_montant_annuel, "Montant annuel de l'abonnement", class: "field-label" %>
-        <%= f.number_field :navigo_montant_annuel, placeholder: "Ex : 1 036,80", step: 0.01, min: 0,
-              data: { action: "input->simulation#updateSidebar" } %>
-        <span class="field-hint">Prix annuel → divisé par 12 pour le mensuel simulé</span>
+      <%# Question C — zones (Navigo annuel/mois/semaine) %>
+      <div class="field-grid field-grid--2" data-simulation-target="navigoZonesRow"
+           style="margin-top:0.75rem; <%= @simulation.type_navigo == "autre" ? "display:none" : "" %>">
+        <div class="field-group">
+          <%= f.label :wt1_zones, "Quelles zones sont nécessaires pour votre trajet domicile-travail ?", class: "field-label" %>
+          <%= f.select :wt1_zones,
+                [["Toutes zones 1-5", "1-5"], ["Zones 2-3", "2-3"], ["Zones 3-4", "3-4"], ["Zones 4-5", "4-5"]],
+                { selected: @simulation.wt1_zones, include_blank: "— Choisir —" },
+                data: { action: "change->simulation#updateSidebar" } %>
+          <span class="field-hint">Référence Navigo annuel Île-de-France Mobilités 2026 des mêmes zones, quel que soit le pass détenu</span>
+        </div>
       </div>
 
-      <div class="field-group">
-        <label class="field-label">Remboursement estimé <span class="badge badge--calc">WT1</span></label>
-        <input type="text" disabled class="field-computed" data-simulation-target="wt1Display" value="—"> <%# herb:disable all %>
-        <span class="field-hint">Nuit = 100% · Jour = 75% (déduit de l'heure début service) · Quotité &lt; 50% → ÷2 · &gt;60j absence → 0 €</span>
+      <%# Question B (suite) — Autre abonnement : mode avancé %>
+      <div class="field-grid field-grid--1" data-simulation-target="navigoAutreRow"
+           style="margin-top:0.75rem; <%= @simulation.type_navigo == "autre" ? "" : "display:none" %>">
+        <div class="field-group">
+          <%= f.label :wt1_montant, "Montant mensuel de l'abonnement (justificatif)", class: "field-label" %>
+          <%= f.number_field :wt1_montant, placeholder: "Ex : 86,40", step: 0.01, min: 0,
+                data: { action: "input->simulation#updateSidebar" } %>
+          <span class="field-hint">Mode avancé — montant observé sur votre justificatif d'abonnement</span>
+        </div>
+      </div>
+
+      <%# Question D — profil nuit %>
+      <div class="field-grid field-grid--1" style="margin-top:0.75rem">
+        <div class="field-group">
+          <label class="field-label">Votre profil AP-HP est-il reconnu comme personnel de nuit ou alternance jour/nuit ouvrant droit au remboursement à 100% ?</label>
+          <div class="radio-toggle">
+            <label class="radio-toggle__option">
+              <input type="radio" name="simulation_session[wt1_nuit_eligible]" value="non"
+                data-action="change->simulation#updateSidebar"
+                <%= @simulation.wt1_nuit_eligible.in?(%w[oui nsp]) ? "" : "checked" %>>
+              Non
+            </label>
+            <label class="radio-toggle__option">
+              <input type="radio" name="simulation_session[wt1_nuit_eligible]" value="oui"
+                data-action="change->simulation#updateSidebar"
+                <%= @simulation.wt1_nuit_eligible == "oui" ? "checked" : "" %>>
+              Oui
+            </label>
+            <label class="radio-toggle__option">
+              <input type="radio" name="simulation_session[wt1_nuit_eligible]" value="nsp"
+                data-action="change->simulation#updateSidebar"
+                <%= @simulation.wt1_nuit_eligible == "nsp" ? "checked" : "" %>>
+              Je ne sais pas
+            </label>
+          </div>
+          <span class="field-hint">« Je ne sais pas » → calcul prudent à 75%, variante 100% affichée à titre indicatif</span>
+        </div>
+      </div>
+
+      <div class="field-grid field-grid--2" style="margin-top:0.75rem">
+        <div class="field-group">
+          <label class="field-label">Remboursement estimé <span class="badge badge--calc">WT1</span></label>
+          <input type="text" disabled class="field-computed" data-simulation-target="wt1Display" value="—">
+          <span class="field-hint">Nuit = 100% · Jour = 75% · Quotité &lt; 50% → ÷2 · &gt;60j absence → 0 €</span>
+        </div>
       </div>
     </div>
 

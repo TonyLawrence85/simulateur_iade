@@ -90,6 +90,50 @@
             <%= f.label :nb_enfants_sft, "Enfants ouvrant droit au SFT", class: "field-label" %>
             <%= f.select :nb_enfants_sft, [["0", 0], ["1", 1], ["2", 2], ["3 ou plus", 3]], { selected: 0 } %>
           </div>
+
+          <div class="field-group">
+            <%= f.label :quotite, "Quotité de travail prévue comme IADE", class: "field-label" %>
+            <%= f.select :quotite, [["100%", 1.0], ["90%", 0.9], ["80%", 0.8], ["50%", 0.5]], { selected: 1.0 } %>
+          </div>
+        </div>
+
+        <div class="field-grid field-grid--1" data-controller="carriere-form" style="margin-top:0.75rem">
+          <div class="field-group">
+            <label class="field-label">Aurez-vous la NBI IADE ?</label>
+            <div class="radio-toggle">
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[nbi_choix]" value="oui_15" data-action="change->carriere-form#toggle" checked>
+                Oui, 15 points
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[nbi_choix]" value="non" data-action="change->carriere-form#toggle">
+                Non
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[nbi_choix]" value="ne_sais_pas" data-action="change->carriere-form#toggle">
+                Je ne sais pas
+              </label>
+              <label class="radio-toggle__option">
+                <input type="radio" name="carriere_simulation[nbi_choix]" value="expert" data-action="change->carriere-form#toggle">
+                Mode expert (points)
+              </label>
+            </div>
+            <span class="field-hint">15 points par défaut si le poste IADE est éligible NBI à l'AP-HP</span>
+          </div>
+          <div class="field-group hidden" data-carriere-form-target="revealable" data-show-when="expert">
+            <%= f.label :nbi_points_expert, "Nombre de points NBI", class: "field-label" %>
+            <%= f.number_field :nbi_points_expert, step: 1, min: 0 %>
+          </div>
+        </div>
+
+        <div class="field-grid field-grid--1" style="margin-top:0.75rem">
+          <div class="field-group">
+            <%= f.label :wt1_montant, class: "field-label" do %>
+              Remboursement transport mensuel (Navigo ou autre), si vous voulez le voir inclus
+            <% end %>
+            <%= f.number_field :wt1_montant, placeholder: "Laisser vide pour ne pas inclure le transport", step: 0.01, min: 0 %>
+            <span class="field-hint">Optionnel — le résultat affichera le net avant PAS avec et sans transport si renseigné</span>
+          </div>
         </div>
 
         <div class="field-grid field-grid--1" data-controller="carriere-form" style="margin-top:0.75rem">

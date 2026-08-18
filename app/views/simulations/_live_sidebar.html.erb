@@ -111,12 +111,7 @@
     </div>
   </div>
 
-  <%# Transport & FMD (masqué par défaut) %>
-  <div class="sb-line hidden" data-sb-line="wt1">
-    <span class="sb-code">WT1</span>
-    <span class="sb-name">Transport</span>
-    <span class="sb-amount" data-sb="wt1">—</span>
-  </div>
+  <%# FMD (masqué par défaut) %>
   <div class="sb-line hidden" data-sb-line="fmd">
     <span class="sb-code">FMD</span>
     <span class="sb-name">Forfait mobilités</span>
@@ -176,6 +171,27 @@
       <span class="sb-code">Q60</span>
       <span class="sb-name">PAS</span>
       <span class="sb-amount sb-amount--ded" data-sb="pas">—</span>
+    </div>
+  </div>
+
+  <%# Net social %>
+  <div class="sb-total">
+    <span>Net social</span>
+    <strong data-sb="net-social">—</strong>
+  </div>
+
+  <%# Remboursements hors brut & retenues nettes (masqué par défaut) %>
+  <div class="sb-section hidden" data-sb-line="hors-brut">
+    <div class="sb-section-label">Hors brut <span class="sb-est-tag">après net social</span></div>
+    <div class="sb-line hidden" data-sb-line="wt1">
+      <span class="sb-code">WT1</span>
+      <span class="sb-name">Remb. transport</span>
+      <span class="sb-amount" data-sb="wt1">—</span>
+    </div>
+    <div class="sb-line hidden" data-sb-line="xrn">
+      <span class="sb-code">XRN</span>
+      <span class="sb-name">Retenue restau. nuit</span>
+      <span class="sb-amount sb-amount--ded" data-sb="xrn">—</span>
     </div>
   </div>
 

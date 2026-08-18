@@ -32,6 +32,7 @@ class SimulationSession < ApplicationRecord
       :departement_code, :nb_enfants_sft, :nbi_points,
       :iss_montant, :dtc_montant, :wt1_montant,
       :taux_pas, :mutuelle, :garde_alternee,
+      :xrn_eligible, :xrn_nb_nuits,
       :heures_nuit, :heures_dimanche, :heures_ferie,
       :hs_m2_nuit, :hs_m2_dimanche, :hs_m2_ferie, :hs_m2_jour,
       :tp7_heures, :tp8_heures,
@@ -46,6 +47,7 @@ class SimulationSession < ApplicationRecord
       :heure_debut_service, :heure_fin_service,
       :nb_matins, :nb_apres_midi, :nb_soirs,
       :type_navigo, :navigo_montant_annuel,
+      :wt1_a_abonnement, :wt1_zones, :wt1_nuit_eligible,
       :simulate_fmd, :fmd_mode, :fmd_jours_annee
     )
   end

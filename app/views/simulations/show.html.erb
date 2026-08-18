@@ -32,7 +32,7 @@
     <div class="result-kpi">
       <p class="rk-label">Net avant PAS</p>
       <p class="rk-value"><%= number_to_currency(@result.net_avant_pas, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
-      <p class="rk-sub">Net imposable</p>
+      <p class="rk-sub">Net social + remb. transport − retenues nettes</p>
     </div>
     <div class="result-kpi">
       <p class="rk-label">Net à payer</p>
@@ -110,9 +110,90 @@
           <% end %>
 
           <tr class="diff-totals">
+            <td colspan="2" style="text-align:right;padding-right:1rem;color:var(--ink-soft)">Net social</td>
+            <td class="td-num"><%= number_to_currency(@result.net_social, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
+          </tr>
+
+          <% remboursements = @result.lines.select { |l| l[:type] == :remboursement } %>
+          <% if remboursements.any? %>
+            <tr style="background:var(--canvas);border-top:1px solid var(--border)">
+              <td colspan="3" style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);padding:6px 12px">
+                Remboursements hors brut
+              </td>
+            </tr>
+            <% remboursements.each do |line| %>
+              <tr>
+                <td class="td-code"><code><%= line[:code] %></code></td>
+                <td class="td-label">
+                  <%= line[:label] %>
+                  <% if line[:detail] %>
+                    <span style="font-size:.75rem;color:var(--ink-mute);display:block"><%= line[:detail] %></span>
+                  <% end %>
+                </td>
+                <td class="td-num" style="color:var(--green)">
+                  + <%= number_to_currency(line[:montant], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+
+          <% retenues_nettes = @result.lines.select { |l| l[:type] == :retenue_nette } %>
+          <% if retenues_nettes.any? %>
+            <tr style="background:var(--canvas);border-top:1px solid var(--border)">
+              <td colspan="3" style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);padding:6px 12px">
+                Autres retenues nettes
+              </td>
+            </tr>
+            <% retenues_nettes.each do |line| %>
+              <tr>
+                <td class="td-code"><code><%= line[:code] %></code></td>
+                <td class="td-label">
+                  <%= line[:label] %>
+                  <% if line[:detail] %>
+                    <span style="font-size:.75rem;color:var(--ink-mute);display:block"><%= line[:detail] %></span>
+                  <% end %>
+                </td>
+                <td class="td-num" style="color:var(--red)">
+                  − <%= number_to_currency(line[:montant].abs, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+
+          <tr class="diff-totals">
             <td colspan="2" style="text-align:right;padding-right:1rem;color:var(--ink-soft)">Net avant PAS</td>
             <td class="td-num"><%= number_to_currency(@result.net_avant_pas, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
           </tr>
+
+          <tr style="background:var(--canvas);border-top:1px solid var(--border)">
+            <td colspan="3" style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);padding:6px 12px">
+              Impôt sur le revenu
+            </td>
+          </tr>
+          <% q60_line = @result.lines.find { |l| l[:code] == "Q60" } %>
+          <% if q60_line %>
+            <tr>
+              <td class="td-code"><code>Q60</code></td>
+              <td class="td-label">
+                Base imposable (Q60)
+                <span style="font-size:.75rem;color:var(--ink-mute);display:block">Net social + UCB + UC8 − HS exonérées — information, pas une retenue</span>
+              </td>
+              <td class="td-num"><%= number_to_currency(q60_line[:base_imposable], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
+            </tr>
+            <tr>
+              <td class="td-code"></td>
+              <td class="td-label">Taux PAS personnalisé</td>
+              <td class="td-num"><%= q60_line[:taux_pas] %>%</td>
+            </tr>
+            <tr>
+              <td class="td-code"><code>PAS</code></td>
+              <td class="td-label">Prélèvement à la source</td>
+              <td class="td-num" style="color:var(--red)">
+                − <%= number_to_currency(q60_line[:montant], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+              </td>
+            </tr>
+          <% end %>
+
           <tr class="diff-totals" style="border-top:2px solid var(--ink)">
             <td colspan="2" style="text-align:right;padding-right:1rem;font-size:1rem">Net à payer</td>
             <td class="td-num" style="font-size:1.125rem;color:var(--green)">
@@ -123,6 +204,77 @@
       </table>
     </div>
   </div>
+
+  <% if @xrn_info || @self_de_jour %>
+    <div class="step-panel" style="margin-top:1.5rem">
+      <div class="panel-header">
+        <div class="panel-icon">🍽</div>
+        <div class="panel-titles">
+          <h2 class="panel-title">Hors paie / informatif</h2>
+          <p class="panel-desc">Crédit carte ticket restaurant et self de jour — n'affectent jamais le net simulé</p>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <% if @xrn_info %>
+          <div class="section-label">
+            Crédit carte ticket restaurant <span class="badge badge--var">XRN · informatif</span>
+          </div>
+          <div class="result-kpis" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:1rem">
+            <div class="result-kpi">
+              <p class="rk-label">Nuits éligibles</p>
+              <p class="rk-value"><%= @xrn_info[:nuits] %></p>
+              <p class="rk-sub">Retenue XRN sur ce bulletin : − <%= number_to_currency(@xrn_info[:retenue], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+            </div>
+            <div class="result-kpi">
+              <p class="rk-label">Valeur des tickets</p>
+              <p class="rk-value"><%= number_to_currency(@xrn_info[:ticket_valeur], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+              <p class="rk-sub">Hors salaire — créditée sur la carte en M+2</p>
+            </div>
+            <div class="result-kpi">
+              <p class="rk-label">Participation employeur</p>
+              <p class="rk-value"><%= number_to_currency(@xrn_info[:participation_employeur], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+              <p class="rk-sub">3,60 € / ticket — informatif</p>
+            </div>
+          </div>
+        <% end %>
+
+        <% if @self_de_jour %>
+          <div class="section-label">
+            Self de jour <span class="badge badge--var">SELF · informatif</span>
+          </div>
+          <div class="result-kpis" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+            <div class="result-kpi">
+              <p class="rk-label">Repas pris</p>
+              <p class="rk-value"><%= @self_de_jour.nb_repas %></p>
+              <p class="rk-sub">Indice majoré <%= @self_de_jour.indice_majore %></p>
+            </div>
+            <div class="result-kpi">
+              <p class="rk-label">Tarif unitaire applicable</p>
+              <p class="rk-value"><%= number_to_currency(@self_de_jour.tarif_unitaire, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+              <p class="rk-sub">Table AP-HP en vigueur depuis <%= I18n.l(@self_de_jour.date_effet_table, format: "%d/%m/%Y") %></p>
+            </div>
+            <div class="result-kpi">
+              <p class="rk-label">Coût estimé du mois</p>
+              <p class="rk-value"><%= number_to_currency(@self_de_jour.cout_estime, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+              <p class="rk-sub">Informatif — coût réel à votre charge</p>
+            </div>
+            <div class="result-kpi">
+              <p class="rk-label">Impact sur la paie simulée</p>
+              <p class="rk-value">0,00 €</p>
+              <p class="rk-sub">Sauf ligne de retenue de paie identifiée</p>
+            </div>
+          </div>
+
+          <% if @self_de_jour.warning %>
+            <div class="alert alert--warn" style="margin-top:1rem">
+              <span>⚠</span><span><%= @self_de_jour.warning %></span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 
   <% if @carriere %>
     <div class="step-panel" style="margin-top:1.5rem">

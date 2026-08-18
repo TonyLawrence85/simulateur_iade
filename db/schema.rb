@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_212959) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -93,7 +93,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_212959) do
     t.datetime "created_at", null: false
     t.date "date_entree_echelon"
     t.string "departement_code"
-    t.decimal "dhn_heures"
     t.decimal "dtc_montant"
     t.integer "echelon"
     t.integer "fmd_jours_annee"
@@ -112,17 +111,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_212959) do
     t.decimal "heures_nuit"
     t.decimal "heures_par_garde", precision: 4, scale: 1
     t.decimal "heures_weekend_garde"
-    t.decimal "hs_dim_jf"
-    t.decimal "hs_jour"
-    t.decimal "hs_jour_100"
-    t.decimal "hs_jour_25"
-    t.decimal "hs_jour_50"
-    t.decimal "hs_nuit"
-    t.decimal "hs_nuit_100"
-    t.decimal "hs_nuit_25"
-    t.decimal "hs_nuit_50"
+    t.decimal "hs_m2_dimanche"
+    t.decimal "hs_m2_ferie"
+    t.decimal "hs_m2_jour"
+    t.decimal "hs_m2_nuit"
     t.decimal "iss_montant"
-    t.integer "it7_qty"
     t.integer "jours_absence_psr", default: 0
     t.integer "jours_anr", default: 0
     t.integer "jours_carence", default: 0
@@ -152,16 +145,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_212959) do
     t.jsonb "result_lines"
     t.decimal "result_net_avant_pas"
     t.decimal "result_net_paye"
+    t.integer "self_nb_repas"
+    t.string "self_repas_eligible"
     t.boolean "simulate_fmd", default: false
     t.string "statut"
     t.decimal "taux_pas"
     t.string "token"
-    t.integer "tp7_qty"
+    t.decimal "tp7_heures"
+    t.decimal "tp8_heures"
     t.string "type_cycle"
     t.string "type_navigo", default: "mensuel"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.string "wt1_a_abonnement"
     t.decimal "wt1_montant"
+    t.string "wt1_nuit_eligible"
+    t.string "wt1_zones"
+    t.string "xrn_eligible"
+    t.integer "xrn_nb_nuits"
     t.index ["user_id"], name: "index_simulation_sessions_on_user_id"
   end
 

@@ -8,8 +8,10 @@ export default class extends Controller {
     "progressFill", "confidenceLabel",
     "form", "zoneDisplay", "irDisplay", "sftDisplay", "nbiDisplay",
     "gradeSelect", "dtcMontantRow",
-    "navigoMensuelRow", "navigoAnnuelRow", "wt1Display",
+    "wt1NspHint", "wt1DetailRows", "navigoZonesRow", "navigoAutreRow", "wt1Display",
     "fmdRow", "fmdEstimate",
+    "xrnNuitsRow", "xrnNspHint", "xrnInfoDisplay",
+    "selfRepasRow", "selfDisplay",
     "absencesList", "absenceCard", "absenceTemplate", "absencesSummary",
     "ft1SemainesRow", "ft1MontantRow", "ft9MontantRow",
     "carriereEchelonActuel", "carriereTibActuelSub",
@@ -27,6 +29,16 @@ export default class extends Controller {
   CTI_POINTS   = 49
   PRIME_VEIL   = 90.00
   PRIME_IADE   = 180.00
+
+  // Self de jour — table AP-HP de référence, note D2023-285, effet 01/03/2023.
+  // Coût informatif uniquement (jamais déduit du net) — cf. SelfDeJourCalculator côté serveur.
+  SELF_TARIFS = [
+    { max: 353, tarif: 2.82 }, { max: 379, tarif: 3.48 }, { max: 463, tarif: 4.36 },
+    { max: 534, tarif: 5.28 }, { max: 642, tarif: 6.26 }, { max: null, tarif: 7.36 }
+  ]
+
+  // Tarifs Navigo annuels Île-de-France Mobilités 2026 — cf. WT1_ZONES_TABLE côté serveur.
+  WT1_ZONES = { "1-5": 998.80, "2-3": 976.80, "3-4": 950.40, "4-5": 928.40 }
 
   GRILLE = {
     grade1:    { 1:450, 2:478, 3:506, 4:534, 5:563, 6:593, 7:624, 8:656, 9:690, 10:727 },
@@ -244,10 +256,38 @@ export default class extends Controller {
     this.updateSidebar()
   }
 
+  xrnEligibleToggle(e) {
+    const value = e.target.value
+    if (this.hasXrnNuitsRowTarget) this.xrnNuitsRowTarget.style.display = value === "oui" ? "" : "none"
+    if (this.hasXrnNspHintTarget)  this.xrnNspHintTarget.style.display  = value === "nsp" ? "" : "none"
+    if (value !== "oui") {
+      const input = this.hasXrnNuitsRowTarget ? this.xrnNuitsRowTarget.querySelector("input") : null
+      if (input) input.value = ""
+    }
+    this.updateSidebar()
+  }
+
+  selfEligibleToggle(e) {
+    const value = e.target.value
+    if (this.hasSelfRepasRowTarget) this.selfRepasRowTarget.style.display = value === "oui" ? "" : "none"
+    if (value !== "oui") {
+      const input = this.hasSelfRepasRowTarget ? this.selfRepasRowTarget.querySelector("input[type=number]") : null
+      if (input) input.value = ""
+    }
+    this.updateSidebar()
+  }
+
+  wt1AbonnementToggle(e) {
+    const value = e.target.value
+    if (this.hasWt1DetailRowsTarget) this.wt1DetailRowsTarget.style.display = value === "oui" ? "" : "none"
+    if (this.hasWt1NspHintTarget)    this.wt1NspHintTarget.style.display    = value === "nsp" ? "" : "none"
+    this.updateSidebar()
+  }
+
   navigoTypeToggle(e) {
-    const annuel = e.target.value === "annuel"
-    if (this.hasNavigoMensuelRowTarget) this.navigoMensuelRowTarget.style.display = annuel ? "none" : ""
-    if (this.hasNavigoAnnuelRowTarget)  this.navigoAnnuelRowTarget.style.display  = annuel ? "" : "none"
+    const autre = e.target.value === "autre"
+    if (this.hasNavigoZonesRowTarget) this.navigoZonesRowTarget.style.display = autre ? "none" : ""
+    if (this.hasNavigoAutreRowTarget) this.navigoAutreRowTarget.style.display = autre ? "" : "none"
     this.updateSidebar()
   }
 
@@ -475,12 +515,20 @@ export default class extends Controller {
     const hGarde      = parseFloat(this._fv("heures_par_garde")) || 4
     const heuresWeekendGarde = parseFloat(this._fv("heures_weekend_garde")) || 0
     const { carence: joursCarence = 0, cmo90: joursCmo90 = 0, cmo50: joursCmo50 = 0 } = this._absenceTotals || {}
-    const typeNavigo   = this._fv("type_navigo") || "mensuel"
-    const wt1Base      = typeNavigo === "annuel"
-      ? (parseFloat(this._fv("navigo_montant_annuel")) || 0) / 12
+    const typeNavigo      = this._fv("type_navigo") || "mensuel"
+    const wt1Abonnement   = this._fv("wt1_a_abonnement") || "non"
+    const wt1Zones        = this._fv("wt1_zones") || ""
+    const wt1NuitEligible = this._fv("wt1_nuit_eligible") || "non"
+    const heureDebut      = this._fv("heure_debut_service") || "07:36"
+    const isNuit = wt1NuitEligible === "oui" ? true
+      : wt1NuitEligible === "non" ? false
+      : heureDebut.slice(0, 5) >= "19:00"
+    // tarif_annuel_ref = table_navigo_annee[zones] — référence unique quel que soit le pass
+    // (annuel/mois/semaine) ; "autre abonnement" utilise le montant mensuel saisi directement.
+    const tarifAnnuelRef = this.WT1_ZONES[wt1Zones] || (parseFloat(this._fv("navigo_montant_annuel")) || 0)
+    const wt1Base = (typeNavigo !== "autre" && tarifAnnuelRef > 0)
+      ? tarifAnnuelRef / 12
       : (parseFloat(this._fv("wt1_montant")) || 0)
-    const heureDebut   = this._fv("heure_debut_service") || "07:36"
-    const isNuit       = heureDebut.slice(0, 5) >= "19:00"
     const simulateFmd  = this._fv("simulate_fmd") === "1"
     const fmdJours     = parseInt(this._fv("fmd_jours_annee")) || 0
     const moisPaie     = this._fv("mois_paie") || ""
@@ -508,9 +556,12 @@ export default class extends Controller {
     const baseH    = (tib + ir) * 12 / 1820
     const jma      = baseH * 0.25 * hNuit
     const dimjf    = (hDim + hFerie) * 7.50
-    const hsSupMontant  = this._calcHeuresSupM2(baseH, hsM2Nuit + nbGardes * hGarde, hsM2Dimanche, hsM2Ferie, hsM2Jour)
+    const hsNuitDetail  = this._calcHeuresSupM2(baseH, hsM2Nuit + nbGardes * hGarde, hsM2Dimanche, hsM2Ferie, hsM2Jour)
     const greffeMontant = this._tronquerTaux(baseH * 2.52) * tp7Heures + this._tronquerTaux(baseH * 2.10) * tp8Heures
+    const hsSupMontant  = hsNuitDetail.nuit + hsNuitDetail.autres
     const hsTotal  = hsSupMontant + greffeMontant
+    // Part exonérée fiscalement (IT7/DHN/TP7/TP8) — sert uniquement à la base Q60, jamais au net avant PAS
+    const hsExonereesBrut = hsNuitDetail.nuit + greffeMontant
     const tauxHsN  = this._tronquerTaux(baseH * 2.52)
     const gardes   = heuresWeekendGarde * tauxHsN
 
@@ -522,12 +573,33 @@ export default class extends Controller {
     const ft1      = ft1Mode === "montant" ? ft1Montant : ft1Semaines * 54
     const ft9      = ft9Actif ? ft9Montant : 0
 
-    // ── Transport (WT1) ──
+    // ── Transport (WT1) — remboursement hors brut, ajouté après le net social ──
     const totalAbsence = joursCarence + joursCmo90 + joursCmo50
     let wt1 = 0
-    if (wt1Base > 0 && totalAbsence <= 60) {
+    if (wt1Abonnement !== "non" && wt1Base > 0 && totalAbsence <= 60) {
       wt1 = wt1Base * (isNuit ? 1.0 : 0.75)
       if (quotite < 0.5) wt1 /= 2
+    }
+
+    // ── Restauration de nuit (XRN) — retenue nette, hors cotisations sociales ──
+    const xrnEligible = this._fv("xrn_eligible") === "oui"
+    const xrnNbNuits   = parseInt(this._fv("xrn_nb_nuits")) || 0
+    const xrn = xrnEligible ? xrnNbNuits * 2.40 : 0
+    if (this.hasXrnInfoDisplayTarget) {
+      this.xrnInfoDisplayTarget.value = (xrnEligible && xrnNbNuits > 0)
+        ? `Ticket ${this.fmt((xrnNbNuits * 6.00).toFixed(2))} € (dont employeur ${this.fmt((xrnNbNuits * 3.60).toFixed(2))} €)`
+        : "—"
+    }
+
+    // ── Self de jour — coût informatif uniquement, jamais déduit du net ──
+    const selfEligible = this._fv("self_repas_eligible") === "oui"
+    const selfNbRepas   = parseInt(this._fv("self_nb_repas")) || 0
+    const selfTarif = this._tarifSelf(im)
+    const selfCout   = selfEligible ? selfNbRepas * selfTarif : 0
+    if (this.hasSelfDisplayTarget) {
+      this.selfDisplayTarget.value = (selfEligible && selfNbRepas > 0)
+        ? `${this.fmt(selfTarif.toFixed(2))} € / repas → ${this.fmt(selfCout.toFixed(2))} € (informatif)`
+        : "—"
     }
 
     // ── FMD (versé oct./nov. seulement) ──
@@ -538,9 +610,9 @@ export default class extends Controller {
       else                     fmd = 300
     }
 
-    // ── Brut ──
+    // ── Brut (WT1/XRN exclus : hors brut, hors cotisations — fiche corrective codeur 17/08/2026) ──
     const brut = tib + cti + veil + iade - iba + ir + nbi + irNbi + iss + sft +
-                 jma + dimjf + hsTotal + gardes + psr + lsu + div + ft1 + ft9 + wt1 + fmd
+                 jma + dimjf + hsTotal + gardes + psr + lsu + div + ft1 + ft9 + fmd
 
     // ── Absences (retenues approchées — détail exact sur bulletin) ──
     const { clmCldPlein = 0, clmCldDemi = 0, anr = 0, joursCalendaires = 30 } = this._absenceTotals || {}
@@ -566,12 +638,18 @@ export default class extends Controller {
       cnracl = 0.0401 * (tib + cti + brut)
     }
     const baseCsg  = brut * 0.9825
-    const hsGardes = hsSupMontant + gardes
-    const csgTotal = baseCsg * (0.029 + 0.068) + (hsGardes > 0 ? hsGardes * 0.068 : 0)
-    const totalAv  = cnracl + rafp + csgTotal
-    const netAvPas = brut - totalAv - retAbsTotal
-    const pas      = netAvPas * (tausPas / 100)
-    const net      = netAvPas - pas - mutuelle
+    const ucbMontant = baseCsg * 0.029
+    // UC8 : donnée fiscale (base Q60 uniquement), jamais une retenue réelle sur le net avant PAS
+    const hsGardes   = hsSupMontant + gardes
+    const uc8Montant = hsGardes > 0 ? hsGardes * 0.068 : 0
+    const csgTotal   = baseCsg * (0.029 + 0.068)
+    const totalAv    = cnracl + rafp + csgTotal
+    const netSocial  = brut - totalAv - retAbsTotal
+    const baseQ60    = netSocial + ucbMontant + uc8Montant - hsExonereesBrut
+    const pas        = baseQ60 * (tausPas / 100)
+    // Net avant PAS : net social + WT1 (remb. transport) − XRN (retenue restau. nuit)
+    const netAvPas   = netSocial + wt1 - xrn
+    const net        = netAvPas - pas - mutuelle
 
     // ── Mise à jour du DOM ──
     this._sbAmt("tib",    tib)
@@ -611,12 +689,14 @@ export default class extends Controller {
     this._sbLineShow("ft1", ft1 > 0); if (ft1 > 0) this._sbAmt("ft1", ft1)
     this._sbLineShow("ft9", ft9 > 0); if (ft9 > 0) this._sbAmt("ft9", ft9)
 
-    this._sbLineShow("wt1", wt1 > 0); if (wt1 > 0) this._sbAmt("wt1", wt1)
     this._sbLineShow("fmd", fmd > 0); if (fmd > 0) this._sbAmt("fmd", fmd)
 
     if (this.hasWt1DisplayTarget) {
+      const nspVariante = (wt1NuitEligible === "nsp" && wt1 > 0)
+        ? ` — variante 100% : ${this.fmt((wt1 / (isNuit ? 1.0 : 0.75) * 1.0).toFixed(2))} €`
+        : ""
       this.wt1DisplayTarget.value = wt1 > 0
-        ? `${this.fmt(wt1.toFixed(2))} € (${isNuit ? "100% nuit" : "75% jour"}${quotite < 0.5 ? " ÷2" : ""})`
+        ? `${this.fmt(wt1.toFixed(2))} € (${isNuit ? "100% nuit" : "75% jour"}${quotite < 0.5 ? " ÷2" : ""})${nspVariante}`
         : totalAbsence > 60 ? "0 € (>60j absence)" : "—"
     }
 
@@ -628,11 +708,17 @@ export default class extends Controller {
     this._sbLineShow("clmcld",  retClmCld  > 0); if (retClmCld  > 0) this._sbNeg("clmcld",  retClmCld,  true)
     this._sbLineShow("anr",     retAnr     > 0); if (retAnr     > 0) this._sbNeg("anr",     retAnr,     true)
 
-    this._sbTotal("brut",   brut)
-    this._sbNeg("cnracl",   cnracl + rafp, true)
-    this._sbNeg("csg",      csgTotal,      true)
-    this._sbNeg("pas",      pas,           tausPas > 0)
-    this._sbTotal("net",    net)
+    this._sbTotal("brut",       brut)
+    this._sbNeg("cnracl",       cnracl + rafp, true)
+    this._sbNeg("csg",          csgTotal,      true)
+    this._sbNeg("pas",          pas,           tausPas > 0)
+    this._sbTotal("net-social", netSocial)
+
+    this._sbLineShow("hors-brut", wt1 > 0 || xrn > 0)
+    this._sbLineShow("wt1", wt1 > 0); if (wt1 > 0) this._sbAmt("wt1", wt1)
+    this._sbLineShow("xrn", xrn > 0); if (xrn > 0) this._sbNeg("xrn", xrn, true)
+
+    this._sbTotal("net", net)
 
     this.updateCarriere(grade, echelon, quotite, tauxIr)
   }
@@ -750,6 +836,11 @@ export default class extends Controller {
     return im * this.VALEUR_POINT * quotite
   }
 
+  _tarifSelf(im) {
+    const ligne = this.SELF_TARIFS.find(l => l.max === null || im <= l.max)
+    return ligne ? ligne.tarif : this.SELF_TARIFS[this.SELF_TARIFS.length - 1].tarif
+  }
+
   _calcSft(nb, tib, alternee) {
     let sft = 0
     if (nb === 1)      sft = 2.29
@@ -758,26 +849,21 @@ export default class extends Controller {
     return alternee && sft > 0 ? sft / 2 : sft
   }
 
-  // Contingent mensuel de 20h (nuit puis dimanche puis férié puis jour) au tarif de la
-  // catégorie (IT7), au-delà taux réduit ×0,25 (DHN). Miroir de HeuresSupM2Calculator.
+  // Contingent de 20h dédié aux heures sup de NUIT uniquement (IT7 jusqu'à 20h, DHN
+  // au-delà, même taux que IT7). Dimanche/férié/jour sont payés directement, hors
+  // contingent, à leur propre taux. Miroir de HeuresSupM2Calculator (fiche corrective
+  // codeur IT7/DHN du 17/08/2026).
   _calcHeuresSupM2(baseH, hNuit, hDimanche, hFerie, hJour) {
-    const taux = {
-      nuit: this._tronquerTaux(baseH * 2.52),
-      dimanche: this._tronquerTaux(baseH * 2.10),
-      ferie: this._tronquerTaux(baseH * 2.10),
-      jour: this._tronquerTaux(baseH * 1.26)
-    }
-    const tauxDhn = this._tronquerTaux(baseH * 0.25)
-    let contingentRestant = 20
-    let montant = 0
-    ;[["nuit", hNuit], ["dimanche", hDimanche], ["ferie", hFerie], ["jour", hJour]].forEach(([cat, h]) => {
-      const hIt7 = Math.min(h, contingentRestant)
-      const hDhn = h - hIt7
-      contingentRestant -= hIt7
-      montant += taux[cat] * hIt7
-      montant += tauxDhn * hDhn
-    })
-    return montant
+    const tauxNuit  = this._tronquerTaux(baseH * 2.52)
+    const tauxDimJf = this._tronquerTaux(baseH * 2.10)
+    const tauxJour  = this._tronquerTaux(baseH * 1.26)
+
+    const it7h = Math.min(hNuit, 20)
+    const dhnh = Math.max(hNuit - 20, 0)
+    const nuit = (tauxNuit * it7h) + (tauxNuit * dhnh)
+    const autres = (tauxDimJf * (hDimanche + hFerie)) + (tauxJour * hJour)
+
+    return { nuit, autres }
   }
 
   // Règle moteur AP-HP : taux horaire tronqué au multiple inférieur de 0,02 € (pas arrondi)

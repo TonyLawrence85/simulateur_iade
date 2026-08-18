@@ -20,21 +20,27 @@ module Iade
     FALLBACK = { grade: "grade1", echelon: 1, anciennete: "Sans ancienneté" }.freeze
 
     def initialize(situation_actuelle: nil, grade_source: nil, echelon_source: nil, mois_echelon_source: nil,
-                   mois_nomination: nil, zone_paris: nil, nb_enfants_sft: nil, dtc_choix: nil, dtc_montant: nil, **)
+                   mois_nomination: nil, quotite: nil, zone_paris: nil, nb_enfants_sft: nil,
+                   nbi_choix: nil, nbi_points_expert: nil, dtc_choix: nil, dtc_montant: nil,
+                   wt1_montant: nil, **)
       @situation_actuelle  = situation_actuelle.to_s
       @grade_source        = grade_source
       @echelon_source      = echelon_source.presence&.to_i
       @mois_echelon_source = parse_mois(mois_echelon_source)
       @mois_nomination     = parse_mois(mois_nomination)
+      @quotite             = quotite.presence&.to_f || 1.0
       @zone_paris          = zone_paris.to_s
       @nb_enfants_sft      = nb_enfants_sft.presence&.to_i || 0
+      @nbi_choix           = nbi_choix.to_s
+      @nbi_points_expert   = nbi_points_expert.presence&.to_i
       @dtc_choix           = dtc_choix.to_s
       @dtc_montant         = dtc_montant
+      @wt1_montant         = wt1_montant.presence&.to_f
       @alertes = []
     end
 
     def call
-      return fallback_result("mode_simple") if %w[prive non ne_sais_pas].include?(@situation_actuelle)
+      return fallback_result if %w[prive non ne_sais_pas].include?(@situation_actuelle)
       return { "incomplet" => true, "alertes" => ["Grade, échelon et dates requis pour projeter la carrière."] } unless prerequis_presents?
 
       projection = Iade::CarriereProjectionCalculator.project_to_date(
@@ -52,7 +58,7 @@ module Iade
                            "au" => @mois_nomination.strftime("%Y-%m") },
         "reclassement" => { "grade" => reclassement[:grade], "echelon" => reclassement[:echelon],
                              "anciennete" => reclassement[:anciennete] },
-        "net_avant_pas" => net_avant_pas(reclassement[:echelon]),
+        **net_avant_pas(reclassement[:echelon]),
         "alertes" => @alertes + alertes_saisie
       }
     end
@@ -91,10 +97,8 @@ module Iade
       { grade: "grade1", echelon: entree[:echelon], anciennete: entree[:anciennete] }
     end
 
-    def reclassement_grade2(projection)
-      if projection.echelon == 1
-        return { grade: "grade1", echelon: 1, anciennete: "Sans ancienneté" }
-      end
+    def reclassement_grade2(projection) # rubocop:disable Metrics/MethodLength
+      return { grade: "grade1", echelon: 1, anciennete: "Sans ancienneté" } if projection.echelon == 1
 
       indice_source = GradeScale.indice_for(grade: "ide_grade2", echelon: projection.echelon, date: @mois_nomination)
       unless indice_source
@@ -111,36 +115,80 @@ module Iade
       end
 
       @alertes << "Maintien d'indice à vérifier RH : aucun échelon IADE n'atteint votre indice IDE." if classement.depasse
-      @alertes << "Ancienneté non conservée par hypothèse pour un classement par indice — à confirmer RH."
-      { grade: "grade1", echelon: classement.echelon, anciennete: "Sans ancienneté (par hypothèse)" }
+
+      anciennete = conserve_anciennete_grade2?(projection, classement) ? "Ancienneté acquise" : "Sans ancienneté"
+      { grade: "grade1", echelon: classement.echelon, anciennete: anciennete }
     end
 
-    def net_avant_pas(echelon_iade)
-      return nil unless @mois_nomination
+    # Règle de non-recul (Décret n° 2017-984, art. 14) : l'ancienneté n'est conservée que si
+    # l'augmentation de traitement liée à la nomination IADE ne dépasse pas celle qu'aurait
+    # donnée le prochain avancement d'échelon normal en restant IDE grade 2.
+    def conserve_anciennete_grade2?(projection, classement)
+      tib_iade         = tib_for("grade1", classement.echelon)
+      tib_ide_actuel   = tib_for("ide_grade2", projection.echelon)
+      tib_ide_suivant  = tib_for("ide_grade2", projection.echelon + 1)
 
-      result = Iade::PayslipCalculator.call(
+      return true if tib_ide_suivant.nil? # échelon IDE terminal : pas d'avancement à comparer, on conserve par prudence
+      return false if tib_iade.nil? || tib_ide_actuel.nil?
+
+      augmentation_nomination  = tib_iade - tib_ide_actuel
+      augmentation_avancement  = tib_ide_suivant - tib_ide_actuel
+      augmentation_nomination <= augmentation_avancement
+    end
+
+    def tib_for(grade, echelon)
+      im = GradeScale.indice_for(grade: grade, echelon: echelon, date: @mois_nomination)
+      return nil unless im
+
+      BigDecimal(im.to_s) * Iade::TibCalculator::VALEUR_POINT
+    end
+
+    def nbi_points
+      case @nbi_choix
+      when "oui_15" then 15
+      when "expert" then @nbi_points_expert || 0
+      else 0
+      end
+    end
+
+    # Retourne { "net_avant_pas" => ..., "net_avant_pas_avec_transport" => ... (si transport saisi) }
+    def net_avant_pas(echelon_iade)
+      return { "net_avant_pas" => nil } unless @mois_nomination
+
+      base_params = {
         mois_paie: @mois_nomination.strftime("%Y-%m"), profession: "iade", statut: "titulaire",
-        grade: "grade1", echelon: echelon_iade, quotite: 1.0,
+        grade: "grade1", echelon: echelon_iade, quotite: @quotite,
         departement_code: @zone_paris == "oui" ? "75" : "00",
-        nb_enfants_sft: @nb_enfants_sft, nbi_points: 0, taux_pas: 0,
+        nb_enfants_sft: @nb_enfants_sft, nbi_points: nbi_points, taux_pas: 0,
         dtc_montant: @dtc_choix.in?(%w[dtc dtf]) ? @dtc_montant : nil
-      )
-      result.errors.any? ? nil : result.net_avant_pas.to_f.round(2)
+      }
+
+      sans_transport = Iade::PayslipCalculator.call(base_params)
+      resultat = { "net_avant_pas" => (sans_transport.net_avant_pas.to_f.round(2) unless sans_transport.errors.any?) }
+
+      if @wt1_montant&.positive?
+        avec_transport = Iade::PayslipCalculator.call(base_params.merge(wt1_montant: @wt1_montant))
+        resultat["net_avant_pas_avec_transport"] = avec_transport.net_avant_pas.to_f.round(2) unless avec_transport.errors.any?
+      end
+
+      resultat
     end
 
     def alertes_saisie
       alertes = []
+      alertes << "Quotité non renseignée : 100% appliqué par défaut." if @quotite.blank?
+      alertes << "NBI IADE non renseignée : calculée sans NBI (0 point)." if @nbi_choix.in?(%w[non ne_sais_pas ""])
       alertes << "Zone d'indemnité de résidence inconnue : Paris (3%) appliqué par défaut." if @zone_paris == "ne_sais_pas"
       alertes << "Ligne DTC/DTF non renseignée : calculée hors DTC/DTF." if @dtc_choix.in?(%w[non ne_sais_pas ""])
       alertes << "Le maintien de la ligne DTC/DTF après changement de corps n'est pas garanti — à vérifier RH." if @dtc_choix.in?(%w[dtc dtf])
       alertes
     end
 
-    def fallback_result(_reason)
+    def fallback_result
       {
         "situation_actuelle" => { "grade" => @grade_source, "echelon" => @echelon_source },
         "reclassement" => { "grade" => FALLBACK[:grade], "echelon" => FALLBACK[:echelon], "anciennete" => FALLBACK[:anciennete] },
-        "net_avant_pas" => net_avant_pas(FALLBACK[:echelon]),
+        **net_avant_pas(FALLBACK[:echelon]),
         "alertes" => ["Situation IDE privée, non déclarée ou inconnue : classement simplifié IADE 1er grade échelon 1, " \
                       "à confirmer avec votre gestionnaire RH (reprise d'ancienneté éventuelle non prise en compte)."]
       }

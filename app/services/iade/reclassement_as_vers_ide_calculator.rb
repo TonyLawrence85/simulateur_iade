@@ -8,7 +8,7 @@ module Iade
     FALLBACK = { grade: "ide_grade1", echelon: 1, anciennete: "Sans ancienneté" }.freeze
 
     def initialize(situation_actuelle: nil, statut_administratif: nil, grade_source: nil, echelon_source: nil,
-                   mois_echelon_source: nil, mois_nomination: nil, zone_paris: nil, nb_enfants_sft: nil,
+                   mois_echelon_source: nil, mois_nomination: nil, quotite: nil, zone_paris: nil, nb_enfants_sft: nil,
                    dtc_choix: nil, dtc_montant: nil, **)
       @situation_actuelle    = situation_actuelle.to_s
       @statut_administratif  = statut_administratif.to_s
@@ -16,6 +16,7 @@ module Iade
       @echelon_source        = echelon_source.presence&.to_i
       @mois_echelon_source   = parse_mois(mois_echelon_source)
       @mois_nomination       = parse_mois(mois_nomination)
+      @quotite               = quotite.presence&.to_f || 1.0
       @zone_paris            = zone_paris.to_s
       @nb_enfants_sft        = nb_enfants_sft.presence&.to_i || 0
       @dtc_choix             = dtc_choix.to_s
@@ -83,7 +84,7 @@ module Iade
 
       result = Iade::PayslipCalculator.call(
         mois_paie: @mois_nomination.strftime("%Y-%m"), profession: "ide", statut: "titulaire",
-        grade: "ide_grade1", echelon: echelon_ide, quotite: 1.0,
+        grade: "ide_grade1", echelon: echelon_ide, quotite: @quotite,
         departement_code: @zone_paris == "oui" ? "75" : "00",
         nb_enfants_sft: @nb_enfants_sft, nbi_points: 0, taux_pas: 0,
         dtc_montant: @dtc_choix.in?(%w[dtc dtf]) ? @dtc_montant : nil

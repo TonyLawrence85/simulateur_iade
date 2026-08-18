@@ -61,6 +61,119 @@
       </div>
     </div>
 
+    <div class="section-label" style="margin-top:1.25rem">
+      Restauration de nuit — ticket restaurant <span class="badge badge--var">XRN</span>
+    </div>
+    <div class="alert alert--info" style="margin-bottom:0.75rem">
+      <span>ℹ</span>
+      <div>
+        1 nuit éligible = 1 ticket restaurant de 6,00 €, dont 2,40 € retenus sur la paie (code
+        <code>XRN</code>) et 3,60 € pris en charge par l'employeur. Le crédit de la carte est
+        hors salaire et versé en M+2. Ne pas confondre avec le self de jour, dispositif séparé
+        sans impact sur la paie.
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--1">
+      <div class="field-group">
+        <label class="field-label">Votre profil AP-HP ouvre-t-il droit aux tickets restaurant pour les nuits travaillées ?</label>
+        <div class="radio-toggle">
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[xrn_eligible]" value="non"
+              data-action="change->simulation#xrnEligibleToggle"
+              <%= @simulation.xrn_eligible.in?(%w[oui]) ? "" : "checked" %>>
+            Non
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[xrn_eligible]" value="oui"
+              data-action="change->simulation#xrnEligibleToggle"
+              <%= @simulation.xrn_eligible == "oui" ? "checked" : "" %>>
+            Oui
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[xrn_eligible]" value="nsp"
+              data-action="change->simulation#xrnEligibleToggle"
+              <%= @simulation.xrn_eligible == "nsp" ? "checked" : "" %>>
+            Je ne sais pas
+          </label>
+        </div>
+        <span class="field-hint" data-simulation-target="xrnNspHint" style="<%= @simulation.xrn_eligible == "nsp" ? "" : "display:none" %>">
+          Vérifiez si votre profil Gestime est de nuit ou en alternance jour/nuit et si le dispositif ticket restaurant est activé.
+        </span>
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--2" data-simulation-target="xrnNuitsRow"
+         style="margin-top:0.5rem; <%= @simulation.xrn_eligible == "oui" ? "" : "display:none" %>">
+      <div class="field-group">
+        <%= f.label :xrn_nb_nuits, class: "field-label" do %>
+          Combien de nuits ouvrant droit au ticket restaurant avez-vous effectuées le mois dernier (M-1) ?
+        <% end %>
+        <%= f.number_field :xrn_nb_nuits, placeholder: "0", step: 1, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Retenue XRN = nombre de nuits × 2,40 €</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Ticket &amp; participation employeur <span class="badge badge--var">informatif</span></label>
+        <input type="text" disabled class="field-computed" data-simulation-target="xrnInfoDisplay" value="—">
+        <span class="field-hint">6,00 € / ticket (hors salaire, carte créditée en M+2), dont 3,60 € employeur</span>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:1.25rem">
+      Restaurant du personnel — self de jour <span class="badge badge--var">SELF · informatif</span>
+    </div>
+    <div class="alert alert--info" style="margin-bottom:0.75rem">
+      <span>ℹ</span>
+      <div>
+        Dispositif séparé du ticket restaurant de nuit (XRN) ci-dessus. Le tarif dépend de votre
+        indice majoré (déjà connu via grade/échelon) selon une table AP-HP datée. Ce coût est
+        <strong>informatif</strong> : il n'est jamais déduit de la paie simulée, sauf si une
+        ligne de retenue correspondante est identifiée sur votre bulletin.
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--1">
+      <div class="field-group">
+        <label class="field-label">Avez-vous pris des repas au restaurant du personnel AP-HP pendant le mois simulé ?</label>
+        <div class="radio-toggle">
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[self_repas_eligible]" value="non"
+              data-action="change->simulation#selfEligibleToggle"
+              <%= @simulation.self_repas_eligible.in?(%w[oui]) ? "" : "checked" %>>
+            Non
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[self_repas_eligible]" value="oui"
+              data-action="change->simulation#selfEligibleToggle"
+              <%= @simulation.self_repas_eligible == "oui" ? "checked" : "" %>>
+            Oui
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="simulation_session[self_repas_eligible]" value="nsp"
+              data-action="change->simulation#selfEligibleToggle"
+              <%= @simulation.self_repas_eligible == "nsp" ? "checked" : "" %>>
+            Je ne sais pas
+          </label>
+        </div>
+        <span class="field-hint">« Je ne sais pas » ne déduit rien — le module self reste à 0.</span>
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--2" data-simulation-target="selfRepasRow"
+         style="margin-top:0.5rem; <%= @simulation.self_repas_eligible == "oui" ? "" : "display:none" %>">
+      <div class="field-group">
+        <%= f.label :self_nb_repas, "Combien de repas avez-vous pris au self AP-HP pendant ce mois ?", class: "field-label" %>
+        <%= f.number_field :self_nb_repas, placeholder: "0", step: 1, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Coût estimé (informatif)</label>
+        <input type="text" disabled class="field-computed" data-simulation-target="selfDisplay" value="—">
+        <span class="field-hint">Tarif selon indice majoré (table AP-HP D2023-285) — n'affecte pas le net simulé</span>
+      </div>
+    </div>
+
     <div class="section-label">
       Dim. &amp; jours fériés — activité de M−1 <span class="badge badge--var">M+1</span>
     </div>
@@ -86,12 +199,13 @@
     <div class="alert alert--info" style="margin-bottom:0.75rem">
       <span>ℹ</span>
       <div>
-        <strong>Contingent mensuel de 20h :</strong> les heures cumulées (nuit, puis dimanche,
-        puis jours fériés, puis jour) sont payées au tarif de leur catégorie tant que le
-        contingent n'est pas dépassé (code <code>IT7</code>) — Jour ×1,26 · Nuit ×2,52 ·
-        Dim./Fériés ×2,10. Au-delà de 20h cumulées, le reste est payé à taux réduit ×0,25
-        (code <code>DHN</code>). Base = (TIB+IR) × 12 / 1 820 h, taux horaire tronqué au
-        centime pair inférieur pour coller aux bulletins AP-HP.
+        <strong>Contingent mensuel de 20h (heures de nuit uniquement) :</strong> vos heures
+        supplémentaires de nuit (gardes incluses) sont payées au tarif nuit ×2,52 tant que le
+        contingent n'est pas dépassé (code <code>IT7</code>). Au-delà de 20h, le reste est payé
+        au <strong>même tarif</strong> (code <code>DHN</code> — ce n'est pas un second type
+        d'heure, juste la part au-delà du plafond). Les heures sup de jour (×1,26) et
+        dimanche/fériés (×2,10) sont payées directement, hors contingent. Base = (TIB+IR) × 12
+        / 1 820 h, taux horaire tronqué au centime pair inférieur pour coller aux bulletins AP-HP.
       </div>
     </div>
 

@@ -8,6 +8,16 @@ module Iade
     REQUIRED = %i[mois_paie statut grade echelon quotite departement_code
                   nb_enfants_sft nbi_points taux_pas].freeze
 
+    # Tarifs Navigo annuels Île-de-France Mobilités 2026 — référence unique quel que soit
+    # le type de pass détenu (annuel/mois/semaine), fiche corrective codeur 17/08/2026,
+    # fiche 3. À réviser chaque année (barème IDFM).
+    WT1_ZONES_TABLE = {
+      "1-5" => BigDecimal("998.80"),
+      "2-3" => BigDecimal("976.80"),
+      "3-4" => BigDecimal("950.40"),
+      "4-5" => BigDecimal("928.40")
+    }.freeze
+
     def self.call(params)
       new(params).call
     end
@@ -56,7 +66,6 @@ module Iade
       add_iss                   # IS1 calculé automatiquement
       add_abattement_ppcr       # IBA (déduction PPCR, réduit le brut et l'assiette RAFP)
       add_dtc
-      add_wt1
       add_fmd
       add_jma
       add_dim_jf
@@ -181,17 +190,40 @@ module Iade
                montant: BigDecimal(@p[:dtc_montant].to_s), detail: "Profil bulletin")
     end
 
-    def add_wt1
-      base = wt1_base
-      return unless base
+    # WT1 : remboursement de frais domicile-travail, hors rémunération brute, hors CSG/CRDS
+    # et hors net social — ajouté après le net social, jamais dans @brut_lines_total
+    # (fiche corrective codeur 17/08/2026, fiche 3).
+    def add_wt1 # rubocop:disable Metrics/MethodLength
+      return if @p[:wt1_a_abonnement].to_s == "non"
+
+      montant = wt1_montant_net
+      return unless montant
 
       total_absence = @p[:jours_carence].to_i + @p[:jours_cmo90].to_i + @p[:jours_cmo50].to_i
       return if total_absence > 60
 
-      taux_label = agent_nuit? ? "100% nuit" : "75% jour"
-      montant    = wt1_montant_net(base)
-      add_line(code: "WT1", label: "REMBOUR. TRANSPORT", category: :profile,
-               montant: montant.round(2), detail: taux_label)
+      taux_label = wt1_nuit? ? "100% nuit" : "75% jour"
+      detail = "#{taux_label} — hors brut, hors cotisations"
+      if @p[:wt1_nuit_eligible].to_s == "nsp" && (variante = wt1_montant_net(force_nuit: true))
+        detail += " — profil nuit non confirmé : variante 100% = #{variante.round(2)} €"
+      end
+      add_line(code: "WT1", label: "REMBOUR. TRANSPORT", category: :remboursement, type: :remboursement,
+               montant: montant.round(2), detail: detail)
+    end
+
+    # XRN : participation agent au ticket restaurant des nuits éligibles (2,40 € / nuit,
+    # M-1). Retenue nette distincte des cotisations sociales, appliquée après le net social
+    # (fiche corrective codeur 17/08/2026). Ne pas confondre avec le self de jour, dispositif
+    # séparé sans ligne de paie dans ce moteur.
+    def add_xrn
+      return unless @p[:xrn_eligible].to_s == "oui"
+
+      nuits = @p[:xrn_nb_nuits].to_i
+      return if nuits.zero?
+
+      retenue = (nuits * BigDecimal("2.40")).round(2)
+      add_line(code: "XRN", label: "RET. RESTAU. NUIT", category: :retenue_nette, type: :retenue_nette,
+               montant: -retenue, detail: "#{nuits} nuit(s) éligible(s) × 2,40 €")
     end
 
     def add_fmd
@@ -212,17 +244,38 @@ module Iade
       debut >= "19:00"
     end
 
-    def wt1_base
-      if @p[:type_navigo] == "annuel" && @p[:navigo_montant_annuel].to_f.positive?
-        BigDecimal(@p[:navigo_montant_annuel].to_s) / 12
-      elsif @p[:wt1_montant].to_f.positive?
-        BigDecimal(@p[:wt1_montant].to_s)
+    # Question D (fiche 3) : profil nuit déclaré explicitement en priorité ; à défaut,
+    # calcul prudent par défaut à 75% (heure de début de service, "07:36" jour par défaut).
+    def wt1_nuit?
+      case @p[:wt1_nuit_eligible].to_s
+      when "oui" then true
+      when "non" then false
+      else agent_nuit?
       end
     end
 
-    def wt1_montant_net(base)
-      taux   = agent_nuit? ? BigDecimal("1.00") : BigDecimal("0.75")
-      result = base * taux
+    # tarif_annuel_ref = table_navigo_annee[zones] — référence unique quel que soit le type
+    # de pass (annuel/mois/semaine) ; à défaut, montant annuel saisi manuellement (compat).
+    def wt1_tarif_annuel_ref
+      table_zone = WT1_ZONES_TABLE[@p[:wt1_zones].to_s]
+      return table_zone if table_zone
+
+      BigDecimal(@p[:navigo_montant_annuel].to_s) if @p[:navigo_montant_annuel].to_f.positive?
+    end
+
+    # Multiplie avant de diviser par 12 pour éviter la perte de précision d'une division
+    # décimale répétée (998,80 / 12 × 75% arrondit à tort à 62,42 € au lieu de 62,43 €).
+    def wt1_montant_net(force_nuit: false) # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity
+      nuit = force_nuit || wt1_nuit?
+      taux = nuit ? BigDecimal("1.00") : BigDecimal("0.75")
+      result =
+        if @p[:type_navigo] != "autre" && (tarif = wt1_tarif_annuel_ref)
+          tarif * taux / 12
+        elsif @p[:wt1_montant].to_f.positive?
+          BigDecimal(@p[:wt1_montant].to_s) * taux
+        end
+      return unless result
+
       result /= 2 if quotite < BigDecimal("0.5")
       result
     end
@@ -421,39 +474,57 @@ module Iade
                     detail: "4,01% tranche A (contractuel)")
     end
 
-    def build_deduction_lines # rubocop:disable Metrics/MethodLength
+    # UC8 et Q60/PAS sont volontairement exclus d'ici : ce sont des éléments du bloc fiscal
+    # (cf. add_impot_revenu), pas des cotisations salariales — UC8 en particulier n'est
+    # jamais une retenue réelle sur le net avant PAS (fiche corrective codeur 17/08/2026).
+    def build_deduction_lines
       add_retenues_absence
       add_retraite_principale
 
       base_csg = Iade::CotisationsCalculator.base_csg(brut_total: @brut_lines_total)
 
-      add_deduction(code: "UCB", label: "C.S.G. ET R.D.S.",
-                    montant: Iade::CotisationsCalculator.csg_crds(base_csg: base_csg), detail: "2,90%")
+      @ucb_montant = Iade::CotisationsCalculator.csg_crds(base_csg: base_csg)
+      add_deduction(code: "UCB", label: "C.S.G. ET R.D.S.", montant: @ucb_montant, detail: "2,90%")
 
       add_deduction(code: "UCX", label: "CSG MALADIE TITUL.",
                     montant: Iade::CotisationsCalculator.csg_maladie(base_csg: base_csg), detail: "6,80%")
 
       hs_total = hs_montant_total
+      @uc8_montant = BigDecimal("0")
       if hs_total.positive?
-        add_deduction(code: "UC8", label: "CSG SUR TTA OU HS",
-                      montant: Iade::CotisationsCalculator.csg_hs(assiette_hs: hs_total), detail: "6,80%")
+        @uc8_montant = Iade::CotisationsCalculator.csg_hs(assiette_hs: hs_total)
         add_deduction(code: "VR7", label: "REDUC COTIS SUR HS",
                       montant: -(@rafp_montant || BigDecimal("0")), detail: "Réduction (= RAFP)")
       end
+    end
 
-      pas = Iade::CotisationsCalculator.pas(
-        base_imposable: base_imposable_mensuelle,
-        taux: BigDecimal(@p[:taux_pas].to_s) / 100
-      )
-      add_deduction(code: "Q60", label: "MT PAS TAUX PERS", montant: pas, detail: "#{@p[:taux_pas]}%")
+    # Bloc fiscal : calculé APRÈS le net avant PAS, ne le modifie jamais. Base Q60 = net
+    # social + UCB + UC8 - part brute des heures sup exonérées (IT7/DHN/TP7/TP8).
+    def add_impot_revenu
+      base_q60 = @net_social + @ucb_montant + @uc8_montant - hs_exonerees_brut_total
+      taux     = BigDecimal(@p[:taux_pas].to_s) / 100
+      pas      = Iade::CotisationsCalculator.pas(base_imposable: base_q60, taux: taux)
+
+      @lines << { code: "Q60", label: "MT PAS TAUX PERS", category: :fiscal, montant: pas.round(2),
+                  detail: "Base #{base_q60.round(2)} € × #{@p[:taux_pas]}%", type: :fiscal,
+                  base_imposable: base_q60.round(2), taux_pas: @p[:taux_pas] }
+      @pas_montant = pas
+    end
+
+    def hs_exonerees_brut_total
+      codes = %w[IT7 DHN TP7 TP8]
+      @lines.select { |l| l[:type] == :brut && codes.include?(l[:code]) }.sum { |l| l[:montant] }
     end
 
     # ---------------- TOTAUX ----------------
 
     def compute_brut_total
-      @brut_lines_total = @lines.reject { |l| l[:type] == :deduction }.sum { |l| l[:montant] }
+      @brut_lines_total = @lines.select { |l| l[:type] == :brut }.sum { |l| l[:montant] }
     end
 
+    # Chaîne fiche corrective codeur 17/08/2026 :
+    # BRUT - cotisations = NET SOCIAL ; NET SOCIAL + WT1 - XRN = NET AVANT PAS.
+    # WT1/XRN n'entrent ni dans le brut, ni dans les cotisations, ni dans l'assiette Q60.
     def compute_totals
       deduct_lines = @lines.select { |l| l[:type] == :deduction }
 
@@ -461,17 +532,21 @@ module Iade
       @cotisations_total = deduct_lines.sum { |l| l[:montant] }
       @net_social        = @brut_total - @cotisations_total
 
-      pas_montant = deduct_lines.find { |l| l[:code] == "Q60" }&.dig(:montant) || BigDecimal("0")
-      mutuelle    = BigDecimal(@p[:mutuelle].to_s.presence || "0")
-      @net_avant_pas = @brut_total - (@cotisations_total - pas_montant)
-      @net_paye      = @net_avant_pas - pas_montant - mutuelle
+      add_wt1
+      add_xrn
+      @net_avant_pas = @net_social + line_montant("WT1") + line_montant("XRN")
+
+      add_impot_revenu
+
+      mutuelle  = BigDecimal(@p[:mutuelle].to_s.presence || "0")
+      @net_paye = @net_avant_pas - @pas_montant - mutuelle
     end
 
     # ---------------- HELPERS ----------------
 
-    def add_line(code:, label:, category:, montant:, detail: nil, pay_lag: nil) # rubocop:disable Metrics/ParameterLists
+    def add_line(code:, label:, category:, montant:, detail: nil, pay_lag: nil, type: :brut) # rubocop:disable Metrics/ParameterLists
       @lines << { code: code, label: label, category: category, montant: montant.to_d.round(2),
-                  detail: detail, pay_lag: pay_lag, type: :brut }
+                  detail: detail, pay_lag: pay_lag, type: type }
     end
 
     def add_deduction(code:, label:, montant:, detail: nil)
@@ -533,11 +608,6 @@ module Iade
 
     def taux_hs_nuit
       Iade::PlanningCalculator.taux_hs(:nuit, tib_mensuel: tib_montant, ir_mensuel: @ir_montant || BigDecimal("0"))
-    end
-
-    def base_imposable_mensuelle
-      deductions_so_far = @lines.select { |l| l[:type] == :deduction }.sum { |l| l[:montant] }
-      @brut_lines_total - deductions_so_far
     end
 
     def failure_result

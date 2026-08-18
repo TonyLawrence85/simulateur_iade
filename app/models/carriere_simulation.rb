@@ -9,8 +9,10 @@ class CarriereSimulation < ApplicationRecord
                   :periode_exclue, :periode_debut, :periode_fin,
                   # Modules B/C — reclassement IDE→IADE et AS→IDE (champs partagés)
                   :situation_actuelle, :statut_administratif, :grade_source, :echelon_source,
-                  :mois_echelon_source, :mois_nomination, :zone_paris, :nb_enfants_sft,
-                  :dtc_choix, :dtc_montant
+                  :mois_echelon_source, :mois_nomination, :quotite, :zone_paris, :nb_enfants_sft,
+                  :dtc_choix, :dtc_montant,
+                  # Module B uniquement — NBI IADE et transport (double affichage avec/sans)
+                  :nbi_choix, :nbi_points_expert, :wt1_montant
 
   validates :kind,  presence: true, inclusion: { in: KINDS }
   validates :token, presence: true, uniqueness: true

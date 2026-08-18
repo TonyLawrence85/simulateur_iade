@@ -52,14 +52,16 @@ class SimulationsController < ApplicationController
   end
 
   def show
-    @result   = @simulation.simulate!
-    @carriere = Iade::CarriereCalculator.new(
+    @result       = @simulation.simulate!
+    @carriere     = Iade::CarriereCalculator.new(
       grade: @simulation.grade,
       echelon: @simulation.echelon,
       quotite: @simulation.quotite,
       ir_taux: ir_taux_for(@simulation),
       date_entree_echelon: @simulation.date_entree_echelon
     ).compute
+    @self_de_jour = compute_self_de_jour(@simulation)
+    @xrn_info     = compute_xrn_info(@simulation)
   end
 
   def compare
@@ -166,6 +168,40 @@ class SimulationsController < ApplicationController
     nil
   end
 
+  # Coût informatif du self de jour — jamais soustrait de la paie simulée (fiche
+  # corrective codeur 17/08/2026, fiche 2).
+  def compute_self_de_jour(sim)
+    return nil unless sim.self_repas_eligible == "oui"
+
+    nb_repas = sim.self_nb_repas.to_i
+    return nil if nb_repas.zero?
+
+    tib = compute_tib_preview(sim)
+    return nil unless tib
+
+    Iade::SelfDeJourCalculator.call(
+      nb_repas: nb_repas, indice_majore: tib[:indice_majore], mois_paie: sim.mois_paie
+    )
+  rescue StandardError
+    nil
+  end
+
+  # Valeur du ticket restaurant et participation employeur — hors salaire, purement
+  # informatif (fiche corrective codeur 17/08/2026, fiche 1, "Calcul moteur").
+  def compute_xrn_info(sim)
+    return nil unless sim.xrn_eligible == "oui"
+
+    nuits = sim.xrn_nb_nuits.to_i
+    return nil if nuits.zero?
+
+    {
+      nuits: nuits,
+      ticket_valeur: (nuits * BigDecimal("6.00")).round(2),
+      participation_employeur: (nuits * BigDecimal("3.60")).round(2),
+      retenue: (nuits * BigDecimal("2.40")).round(2)
+    }
+  end
+
   def compute_carriere_preview(sim)
     Iade::CarriereCalculator.new(
       grade: sim.grade,
@@ -186,6 +222,8 @@ class SimulationsController < ApplicationController
       :nbi_points, :iss_montant, :dtc_montant, :wt1_montant,
       :taux_pas, :mutuelle,
       :heures_nuit,
+      :xrn_eligible, :xrn_nb_nuits,
+      :self_repas_eligible, :self_nb_repas,
       :heures_dimanche, :heures_ferie,
       :hs_m2_nuit, :hs_m2_dimanche, :hs_m2_ferie, :hs_m2_jour,
       :tp7_heures, :tp8_heures,
@@ -198,6 +236,7 @@ class SimulationsController < ApplicationController
       :heure_debut_service, :heure_fin_service,
       :nb_matins, :nb_apres_midi, :nb_soirs,
       :type_navigo, :navigo_montant_annuel,
+      :wt1_a_abonnement, :wt1_zones, :wt1_nuit_eligible,
       :simulate_fmd, :fmd_mode, :fmd_jours_annee,
       :confirm_decalage,
       absences: %i[type date_debut date_fin continuation compteur_90j_depasse imputabilite_service palier]

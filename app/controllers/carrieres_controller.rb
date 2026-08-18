@@ -18,9 +18,11 @@ class CarrieresController < ApplicationController
     "promotion_2e_grade" => %i[echelon_actuel mois_echelon_actuel mois_debut_cat_a
                                 periode_exclue periode_debut periode_fin],
     "reclassement_ide_iade" => %i[situation_actuelle grade_source echelon_source mois_echelon_source
-                                   mois_nomination zone_paris nb_enfants_sft dtc_choix dtc_montant],
+                                   mois_nomination quotite zone_paris nb_enfants_sft
+                                   nbi_choix nbi_points_expert dtc_choix dtc_montant wt1_montant],
     "reclassement_as_ide" => %i[situation_actuelle statut_administratif grade_source echelon_source
-                                 mois_echelon_source mois_nomination zone_paris nb_enfants_sft dtc_choix dtc_montant]
+                                 mois_echelon_source mois_nomination quotite zone_paris nb_enfants_sft
+                                 dtc_choix dtc_montant]
   }.freeze
 
   def index

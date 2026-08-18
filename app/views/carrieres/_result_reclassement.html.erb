@@ -24,7 +24,15 @@
         <div class="result-kpi">
           <p class="rk-label">Net avant PAS estimé (35h simple)</p>
           <p class="rk-value"><%= number_to_currency(result["net_avant_pas"], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
-          <p class="rk-sub">Hors heures sup., nuit, dimanche/JF, transport, PSR/LSU, tutorat</p>
+          <p class="rk-sub">Hors heures sup., nuit, dimanche/JF<%= result["net_avant_pas_avec_transport"] ? ", PSR/LSU, tutorat" : ", transport, PSR/LSU, tutorat" %></p>
+        </div>
+      <% end %>
+
+      <% if result["net_avant_pas_avec_transport"] %>
+        <div class="result-kpi">
+          <p class="rk-label">Net avant PAS estimé, transport inclus</p>
+          <p class="rk-value"><%= number_to_currency(result["net_avant_pas_avec_transport"], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></p>
+          <p class="rk-sub">Avec le remboursement transport renseigné</p>
         </div>
       <% end %>
     </div>

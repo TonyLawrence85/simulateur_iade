@@ -191,6 +191,13 @@
         <% end %>
         <%= f.number_field :heures_ferie, placeholder: "0", step: 0.5, min: 0, data: { action: "input->simulation#updateSidebar" } %>
       </div>
+      <div class="field-group">
+        <%= f.label :jw0_regul_heures, class: "field-label" do %>
+          Régularisation dim./JF de mois antérieurs (nombre d'heures)
+        <% end %>
+        <%= f.number_field :jw0_regul_heures, placeholder: "0", step: 0.5, min: 0, data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Si votre bulletin affiche une ligne JW0 « régularisation » couvrant plusieurs mois passés, saisissez ici le total d'heures — même tarif 7,50 €/h</span>
+      </div>
     </div>
 
     <div class="section-label">

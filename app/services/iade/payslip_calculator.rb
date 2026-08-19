@@ -11,6 +11,15 @@ module Iade
     # Tarifs Navigo annuels Île-de-France Mobilités 2026 — référence unique quel que soit
     # le type de pass détenu (annuel/mois/semaine), fiche corrective codeur 17/08/2026,
     # fiche 3. À réviser chaque année (barème IDFM).
+    # Exonération fiscale des heures sup/complémentaires : plafond annuel légal (art. 81 quater
+    # CGI), 7 500 € net par an et par agent depuis 2022. Au-delà, la part excédentaire des heures
+    # sup redevient imposable (base Q60) même si elle reste exonérée de cotisations sociales.
+    # Un simulateur mensuel ne peut pas connaître ce cumul seul : @p[:cumul_hs_brut_anterieur]
+    # (optionnel, 0 par défaut) permet à l'utilisateur de saisir le brut IT7/DHN/TP7/TP8 cumulé
+    # de janvier au mois précédent (visible sur ses propres bulletins) pour obtenir une base Q60
+    # exacte une fois le plafond approché ou dépassé.
+    PLAFOND_ANNUEL_EXO_HS = BigDecimal("7500")
+
     WT1_ZONES_TABLE = {
       "1-5" => BigDecimal("998.80"),
       "2-3" => BigDecimal("976.80"),
@@ -298,15 +307,19 @@ module Iade
                montant: montant, detail: "#{heures}h × 25% × base horaire (TIB+IR)", pay_lag: :mois_m1)
     end
 
-    def add_dim_jf
+    def add_dim_jf # rubocop:disable Metrics/MethodLength
       h_dim   = @p[:heures_dimanche].to_f
       h_ferie = @p[:heures_ferie].to_f
-      return if h_dim.zero? && h_ferie.zero?
+      h_regul = @p[:jw0_regul_heures].to_f
+      return if h_dim.zero? && h_ferie.zero? && h_regul.zero?
 
-      montant = Iade::PlanningCalculator.dimanche_ferie(heures_dim: h_dim, heures_ferie: h_ferie)
+      montant = Iade::PlanningCalculator.dimanche_ferie(heures_dim: h_dim + h_regul, heures_ferie: h_ferie)
+      details = []
+      details << "#{h_dim + h_ferie}h M-1" if (h_dim + h_ferie).positive?
+      details << "#{h_regul}h régularisation mois antérieurs" if h_regul.positive?
       add_line(code: "JW0", label: "IND. DIM. & JOURS FERIES", category: :var_m1,
-               montant: montant, detail: "#{h_dim + h_ferie}h × 7,50 €/h (M-1)", pay_lag: :mois_m1)
-      @warnings << "JW0 : vérifier que vous avez saisi l'activité de M-1" if montant.positive?
+               montant: montant, detail: "#{details.join(' + ')} × 7,50 €/h", pay_lag: :mois_m1)
+      @warnings << "JW0 : vérifier que vous avez saisi l'activité de M-1" if (h_dim + h_ferie).positive?
     end
 
     def add_heures_sup_m2 # rubocop:disable Metrics/MethodLength
@@ -489,31 +502,56 @@ module Iade
       add_deduction(code: "UCX", label: "CSG MALADIE TITUL.",
                     montant: Iade::CotisationsCalculator.csg_maladie(base_csg: base_csg), detail: "6,80%")
 
-      hs_total = hs_montant_total
-      @uc8_montant = BigDecimal("0")
-      if hs_total.positive?
-        @uc8_montant = Iade::CotisationsCalculator.csg_hs(assiette_hs: hs_total)
+      # VR7 (réduction cotis. retraite sur HS, régime L241-17 CSS) est gouverné par le brut HS
+      # du mois sans plafond annuel — mécanisme distinct de l'exonération fiscale de Q60/UC8.
+      # UC8 lui-même est fiscal : son assiette suit le même plafond annuel que Q60 (même pool).
+      if hs_montant_total.positive?
+        @uc8_montant = Iade::CotisationsCalculator.csg_hs(assiette_hs: hs_exonerees_effectif)
         add_deduction(code: "VR7", label: "REDUC COTIS SUR HS",
                       montant: -(@rafp_montant || BigDecimal("0")), detail: "Réduction (= RAFP)")
+      else
+        @uc8_montant = BigDecimal("0")
       end
     end
 
     # Bloc fiscal : calculé APRÈS le net avant PAS, ne le modifie jamais. Base Q60 = net
-    # social + UCB + UC8 - part brute des heures sup exonérées (IT7/DHN/TP7/TP8).
+    # social + UCB + UC8 - part des heures sup effectivement exonérées ce mois (plafonnée
+    # par le reliquat annuel restant, voir PLAFOND_ANNUEL_EXO_HS).
     def add_impot_revenu
-      base_q60 = @net_social + @ucb_montant + @uc8_montant - hs_exonerees_brut_total
+      hs_exo   = hs_exonerees_effectif
+      base_q60 = @net_social + @ucb_montant + @uc8_montant - hs_exo
       taux     = BigDecimal(@p[:taux_pas].to_s) / 100
       pas      = Iade::CotisationsCalculator.pas(base_imposable: base_q60, taux: taux)
 
       @lines << { code: "Q60", label: "MT PAS TAUX PERS", category: :fiscal, montant: pas.round(2),
                   detail: "Base #{base_q60.round(2)} € × #{@p[:taux_pas]}%", type: :fiscal,
-                  base_imposable: base_q60.round(2), taux_pas: @p[:taux_pas] }
+                  base_imposable: base_q60.round(2), taux_pas: @p[:taux_pas],
+                  estimatif: hs_exonerees_brut_total.positive? }
       @pas_montant = pas
+
+      if hs_exo < hs_exonerees_brut_total
+        @warnings << "Plafond annuel d'exonération fiscale des heures sup (7 500 €) atteint : " \
+                     "#{(hs_exonerees_brut_total - hs_exo).round(2)} € de vos heures sup de ce mois redeviennent imposables."
+      end
     end
 
+    # IT5/IT7/DHN/IT8/TP7/TP8/GAR : famille complète des heures sup/gardes bénéficiant de
+    # l'exonération fiscale (Complément simulateur PAS §1 — codes exacts observés sur bulletin).
     def hs_exonerees_brut_total
-      codes = %w[IT7 DHN TP7 TP8]
+      codes = %w[IT5 IT7 DHN IT8 TP7 TP8 GAR]
       @lines.select { |l| l[:type] == :brut && codes.include?(l[:code]) }.sum { |l| l[:montant] }
+    end
+
+    # cumul_hs_brut_anterieur = somme des lignes IT5/IT7/DHN/IT8/TP7/TP8/GAR (brut, avant
+    # exonération) des bulletins de janvier au mois précédent — équivalent au cumul déjà
+    # exonéré tant que le plafond n'est pas dépassé, et plafonné de la même façon une fois
+    # qu'il l'est ; c'est la seule des deux formulations qu'un agent peut reconstituer
+    # directement depuis ses bulletins (le cumul "déjà exonéré" lui-même n'apparaît nulle
+    # part sur un bulletin AP-HP).
+    def hs_exonerees_effectif
+      cumul_anterieur = BigDecimal(@p[:cumul_hs_brut_anterieur].to_s.presence || "0")
+      reliquat = [PLAFOND_ANNUEL_EXO_HS - cumul_anterieur, BigDecimal("0")].max
+      [hs_exonerees_brut_total, reliquat].min
     end
 
     # ---------------- TOTAUX ----------------
@@ -593,16 +631,16 @@ module Iade
 
     def brut_primes_total
       # IBA (négatif) réduit l'assiette RAFP ; PSR/LSU soumis RAFP selon plafond (PDF §8)
-      codes = %w[CW1 LP1 LPN IS1 JMA JW0 IT7 DHN TP7 TP8 IBA PSR LSU DIV FT1 FT9]
+      codes = %w[CW1 LP1 LPN IS1 JMA JW0 IT5 IT7 DHN IT8 TP7 TP8 IBA PSR LSU DIV FT1 FT9]
       total = @lines.select { |l| codes.include?(l[:code]) && l[:type] == :brut }.sum { |l| l[:montant] }
       [total, BigDecimal("0")].max
     end
 
+    # Assiette du régime de réduction de cotisations retraite sur HS (VR7, L241-17 CSS) :
+    # GAR/IT5/IT7/DHN/IT8 = heures sup et gardes-équivalent — TP7/TP8 (greffe/transplantation)
+    # en sont exclus, régime distinct, même s'ils entrent dans l'exonération fiscale (Q60/UC8).
     def hs_montant_total
-      # GAR = gardes équivalent HS nuit ; IT7/DHN = heures sup M-2 → même régime UC8/VR7
-      # (TP7/TP8 = greffe/transplantation, hors régime heures sup)
-      @lines.select { |l| l[:type] == :brut }
-            .select { |l| l[:code].start_with?("HS") || %w[GAR IT7 DHN].include?(l[:code]) }
+      @lines.select { |l| l[:type] == :brut && %w[GAR IT5 IT7 DHN IT8].include?(l[:code]) }
             .sum { |l| l[:montant] }
     end
 

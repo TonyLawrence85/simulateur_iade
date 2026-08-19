@@ -180,6 +180,16 @@
               </td>
               <td class="td-num"><%= number_to_currency(q60_line[:base_imposable], unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
             </tr>
+            <% if q60_line[:estimatif] %>
+              <tr>
+                <td class="td-code"></td>
+                <td class="td-label" colspan="2" style="font-size:.75rem;color:var(--ink-mute)">
+                  ⓘ Estimation : l'exonération fiscale des heures sup est plafonnée à 7 500 €/an.
+                  Ce calcul suppose que vous n'avez pas encore atteint ce plafond, sauf si vous
+                  avez renseigné le cumul heures sup brutes depuis janvier (étape « Retenues personnelles »).
+                </td>
+              </tr>
+            <% end %>
             <tr>
               <td class="td-code"></td>
               <td class="td-label">Taux PAS personnalisé</td>

@@ -70,13 +70,13 @@ module Iade
     end
 
     def jour_line
-      { code: "HSJOUR", label: "H. SUP. JOUR (M-2)", montant: (@taux[:jour] * @hs_jour).round(2),
+      { code: "IT5", label: "H. SUP. JOUR (M-2)", montant: (@taux[:jour] * @hs_jour).round(2),
         detail: "#{@hs_jour}h × #{@taux[:jour]}€/h" }
     end
 
     def dim_ferie_line
       heures = @hs_dimanche + @hs_ferie
-      { code: "HSDIMJF", label: "H. SUP. DIM./FÉRIÉS (M-2)", montant: (@taux[:dim_jf] * heures).round(2),
+      { code: "IT8", label: "H. SUP. DIM./FÉRIÉS (M-2)", montant: (@taux[:dim_jf] * heures).round(2),
         detail: "#{heures}h × #{@taux[:dim_jf]}€/h" }
     end
 

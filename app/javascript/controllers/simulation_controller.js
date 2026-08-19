@@ -496,6 +496,8 @@ export default class extends Controller {
     const hNuit    = parseFloat(this._fv("heures_nuit")) || 0
     const hDim     = parseFloat(this._fv("heures_dimanche")) || 0
     const hFerie   = parseFloat(this._fv("heures_ferie")) || 0
+    const hJw0Regul = parseFloat(this._fv("jw0_regul_heures")) || 0
+    const cumulHsAnt = parseFloat(this._fv("cumul_hs_brut_anterieur")) || 0
     const hsM2Nuit     = parseFloat(this._fv("hs_m2_nuit")) || 0
     const hsM2Dimanche = parseFloat(this._fv("hs_m2_dimanche")) || 0
     const hsM2Ferie    = parseFloat(this._fv("hs_m2_ferie")) || 0
@@ -555,15 +557,16 @@ export default class extends Controller {
     // ── Planning ──
     const baseH    = (tib + ir) * 12 / 1820
     const jma      = baseH * 0.25 * hNuit
-    const dimjf    = (hDim + hFerie) * 7.50
+    const dimjf    = (hDim + hFerie + hJw0Regul) * 7.50
     const hsNuitDetail  = this._calcHeuresSupM2(baseH, hsM2Nuit + nbGardes * hGarde, hsM2Dimanche, hsM2Ferie, hsM2Jour)
     const greffeMontant = this._tronquerTaux(baseH * 2.52) * tp7Heures + this._tronquerTaux(baseH * 2.10) * tp8Heures
     const hsSupMontant  = hsNuitDetail.nuit + hsNuitDetail.autres
     const hsTotal  = hsSupMontant + greffeMontant
-    // Part exonérée fiscalement (IT7/DHN/TP7/TP8) — sert uniquement à la base Q60, jamais au net avant PAS
-    const hsExonereesBrut = hsNuitDetail.nuit + greffeMontant
     const tauxHsN  = this._tronquerTaux(baseH * 2.52)
     const gardes   = heuresWeekendGarde * tauxHsN
+    // Part exonérée fiscalement (IT5/IT7/DHN/IT8/TP7/TP8/GAR) — sert uniquement à la base
+    // Q60, jamais au net avant PAS (Complément simulateur PAS §1)
+    const hsExonereesBrut = hsNuitDetail.nuit + hsNuitDetail.autres + greffeMontant + gardes
 
     // ── Primes variables ──
     const pertePsr = jAbsPsr > 0 ? mPsr * jAbsPsr / 140 : 0
@@ -639,13 +642,18 @@ export default class extends Controller {
     }
     const baseCsg  = brut * 0.9825
     const ucbMontant = baseCsg * 0.029
-    // UC8 : donnée fiscale (base Q60 uniquement), jamais une retenue réelle sur le net avant PAS
+    // Exonération fiscale des heures sup plafonnée à 7 500 €/an (art. 81 quater CGI) — pool
+    // commun à UC8 et à la base Q60 (Complément simulateur PAS §1)
+    const reliquatHs      = Math.max(0, 7500 - cumulHsAnt)
+    const hsExonereesEffectif = Math.min(hsExonereesBrut, reliquatHs)
+    // UC8 : donnée fiscale (base Q60 uniquement), jamais une retenue réelle sur le net avant PAS.
+    // Gardé par le brut HS/gardes réel (régime VR7), assiette = part encore exonérée (plafonnée).
     const hsGardes   = hsSupMontant + gardes
-    const uc8Montant = hsGardes > 0 ? hsGardes * 0.068 : 0
+    const uc8Montant = hsGardes > 0 ? hsExonereesEffectif * 0.068 : 0
     const csgTotal   = baseCsg * (0.029 + 0.068)
     const totalAv    = cnracl + rafp + csgTotal
     const netSocial  = brut - totalAv - retAbsTotal
-    const baseQ60    = netSocial + ucbMontant + uc8Montant - hsExonereesBrut
+    const baseQ60    = netSocial + ucbMontant + uc8Montant - hsExonereesEffectif
     const pas        = baseQ60 * (tausPas / 100)
     // Net avant PAS : net social + WT1 (remb. transport) − XRN (retenue restau. nuit)
     const netAvPas   = netSocial + wt1 - xrn

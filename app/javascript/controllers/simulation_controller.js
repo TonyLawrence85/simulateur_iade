@@ -17,7 +17,8 @@ export default class extends Controller {
     "carriereEchelonActuel", "carriereTibActuelSub",
     "carriereBlockSuivant", "carriereEchelonSuivant", "carriereDeltaTibSub",
     "carriereBlockDate", "carriereDateEstimee", "carriereMoisRestantsSub",
-    "carriereBlockTerminal", "carriereNoDateHint"
+    "carriereBlockTerminal", "carriereNoDateHint",
+    "bulletinInput", "extractBanner", "realLineField", "realBrutField", "realNetField"
   ]
 
   static values = {
@@ -834,6 +835,119 @@ export default class extends Controller {
     if (els.length <= 1) return els[0]?.value
     const checked = Array.from(els).find(el => el.checked)
     return (checked || els[0]).value
+  }
+
+  // Écrit une valeur pré-extraite d'un bulletin dans le champ correspondant du wizard,
+  // marque son .field-group comme "pré-rempli" (retiré dès que l'utilisateur touche le
+  // champ) et déclenche un événement change pour que les listeners dépendants existants
+  // (professionChanged, gradeChanged, updateTib, updateDates…) s'exécutent normalement.
+  _setFv(name, value) {
+    if (value === undefined || value === null || value === "") return false
+    const els = this.formTarget.querySelectorAll(`[name='simulation_session[${name}]']`)
+    if (!els.length) return false
+
+    if (els.length > 1) {
+      const match = Array.from(els).find(el => el.value == value)
+      if (!match) return false
+      match.checked = true
+    } else if (els[0].tagName === "SELECT") {
+      // Les valeurs numériques (ex. quotite 1.0) perdent leur format exact en
+      // traversant le JSON ("1.0" -> 1) : comparer les options en float, pas en string.
+      const target = parseFloat(value)
+      const option = Array.from(els[0].options).find(o => o.value === String(value) || parseFloat(o.value) === target)
+      if (!option) return false
+      els[0].value = option.value
+    } else {
+      els[0].value = value
+    }
+
+    // Déclenché AVANT le marquage "pré-rempli" : ce change synthétique sert à réveiller les
+    // listeners dépendants existants (professionChanged, gradeChanged...), pas à signaler une
+    // édition utilisateur — sinon le listener de nettoyage ci-dessous s'auto-déclencherait.
+    els[0].dispatchEvent(new Event("change", { bubbles: true }))
+
+    const group = els[0].closest(".field-group")
+    if (group) {
+      group.classList.add("field-prefilled")
+      const clear = () => group.classList.remove("field-prefilled")
+      els[0].addEventListener("input", clear, { once: true })
+      els[0].addEventListener("change", clear, { once: true })
+    }
+
+    return true
+  }
+
+  // ── Upload bulletin (pré-remplissage + comparaison auto) ────────
+  async uploadBulletin(e) {
+    const file = e.target.files[0]
+    if (!file) return
+
+    this._showExtractBanner("Analyse du bulletin en cours…", "info")
+
+    const fd = new FormData()
+    fd.append("bulletin", file)
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+
+    try {
+      const res = await fetch("/simulations/extract_bulletin", {
+        method: "POST",
+        headers: { "X-CSRF-Token": csrf, "Accept": "application/json" },
+        body: fd
+      })
+      const data = await res.json()
+
+      if (!res.ok || (data.errors && data.errors.length)) {
+        this._showExtractBanner("Extraction impossible — vous pouvez continuer la saisie manuellement.", "warn")
+        return
+      }
+
+      this._applyExtraction(data)
+    } catch (err) {
+      this._showExtractBanner("Extraction impossible — vous pouvez continuer la saisie manuellement.", "warn")
+    }
+  }
+
+  _applyExtraction(data) {
+    const header = data.header || {}
+    let filled = 0
+
+    // La profession doit être posée en premier : son `change` reconstruit les options
+    // du select grade (professionChanged → _initGradeOptions) — le grade posé avant
+    // serait sinon écrasé par ce rebuild.
+    if (this._setFv("profession", header.profession)) filled++
+    if (this._setFv("grade", header.grade)) filled++
+    if (this._setFv("statut", header.statut)) filled++
+    if (this._setFv("echelon", header.echelon)) filled++
+    if (this._setFv("quotite", header.quotite)) filled++
+    if (this._setFv("mois_paie", header.mois_paie)) filled++
+
+    this.realLineFieldTargets.forEach(input => {
+      const value = data.real_lines?.[input.dataset.code]
+      if (value !== undefined && value !== null && value !== "") input.value = value
+    })
+    if (this.hasRealBrutFieldTarget && data.real_totals?.brut != null) {
+      this.realBrutFieldTarget.value = data.real_totals.brut
+    }
+    if (this.hasRealNetFieldTarget && data.real_totals?.net != null) {
+      this.realNetFieldTarget.value = data.real_totals.net
+    }
+
+    const confidenceLabel = { high: "élevée", medium: "moyenne", low: "faible", none: "aucune" }[data.confidence] || data.confidence
+    const level = data.confidence === "high" ? "ok" : data.confidence === "none" ? "warn" : "info"
+    let message = filled > 0
+      ? `Bulletin analysé (confiance : ${confidenceLabel}) — ${filled} champ(s) pré-rempli(s), à vérifier.`
+      : `Bulletin analysé (confiance : ${confidenceLabel}) — aucun champ de situation reconnu, saisie manuelle nécessaire.`
+    if (data.warnings?.length) message += " " + data.warnings.join(" ")
+    this._showExtractBanner(message, level)
+
+    this.updateSidebar()
+    this.updateProgress()
+  }
+
+  _showExtractBanner(message, level) {
+    if (!this.hasExtractBannerTarget) return
+    this.extractBannerTarget.textContent = message
+    this.extractBannerTarget.className = `alert alert--${level}`
   }
 
   _fv_tib() {

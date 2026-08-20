@@ -30,9 +30,34 @@
 
   <div class="sim-layout">
     <div class="sim-main">
-      <%= form_with model: @simulation, url: simulations_path,
+      <%= form_with model: @simulation, url: simulations_path, multipart: true,
             data: { simulation_target: "form",
                     action: "input->simulation#updateSidebar change->simulation#updateSidebar input->simulation#updateProgress change->simulation#updateProgress" } do |f| %>
+
+        <div class="step-panel" style="margin-bottom:1.5rem">
+          <div class="panel-header">
+            <div class="panel-icon">📎</div>
+            <div class="panel-titles">
+              <h2 class="panel-title">Importer un bulletin existant (optionnel)</h2>
+              <p class="panel-desc">
+                Pré-remplit automatiquement mois, statut, échelon, quotité, profession et grade
+                — le reste du formulaire reste à compléter. Tous les champs restent modifiables.
+              </p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <%= f.file_field :bulletin_pdf,
+                  accept: "application/pdf,image/jpeg,image/png,image/heic",
+                  data: { simulation_target: "bulletinInput", action: "change->simulation#uploadBulletin" } %>
+            <div class="alert hidden" data-simulation-target="extractBanner" style="margin-top:1rem"></div>
+          </div>
+        </div>
+
+        <% Iade::Ocr::BulletinExtractor::KNOWN_CODES.each_key do |code| %>
+          <input type="hidden" name="real_lines[<%= code %>]" data-simulation-target="realLineField" data-code="<%= code %>">
+        <% end %>
+        <input type="hidden" name="real[brut]" data-simulation-target="realBrutField">
+        <input type="hidden" name="real[net]" data-simulation-target="realNetField">
 
         <div data-simulation-target="panel" data-step="0" class="<%= @current_step == 0 ? '' : 'hidden' %>">
           <%= render "simulations/steps/step_0", f: f %>

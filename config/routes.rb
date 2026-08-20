@@ -16,7 +16,8 @@ Rails.application.routes.draw do
       post :upload_bulletin
     end
     collection do
-      get :tib_preview
+      get  :tib_preview
+      post :extract_bulletin
     end
   end
 

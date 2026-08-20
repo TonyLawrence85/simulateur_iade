@@ -4,7 +4,7 @@ module Iade
   module Ocr
     class BulletinExtractor
       Result = Struct.new(
-        :lines, :totals, :strategy, :confidence,
+        :lines, :totals, :header, :strategy, :confidence,
         :raw_text, :errors, :warnings,
         keyword_init: true
       )
@@ -35,7 +35,36 @@ module Iade
         "UCX" => { label: "CSG MALADIE",          type: :deduction },
         "UC8" => { label: "CSG SUR TTA",          type: :deduction },
         "VR7" => { label: "REDUC COTIS",          type: :deduction },
-        "Q60" => { label: "MT PAS TAUX PERS",     type: :deduction }
+        "Q60" => { label: "MT PAS TAUX PERS",     type: :deduction },
+        # Primes/brut produits par PayslipCalculator, absents jusqu'ici de ce dictionnaire.
+        "IBA" => { label: "ABAT.PPCR.CAT A",       type: :deduction },
+        "FMD" => { label: "FORFAIT MOBILITES DUR", type: :brut },
+        "JW0" => { label: "IND. DIM. & JOURS FERIES", type: :brut },
+        "GAR" => { label: "GARDES WEEKEND",        type: :brut },
+        "PSR" => { label: "PRIME DE SERVICE",      type: :brut },
+        "LSU" => { label: "INDEM. EXCEP",          type: :brut },
+        "DIV" => { label: "PRIMES DIVERSES",       type: :brut },
+        "FT1" => { label: "IND. TUTORAT STAGIAIRE", type: :brut },
+        "FT9" => { label: "PRIME TUTORAT SOIGNANT", type: :brut },
+        "RET" => { label: "RETRAITE IRCANTEC",     type: :deduction },
+        # Retenues absence (Iade::AbsencesCalculator::CODES).
+        "07C" => { label: "RET. TR. BRUT 10%",        type: :deduction },
+        "30A" => { label: "RET. TR. BRUT CAR",         type: :deduction },
+        "30B" => { label: "RET. I.A./I.R. CAR",        type: :deduction },
+        "07A" => { label: "RET. N.B.I. 10%",           type: :deduction },
+        "30G" => { label: "RET. N.B.I. CAR",           type: :deduction },
+        "30F" => { label: "RET. NBI IR/IA CAR",        type: :deduction },
+        "07L" => { label: "RET. IND. SP. 10%",         type: :deduction },
+        "07E" => { label: "RET. IND. SUJ. 10%",        type: :deduction },
+        "30K" => { label: "RET. IND.SP.NBI CAR",       type: :deduction },
+        "50C" => { label: "RET. TR. BRUT 50%",         type: :deduction },
+        "50L" => { label: "RET. IND. SP. 50%",         type: :deduction },
+        "DTR" => { label: "RET. IND. COMP",            type: :deduction },
+        "CL5" => { label: "RET. TR. BRUT 50%.*CLM",    type: :deduction },
+        "CL5I" => { label: "RET. I.A./I.R. 50%.*CLM",  type: :deduction },
+        "CLR" => { label: "RET. PRIMES.*CLM",          type: :deduction },
+        "CLRN" => { label: "RET. N.B.I..*CLM",         type: :deduction },
+        "ANR" => { label: "ABSENCE NON REMUNEREE",     type: :deduction }
       }.freeze
 
       def self.call(file_path:)
@@ -61,10 +90,11 @@ module Iade
 
         lines      = Iade::Ocr::LineParser.parse(raw_text, known_codes: KNOWN_CODES)
         totals     = Iade::Ocr::TotalsParser.parse(raw_text)
+        header     = Iade::Ocr::HeaderParser.parse(raw_text)
         confidence = assess_confidence(lines, totals)
 
         Result.new(
-          lines: lines, totals: totals, strategy: strategy,
+          lines: lines, totals: totals, header: header, strategy: strategy,
           confidence: confidence, raw_text: raw_text,
           errors: @errors, warnings: @warnings
         )
@@ -143,7 +173,7 @@ module Iade
 
       def failure_result
         Result.new(
-          lines: {}, totals: {}, strategy: :none,
+          lines: {}, totals: {}, header: {}, strategy: :none,
           confidence: :none, raw_text: nil,
           errors: @errors, warnings: @warnings
         )

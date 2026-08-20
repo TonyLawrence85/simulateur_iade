@@ -40,7 +40,13 @@ class SimulationsController < ApplicationController
           result_net_paye: result.net_paye,
           result_lines: result.lines.map { |l| l.transform_values(&:to_s) }
         )
-        redirect_to simulation_path(@simulation), notice: "Simulation calculée avec succès."
+
+        if apply_real_bulletin_data!(@simulation)
+          redirect_to compare_simulation_path(@simulation),
+                      notice: "Simulation calculée avec succès. Comparaison avec votre bulletin ci-dessous."
+        else
+          redirect_to simulation_path(@simulation), notice: "Simulation calculée avec succès."
+        end
       end
     else
       @current_step = 0
@@ -68,11 +74,7 @@ class SimulationsController < ApplicationController
     @result = @simulation.simulate!
 
     if request.post?
-      @simulation.update!(
-        real_lines: params[:real_lines]&.to_unsafe_h&.compact_blank,
-        real_brut_total: params.dig(:real, :brut).presence,
-        real_net_paye: params.dig(:real, :net).presence
-      )
+      apply_real_bulletin_data!(@simulation)
       redirect_to compare_simulation_path(@simulation) + "#comparison-result"
       return
     end
@@ -130,6 +132,44 @@ class SimulationsController < ApplicationController
     end
   end
 
+  # Extraction OCR à la volée depuis "Nouvelle simulation", avant qu'une simulation existe
+  # (donc sans token, pas d'ActiveStorage attach ici — le fichier est réattaché normalement
+  # au submit final du wizard via simulation_params). Ne persiste jamais rien.
+  def extract_bulletin # rubocop:disable Metrics/MethodLength
+    file = params[:bulletin]
+    unless file.present?
+      render json: { errors: ["Aucun fichier reçu."] }, status: :unprocessable_entity
+      return
+    end
+
+    extension = case file.content_type
+                when "application/pdf" then ".pdf"
+                when "image/jpeg"      then ".jpg"
+                when "image/png"       then ".png"
+                when "image/heic"      then ".heic"
+                else ".pdf" # rubocop:disable Lint/DuplicateBranch
+                end
+
+    tmp = Tempfile.new(["bulletin_extract", extension])
+    tmp.binmode
+    tmp.write(file.read)
+    tmp.flush
+
+    result = Iade::Ocr::BulletinExtractor.call(file_path: tmp.path)
+
+    render json: {
+      header: result.header || {},
+      real_lines: result.lines.transform_values(&:to_s),
+      real_totals: { brut: result.totals[:brut], net: result.totals[:net_paye] },
+      confidence: result.confidence,
+      warnings: result.warnings,
+      errors: result.errors
+    }
+  ensure
+    tmp&.close
+    tmp&.unlink
+  end
+
   def tib_preview
     grade   = params[:grade] || "grade1"
     echelon = params[:echelon].to_i
@@ -148,6 +188,24 @@ class SimulationsController < ApplicationController
   end
 
   private
+
+  # Persiste les données "réelles" (bulletin) issues des params `real_lines`/`real[brut]`/
+  # `real[net]` — mêmes clés que le formulaire manuel de #compare et que l'upload différé
+  # (#upload_bulletin). Écrit toujours (y compris pour effacer si soumis vide, comportement
+  # historique de #compare) ; retourne un booléen indiquant si des données étaient présentes,
+  # utilisé par #create pour décider de rediriger vers la comparaison.
+  def apply_real_bulletin_data!(sim)
+    real_lines = params[:real_lines]&.to_unsafe_h&.compact_blank
+    has_data   = real_lines.present? || params.dig(:real, :brut).present? || params.dig(:real, :net).present?
+
+    sim.update!(
+      real_lines: real_lines,
+      real_brut_total: params.dig(:real, :brut).presence,
+      real_net_paye: params.dig(:real, :net).presence
+    )
+
+    has_data
+  end
 
   def set_simulation
     @simulation = current_user.simulation_sessions.find_by!(token: params[:token])
@@ -238,7 +296,7 @@ class SimulationsController < ApplicationController
       :type_navigo, :navigo_montant_annuel,
       :wt1_a_abonnement, :wt1_zones, :wt1_nuit_eligible,
       :simulate_fmd, :fmd_mode, :fmd_jours_annee,
-      :confirm_decalage,
+      :confirm_decalage, :bulletin_pdf,
       absences: %i[type date_debut date_fin continuation compteur_90j_depasse imputabilite_service palier]
     )
   end

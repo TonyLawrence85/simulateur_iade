@@ -225,6 +225,15 @@
 .sim-app .field-invalid select { border-color: var(--red) !important; background: var(--red-light) !important; }
 .sim-app .field-invalid .field-label { color: var(--red); }
 
+.sim-app .field-prefilled input,
+.sim-app .field-prefilled select { border-color: var(--blue) !important; background: var(--blue-light) !important; }
+.sim-app .field-prefilled .field-label::after {
+  content: " (pré-rempli, à vérifier)";
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--blue);
+}
+
 .sim-app input[type="text"],
 .sim-app input[type="number"],
 .sim-app input[type="month"],

@@ -34,7 +34,9 @@
             data: { simulation_target: "form",
                     action: "input->simulation#updateSidebar change->simulation#updateSidebar input->simulation#updateProgress change->simulation#updateProgress" } do |f| %>
 
-        <div class="step-panel" style="margin-bottom:1.5rem">
+        <%# Masqué temporairement (pas encore jugé assez abouti pour être exposé aux agents) —
+            code conservé intact, il suffit de retirer la classe "hidden" pour réactiver. %>
+        <div class="step-panel hidden" style="margin-bottom:1.5rem">
           <div class="panel-header">
             <div class="panel-icon">📎</div>
             <div class="panel-titles">

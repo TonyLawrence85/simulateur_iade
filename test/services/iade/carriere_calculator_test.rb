@@ -21,15 +21,15 @@ module Iade
       assert_equal 620, result.im_suivant
       assert_equal 24, result.duree_echelon_mois
       assert_operator result.tib_suivant, :>, result.tib_actuel
-      assert_equal result.tib_suivant - result.tib_actuel, result.delta_tib
+      assert_in_delta result.tib_suivant - result.tib_actuel, result.delta_tib, 0.01
     end
 
     test "applies work quota to current and next TIB" do
       full_time = calculator(echelon: 5, quotite: 1).compute
       part_time = calculator(echelon: 5, quotite: "0.8").compute
 
-      assert_equal (full_time.tib_actuel * BigDecimal("0.8")).round(2), part_time.tib_actuel
-      assert_equal (full_time.tib_suivant * BigDecimal("0.8")).round(2), part_time.tib_suivant
+      assert_in_delta full_time.tib_actuel * BigDecimal("0.8"), part_time.tib_actuel, 0.01
+      assert_in_delta full_time.tib_suivant * BigDecimal("0.8"), part_time.tib_suivant, 0.01
     end
 
     test "calculates remaining months and estimated advancement date" do

@@ -56,6 +56,36 @@ module Iade
       assert_in_delta(result.net_avant_pas - q60[:montant], result.net_paye, BigDecimal("0.01"))
     end
 
+    test "applies work quota to TIB and automatic IADE primes" do
+      full_time = PayslipCalculator.call(base_params)
+      part_time = PayslipCalculator.call(base_params.merge(quotite: "0.8"))
+
+      %w[BT0 CW1 LP1 LPN].each do |code|
+        assert_in_delta line(full_time, code)[:montant] * BigDecimal("0.8"),
+                        line(part_time, code)[:montant], BigDecimal("0.01"),
+                        "Expected #{code} to follow the 80% work quota"
+      end
+      assert_operator part_time.brut_total, :<, full_time.brut_total
+    end
+
+    test "adds NBI and its residence allowance when NBI points are present" do
+      result = PayslipCalculator.call(base_params.merge(nbi_points: 20))
+
+      assert_empty result.errors
+      assert_operator line(result, "KB1")[:montant], :>, BigDecimal("0")
+      assert_operator line(result, "KR0")[:montant], :>, BigDecimal("0")
+      assert_line(result, "RCB", type: :deduction)
+    end
+
+    test "adds NBI family supplement lines for two children" do
+      result = PayslipCalculator.call(base_params.merge(nbi_points: 20, nb_enfants_sft: 2))
+
+      assert_empty result.errors
+      assert_operator line(result, "CS0")[:montant], :>, BigDecimal("0")
+      assert_operator line(result, "KS0")[:montant], :>, BigDecimal("0")
+      assert_operator line(result, "KS1")[:montant], :>, BigDecimal("0")
+    end
+
     private
 
     def base_params

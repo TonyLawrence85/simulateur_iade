@@ -22,22 +22,24 @@
       </div>
     </div>
 
-    <div class="section-label" style="margin-top:1rem">
-      Planning mensuel — répartition des vacations
-    </div>
+    <div class="hidden" data-visible-when="mode:expert">
+      <div class="section-label" style="margin-top:1rem">
+        Planning mensuel — répartition des vacations
+      </div>
 
-    <div class="field-grid field-grid--3">
-      <div class="field-group">
-        <%= f.label :nb_matins, "Nombre de matins", class: "field-label" %>
-        <%= f.number_field :nb_matins, placeholder: "0", step: 1, min: 0 %>
-      </div>
-      <div class="field-group">
-        <%= f.label :nb_apres_midi, "Nombre d'après-midi", class: "field-label" %>
-        <%= f.number_field :nb_apres_midi, placeholder: "0", step: 1, min: 0 %>
-      </div>
-      <div class="field-group">
-        <%= f.label :nb_soirs, "Nombre de soirs", class: "field-label" %>
-        <%= f.number_field :nb_soirs, placeholder: "0", step: 1, min: 0 %>
+      <div class="field-grid field-grid--3">
+        <div class="field-group">
+          <%= f.label :nb_matins, "Nombre de matins", class: "field-label" %>
+          <%= f.number_field :nb_matins, placeholder: "0", step: 1, min: 0 %>
+        </div>
+        <div class="field-group">
+          <%= f.label :nb_apres_midi, "Nombre d'après-midi", class: "field-label" %>
+          <%= f.number_field :nb_apres_midi, placeholder: "0", step: 1, min: 0 %>
+        </div>
+        <div class="field-group">
+          <%= f.label :nb_soirs, "Nombre de soirs", class: "field-label" %>
+          <%= f.number_field :nb_soirs, placeholder: "0", step: 1, min: 0 %>
+        </div>
       </div>
     </div>
 
@@ -55,7 +57,7 @@
     <div class="field-grid field-grid--3">
       <div class="field-group">
         <%= f.label :heures_nuit, class: "field-label" do %>
-          Combien d'heures de nuit (entre 21h et 7h) avez-vous travaillé au mois (M-1) ?
+          Combien d'heures de nuit (entre 21h et 6h) avez-vous travaillé au mois (M-1) ?
         <% end %>
         <%= f.number_field :heures_nuit, placeholder: "0", step: 0.5, min: 0, data: { action: "input->simulation#updateSidebar" } %>
       </div>
@@ -120,6 +122,7 @@
       </div>
     </div>
 
+    <div class="hidden" data-visible-when="mode:expert">
     <div class="section-label" style="margin-top:1.25rem">
       Restaurant du personnel — self de jour <span class="badge badge--var">SELF · informatif</span>
     </div>
@@ -173,6 +176,7 @@
         <span class="field-hint">Tarif selon indice majoré (table AP-HP D2023-285) — n'affecte pas le net simulé</span>
       </div>
     </div>
+    </div>
 
     <div class="section-label">
       Dim. &amp; jours fériés — activité de M−1 <span class="badge badge--var">M+1</span>
@@ -191,7 +195,7 @@
         <% end %>
         <%= f.number_field :heures_ferie, placeholder: "0", step: 0.5, min: 0, data: { action: "input->simulation#updateSidebar" } %>
       </div>
-      <div class="field-group">
+      <div class="field-group hidden" data-visible-when="mode:expert">
         <%= f.label :jw0_regul_heures, class: "field-label" do %>
           Régularisation dim./JF de mois antérieurs (nombre d'heures)
         <% end %>
@@ -244,6 +248,7 @@
     </div>
     <span class="field-hint field-hint--warn">Saisir les heures supplémentaires effectuées sur M−2</span>
 
+    <div class="hidden" data-visible-when="profession:iade">
     <div class="section-label" style="margin-top:1.25rem">
       Greffe / transplantation — activité de M−2 <span class="badge badge--var">M+2</span>
     </div>
@@ -262,6 +267,7 @@
         <%= f.number_field :tp8_heures, placeholder: "0", step: 0.5, min: 0, data: { action: "input->simulation#updateSidebar" } %>
         <span class="field-hint">Même tarif horaire que les heures supplémentaires dimanche/jours fériés</span>
       </div>
+    </div>
     </div>
   </div>
 

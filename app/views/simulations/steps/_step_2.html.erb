@@ -35,7 +35,7 @@
         <input type="text" disabled class="field-computed" data-simulation-target="irDisplay" value="—"> <%# herb:disable all %>
       </div>
 
-      <div class="field-group">
+      <div class="field-group hidden" data-visible-when="mode:expert">
         <%= f.label :commune, "Commune (optionnel)", class: "field-label" %>
         <%= f.text_field :commune, placeholder: "Ex : Montreuil" %>
       </div>
@@ -58,7 +58,7 @@
         <input type="text" disabled class="field-computed" data-simulation-target="sftDisplay" value="0,00 €"> <%# herb:disable all %>
       </div>
 
-      <div class="field-group">
+      <div class="field-group hidden" data-visible-when="mode:expert">
         <%= f.label :garde_alternee, "Garde alternée", class: "field-label" %>
         <%= f.select :garde_alternee, [["Non", false], ["Oui — 50%", true]], { selected: @simulation.garde_alternee }, data: { action: "change->simulation#updateSft" } %>
       </div>

@@ -11,7 +11,8 @@
       Résultat — <%= I18n.l(Date.strptime(@simulation.mois_paie, "%Y-%m"), format: "%B %Y").capitalize %>
     </h1>
     <p class="sim-subtitle">
-      <%= @simulation.grade == "grade1" ? "1er grade" : "2ème grade" %> ·
+      <%= profession_label(@simulation.profession) %> ·
+      <%= grade_label(@simulation.grade) %> ·
       Échelon <%= @simulation.echelon %> ·
       <%= (@simulation.quotite.to_f * 100).to_i %>% ·
       <%= @simulation.statut.capitalize %>
@@ -165,13 +166,13 @@
             <td class="td-num"><%= number_to_currency(@result.net_avant_pas, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
           </tr>
 
-          <tr style="background:var(--canvas);border-top:1px solid var(--border)">
-            <td colspan="3" style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);padding:6px 12px">
-              Impôt sur le revenu
-            </td>
-          </tr>
           <% q60_line = @result.lines.find { |l| l[:code] == "Q60" } %>
           <% if q60_line %>
+            <tr style="background:var(--canvas);border-top:1px solid var(--border)">
+              <td colspan="3" style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);padding:6px 12px">
+                Impôt sur le revenu
+              </td>
+            </tr>
             <tr>
               <td class="td-code"><code>Q60</code></td>
               <td class="td-label">

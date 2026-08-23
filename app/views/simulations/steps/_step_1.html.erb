@@ -13,6 +13,23 @@
   <div class="panel-body">
     <div class="field-grid field-grid--1" style="margin-bottom:1rem">
       <div class="field-group">
+        <label class="field-label">Mode de saisie</label>
+        <div class="radio-toggle">
+          <label class="radio-toggle__option">
+            <input type="radio" name="ui_mode" data-mode-radio value="standard" data-action="change->simulation#modeToggle" checked>
+            Standard
+          </label>
+          <label class="radio-toggle__option">
+            <input type="radio" name="ui_mode" data-mode-radio value="expert" data-action="change->simulation#modeToggle">
+            Expert — afficher tous les champs
+          </label>
+        </div>
+        <span class="field-hint">Le mode standard masque les champs rares/techniques ; vous pouvez tout révéler à tout moment.</span>
+      </div>
+    </div>
+
+    <div class="field-grid field-grid--1" style="margin-bottom:1rem">
+      <div class="field-group">
         <%= f.label :profession, class: "field-label" do %>
           Profession <span class="req">*</span>
         <% end %>
@@ -58,9 +75,10 @@
         <%= f.select :quotite, [["100%", 1.0], ["90%", 0.9], ["80%", 0.8], ["50%", 0.5]], { selected: @simulation.quotite }, required: true, data: { action: "change->simulation#updateTib" } %> <%# herb:disable all %>
       </div>
 
-      <div class="field-group">
+      <div class="field-group hidden" data-visible-when="mode:expert">
         <%= f.label :type_cycle, "Type de cycle", class: "field-label" %>
-        <%= f.select :type_cycle, [["7h36", "7h36"], ["7h30", "7h30"], ["10h", "10h"], ["12h", "12h"]], { selected: @simulation.type_cycle } %> <%# herb:disable all %>
+        <%= f.select :type_cycle, [["7h36", "7h36"], ["7h30", "7h30"], ["10h", "10h"], ["12h", "12h"]], { selected: @simulation.type_cycle },
+              data: { action: "change->simulation#checkCycleCoherence" } %>
       </div>
     </div>
 
@@ -69,7 +87,8 @@
         <%= f.label :heure_debut_service, class: "field-label" do %>
           Heure de début de service <span class="req">*</span>
         <% end %>
-        <%= f.time_field :heure_debut_service, value: @simulation.heure_debut_service || "07:36", required: true %>
+        <%= f.time_field :heure_debut_service, value: @simulation.heure_debut_service || "07:36", required: true,
+              data: { action: "change->simulation#checkCycleCoherence" } %>
         <span class="field-hint">Détermine si vos HS tombent en période de jour ou de nuit</span>
       </div>
 
@@ -77,13 +96,17 @@
         <%= f.label :heure_fin_service, class: "field-label" do %>
           Heure de fin de service <span class="req">*</span>
         <% end %>
-        <%= f.time_field :heure_fin_service, value: @simulation.heure_fin_service || "19:12", required: true %>
+        <%= f.time_field :heure_fin_service, value: @simulation.heure_fin_service || "19:12", required: true,
+              data: { action: "change->simulation#checkCycleCoherence" } %>
         <span class="field-hint">La période de nuit AP-HP est de 21h à 6h</span>
+        <span class="field-hint field-hint--warn hidden" data-simulation-target="cycleCoherenceWarning">
+          Ces horaires ne correspondent pas au cycle sélectionné. Vérifiez votre saisie.
+        </span>
       </div>
     </div>
 
     <div class="field-grid field-grid--2" style="margin-top:1rem">
-      <div class="field-group">
+      <div class="field-group hidden" data-visible-when="mode:expert">
         <%= f.label :date_entree_echelon, class: "field-label" do %>
           Date de prise d'effet de l'échelon actuel
         <% end %>

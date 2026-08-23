@@ -18,7 +18,8 @@ export default class extends Controller {
     "carriereBlockSuivant", "carriereEchelonSuivant", "carriereDeltaTibSub",
     "carriereBlockDate", "carriereDateEstimee", "carriereMoisRestantsSub",
     "carriereBlockTerminal", "carriereNoDateHint",
-    "bulletinInput", "extractBanner", "realLineField", "realBrutField", "realNetField"
+    "bulletinInput", "extractBanner", "realLineField", "realBrutField", "realNetField",
+    "cycleCoherenceWarning", "pasReveal", "pasBlock"
   ]
 
   static values = {
@@ -27,6 +28,7 @@ export default class extends Controller {
 
   // ── Constantes métier ──────────────────────────────────────────
   VALEUR_POINT = 4.92278
+  ABATTEMENT_FRAIS_PRO = 0.9825
   CTI_POINTS   = 49
   PRIME_VEIL   = 90.00
   PRIME_IADE   = 180.00
@@ -71,6 +73,13 @@ export default class extends Controller {
   IR_ZONES = { "75":1, "92":1, "93":1, "94":1, "77":2, "78":2, "91":2, "95":2 }
   IR_TAUX  = { 1: 0.03, 2: 0.01, 3: 0.00 }
 
+  // Amplitude horaire (fin - début) attendue par type de cycle. "7h36" est confirmée par la
+  // paire d'horaires par défaut du formulaire (07:36→19:12 = 11h36) ; les 3 autres sont
+  // extrapolées sur le même principe (poste + pause) faute de référence AP-HP disponible
+  // dans ce dépôt — à confirmer/ajuster si besoin.
+  CYCLE_AMPLITUDE_HEURES = { "7h36": 11.6, "7h30": 11.5, "10h": 10.5, "12h": 12.5 }
+  CYCLE_TOLERANCE_HEURES = 0.25
+
   // ── Lifecycle ─────────────────────────────────────────────────
   connect() {
     this._render(this.currentStepValue)
@@ -80,6 +89,7 @@ export default class extends Controller {
     this.updateProgress()
     this.absenceCardTargets.forEach(card => this._syncAbsenceCard(card))
     this.updateAbsences()
+    this._applyVisibility()
   }
 
   // ── Navigation ────────────────────────────────────────────────
@@ -139,6 +149,63 @@ export default class extends Controller {
   professionChanged(e) {
     this._initGradeOptions(e.target.value)
     this.updateTib()
+    this._applyVisibility()
+  }
+
+  // ── Prélèvement à la source (facultatif) ────────────────────────
+  revealPasBlock() {
+    if (this.hasPasBlockTarget) this.pasBlockTarget.classList.remove("hidden")
+    if (this.hasPasRevealTarget) this.pasRevealTarget.classList.add("hidden")
+  }
+
+  // ── Cohérence cycle / horaires ──────────────────────────────────
+  // Avertissement non bloquant, jamais pris en compte par _validateCurrentStep.
+  checkCycleCoherence() {
+    if (!this.hasCycleCoherenceWarningTarget) return
+    const cycle = this._fv("type_cycle")
+    const attendu = this.CYCLE_AMPLITUDE_HEURES[cycle]
+    const debut = this._fv("heure_debut_service")
+    const fin   = this._fv("heure_fin_service")
+    if (!attendu || !debut || !fin) {
+      this.cycleCoherenceWarningTarget.classList.add("hidden")
+      return
+    }
+    const toHeures = (hhmm) => {
+      const [h, m] = hhmm.split(":").map(Number)
+      return h + m / 60
+    }
+    let amplitude = toHeures(fin) - toHeures(debut)
+    if (amplitude < 0) amplitude += 24 // passage minuit (poste de nuit)
+    const coherent = Math.abs(amplitude - attendu) <= this.CYCLE_TOLERANCE_HEURES
+    this.cycleCoherenceWarningTarget.classList.toggle("hidden", coherent)
+  }
+
+  // ── Mode standard / expert ─────────────────────────────────────
+  // Non persisté (pas d'attribut modèle) : commodité d'UI uniquement, le moteur de calcul
+  // ignore totalement ce qui est visible ou non côté formulaire.
+  modeToggle() {
+    this._applyVisibility()
+  }
+
+  _modeValue() {
+    const checked = this.element.querySelector("input[data-mode-radio]:checked")
+    return checked ? checked.value : "standard"
+  }
+
+  // Mécanisme de visibilité déclaratif générique : tout élément portant
+  // data-visible-when="axe:valeur1,valeur2[;axe2:valeur3]" est affiché seulement si CHAQUE
+  // condition (séparée par ;) est satisfaite (une valeur parmi celles listées pour son axe).
+  // Axes supportés aujourd'hui : "mode" (standard/expert) et "profession" (iade/ide/as).
+  _applyVisibility() {
+    const context = { mode: this._modeValue(), profession: this._fv("profession") || "iade" }
+    this.element.querySelectorAll("[data-visible-when]").forEach(el => {
+      const conditions = el.dataset.visibleWhen.split(";")
+      const visible = conditions.every(cond => {
+        const [axis, values] = cond.split(":")
+        return (values || "").split(",").includes(context[axis])
+      })
+      el.classList.toggle("hidden", !visible)
+    })
   }
 
   _initGradeOptions(profession) {
@@ -641,16 +708,17 @@ export default class extends Controller {
     } else {
       cnracl = 0.0401 * (tib + cti + brut)
     }
-    const baseCsg  = brut * 0.9825
+    const baseCsg  = brut * this.ABATTEMENT_FRAIS_PRO
     const ucbMontant = baseCsg * 0.029
     // Exonération fiscale des heures sup plafonnée à 7 500 €/an (art. 81 quater CGI) — pool
     // commun à UC8 et à la base Q60 (Complément simulateur PAS §1)
     const reliquatHs      = Math.max(0, 7500 - cumulHsAnt)
     const hsExonereesEffectif = Math.min(hsExonereesBrut, reliquatHs)
     // UC8 : donnée fiscale (base Q60 uniquement), jamais une retenue réelle sur le net avant PAS.
-    // Gardé par le brut HS/gardes réel (régime VR7), assiette = part encore exonérée (plafonnée).
+    // Gardé par le brut HS/gardes réel (régime VR7), assiette = part encore exonérée (plafonnée),
+    // même abattement 98,25% que UCB/UCX avant application du taux 6,80%.
     const hsGardes   = hsSupMontant + gardes
-    const uc8Montant = hsGardes > 0 ? hsExonereesEffectif * 0.068 : 0
+    const uc8Montant = hsGardes > 0 ? hsExonereesEffectif * this.ABATTEMENT_FRAIS_PRO * 0.068 : 0
     const csgTotal   = baseCsg * (0.029 + 0.068)
     const totalAv    = cnracl + rafp + csgTotal
     const netSocial  = brut - totalAv - retAbsTotal
@@ -807,7 +875,7 @@ export default class extends Controller {
     const panel = this.panelTargets.find(p => parseInt(p.dataset.step) === this.currentStepValue)
     if (!panel) return true
     const invalid = Array.from(panel.querySelectorAll("[required]")).filter(f =>
-      f.type === "checkbox" ? !f.checked : !f.value || f.value.trim() === ""
+      !f.closest(".hidden") && (f.type === "checkbox" ? !f.checked : !f.value || f.value.trim() === "")
     )
     panel.querySelectorAll(".step-validation-error").forEach(el => el.remove())
     panel.querySelectorAll(".field-invalid").forEach(el => el.classList.remove("field-invalid"))

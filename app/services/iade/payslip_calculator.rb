@@ -6,7 +6,7 @@ module Iade
                         :net_avant_pas, :net_paye, :errors, :warnings, keyword_init: true)
 
     REQUIRED = %i[mois_paie statut grade echelon quotite departement_code
-                  nb_enfants_sft nbi_points taux_pas].freeze
+                  nb_enfants_sft nbi_points].freeze
 
     # Tarifs Navigo annuels Île-de-France Mobilités 2026 — référence unique quel que soit
     # le type de pass détenu (annuel/mois/semaine), fiche corrective codeur 17/08/2026,
@@ -248,6 +248,9 @@ module Iade
                montant: fmd_montant(jours), detail: "#{jours}j (#{@p[:fmd_mode]})")
     end
 
+    # Heuristique WT1 (remboursement transport) uniquement — ne pas confondre avec la
+    # période légale de nuit AP-HP (21h-6h) utilisée pour heures_nuit/hs_m2_nuit, qui
+    # reste une saisie déclarative sans contrôle d'horaire dans ce moteur.
     def agent_nuit?
       debut = @p[:heure_debut_service].to_s.match(/(\d{2}:\d{2})/)&.[](1) || "07:36"
       debut >= "19:00"
@@ -322,8 +325,15 @@ module Iade
       @warnings << "JW0 : vérifier que vous avez saisi l'activité de M-1" if (h_dim + h_ferie).positive?
     end
 
+    # Gardes, greffe/transplantation (TP7/TP8) : dispositifs propres à l'activité IADE
+    # (bloc opératoire/réanimation). Ignorés pour IDE/AS même si des valeurs résiduelles
+    # traînent dans les paramètres (ex. changement de profession en cours de saisie).
+    def iade_only(value)
+      @p[:profession].to_s == "iade" ? value.to_f : 0.0
+    end
+
     def add_heures_sup_m2 # rubocop:disable Metrics/MethodLength
-      nb = @p[:nb_gardes].to_f
+      nb = iade_only(@p[:nb_gardes])
       heures_equiv = @p[:heures_par_garde].presence&.to_f || 4.0
 
       result = Iade::HeuresSupM2Calculator.new(
@@ -334,8 +344,8 @@ module Iade
         hs_m2_ferie: @p[:hs_m2_ferie].to_f,
         hs_m2_jour: @p[:hs_m2_jour].to_f,
         garde_heures: nb * heures_equiv,
-        tp7_heures: @p[:tp7_heures].to_f,
-        tp8_heures: @p[:tp8_heures].to_f
+        tp7_heures: iade_only(@p[:tp7_heures]),
+        tp8_heures: iade_only(@p[:tp8_heures])
       ).compute
       return if result[:total].zero?
 
@@ -349,7 +359,7 @@ module Iade
     # Heures de garde faites le weekend : rémunérées directement au tarif HS nuit, hors
     # contingent (contrairement aux gardes de semaine, poolées avec les heures sup de nuit).
     def add_gardes_weekend
-      heures = @p[:heures_weekend_garde].to_f
+      heures = iade_only(@p[:heures_weekend_garde])
       return if heures.zero?
 
       taux = taux_hs_nuit
@@ -494,7 +504,7 @@ module Iade
       add_retenues_absence
       add_retraite_principale
 
-      base_csg = Iade::CotisationsCalculator.base_csg(brut_total: @brut_lines_total)
+      base_csg = Iade::CotisationsCalculator.base_csg(montant: @brut_lines_total)
 
       @ucb_montant = Iade::CotisationsCalculator.csg_crds(base_csg: base_csg)
       add_deduction(code: "UCB", label: "C.S.G. ET R.D.S.", montant: @ucb_montant, detail: "2,90%")
@@ -518,6 +528,8 @@ module Iade
     # social + UCB + UC8 - part des heures sup effectivement exonérées ce mois (plafonnée
     # par le reliquat annuel restant, voir PLAFOND_ANNUEL_EXO_HS).
     def add_impot_revenu
+      return if @p[:taux_pas].blank?
+
       hs_exo   = hs_exonerees_effectif
       base_q60 = @net_social + @ucb_montant + @uc8_montant - hs_exo
       taux     = BigDecimal(@p[:taux_pas].to_s) / 100
@@ -574,6 +586,7 @@ module Iade
       add_xrn
       @net_avant_pas = @net_social + line_montant("WT1") + line_montant("XRN")
 
+      @pas_montant = BigDecimal("0")
       add_impot_revenu
 
       mutuelle  = BigDecimal(@p[:mutuelle].to_s.presence || "0")

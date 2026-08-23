@@ -28,8 +28,8 @@ module Iade
       end
     end
 
-    def self.base_csg(brut_total:, abattement: ABATTEMENT_FRAIS_PRO)
-      brut  = BigDecimal(brut_total.to_s)
+    def self.base_csg(montant:, abattement: ABATTEMENT_FRAIS_PRO)
+      brut  = BigDecimal(montant.to_s)
       abatt = BigDecimal(abattement.to_s)
       (brut * (1 - abatt)).round(2)
     end
@@ -43,7 +43,7 @@ module Iade
     end
 
     def self.csg_hs(assiette_hs:)
-      (BigDecimal(assiette_hs.to_s) * TAUX_CSG_HS).round(2)
+      (base_csg(montant: assiette_hs) * TAUX_CSG_HS).round(2)
     end
 
     def self.pas(base_imposable:, taux:)

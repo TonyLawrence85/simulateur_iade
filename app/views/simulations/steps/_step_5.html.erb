@@ -12,62 +12,55 @@
 
   <div class="panel-body">
 
-    <%# PSR - Prime de service (13e mois) %>
+    <%# 13e mois AP-HP : PSR + LSU, un seul en-tête, deux sous-questions (règles d'abattement
+        distinctes — pas de fusion des montants, cf. audit QA point 5) %>
     <div class="section-label">
-      Prime de service / 13<sup>e</sup> mois <span class="badge badge--var">PSR</span>
+      13<sup>e</sup> mois AP-HP <span class="badge badge--var">PSR + LSU</span>
     </div>
     <div class="alert alert--info" style="margin-bottom:1rem">
       <span>ℹ</span>
-      <div>Versée en <strong>juin</strong> et <strong>décembre</strong> à l'AP-HP. Saisissez le montant brut prévu ou observé sur votre bulletin. Les absences maladie ordinaires entraînent un abattement de <strong>1/140</strong> par jour abattable.</div>
+      <div>Versés en <strong>juin</strong> et <strong>décembre</strong> à l'AP-HP. Saisissez les montants bruts prévus ou observés sur votre bulletin.</div>
     </div>
 
     <div class="field-grid field-grid--2">
       <div class="field-group">
-        <%= f.label :montant_psr, "Montant PSR brut (€)", class: "field-label" %>
+        <%= f.label :montant_psr, class: "field-label" do %>
+          Prime de service (PSR) <span class="badge badge--calc">PSR</span>
+        <% end %>
         <%= f.number_field :montant_psr, placeholder: "Ex : 1167.00", step: 0.01, min: 0,
             data: { action: "input->simulation#updateSidebar" } %>
         <span class="field-hint">Laisser vide si le mois n'est pas juin/décembre</span>
       </div>
       <div class="field-group">
-        <%= f.label :jours_absence_psr, "Jours d'absence abattables", class: "field-label" %>
-        <%= f.number_field :jours_absence_psr, placeholder: "0", step: 1, min: 0,
-            data: { action: "input->simulation#updateSidebar" } %>
-        <span class="field-hint">Jours CMO abattables → abatt. montant × jours / 140</span>
-      </div>
-    </div>
-
-    <%# LSU - Indemnité exceptionnelle %>
-    <div class="section-label" style="margin-top:1.25rem">
-      Indemnité exceptionnelle <span class="badge badge--var">LSU</span>
-    </div>
-    <div class="alert alert--warn" style="margin-bottom:1rem">
-      <span>⚠</span>
-      <div>Versée en <strong>juin</strong> et <strong>décembre</strong> (à confirmer selon agent). Montant saisi directement — niveau de confiance à valider sur votre bulletin.</div>
-    </div>
-
-    <div class="field-grid field-grid--2">
-      <div class="field-group">
-        <%= f.label :montant_lsu, "Montant LSU brut (€)", class: "field-label" %>
+        <%= f.label :montant_lsu, class: "field-label" do %>
+          Indemnité exceptionnelle (LSU) <span class="badge badge--calc">LSU</span>
+        <% end %>
         <%= f.number_field :montant_lsu, placeholder: "Ex : 531.79", step: 0.01, min: 0,
             data: { action: "input->simulation#updateSidebar" } %>
         <span class="field-hint">Laisser vide si absent du bulletin ce mois-ci</span>
       </div>
+      <div class="field-group hidden" data-visible-when="mode:expert">
+        <%= f.label :jours_absence_psr, "Jours d'absence abattables (PSR)", class: "field-label" %>
+        <%= f.number_field :jours_absence_psr, placeholder: "0", step: 1, min: 0,
+            data: { action: "input->simulation#updateSidebar" } %>
+        <span class="field-hint">Jours CMO abattables → abatt. montant × jours / 140 (PSR uniquement)</span>
+      </div>
     </div>
 
     <%# Primes diverses %>
-    <div class="section-label" style="margin-top:1.25rem">
-      Primes diverses <span class="badge badge--var">DIV</span>
-    </div>
-    <div class="field-grid field-grid--2">
+    <div class="field-grid field-grid--2 hidden" data-visible-when="mode:expert" style="margin-top:1.25rem">
       <div class="field-group">
-        <%= f.label :montant_primes_diverses, "Montant (€)", class: "field-label" %>
+        <%= f.label :montant_primes_diverses, class: "field-label" do %>
+          Primes diverses <span class="badge badge--var">DIV</span>
+        <% end %>
         <%= f.number_field :montant_primes_diverses, placeholder: "Ex : 50.00", step: 0.01, min: 0,
             data: { action: "input->simulation#updateSidebar" } %>
         <span class="field-hint">Toute autre prime ou indemnité non couverte ci-dessus (montant brut observé sur bulletin)</span>
       </div>
     </div>
 
-    <%# FT1 - Indemnité tutorat stagiaire %>
+    <%# FT1 - Indemnité tutorat stagiaire : IDE et IADE uniquement %>
+    <div class="hidden" data-visible-when="profession:iade,ide">
     <div class="section-label" style="margin-top:1.25rem">
       Indemnité tutorat stagiaire IDE/IADE <span class="badge badge--var">FT1</span>
     </div>
@@ -107,8 +100,10 @@
         <span class="field-hint">Montant observé sur votre bulletin</span>
       </div>
     </div>
+    </div>
 
     <%# FT9 - Prime tutorat soignant %>
+    <div class="hidden" data-visible-when="mode:expert">
     <div class="section-label" style="margin-top:1.25rem">
       Prime tutorat soignant <span class="badge badge--var">FT9</span>
     </div>
@@ -142,8 +137,10 @@
         <span class="field-hint">Pré-rempli à 190 € (montant fixe communiqué par l'AP-HP)</span>
       </div>
     </div>
+    </div>
 
-    <%# Gardes %>
+    <%# Gardes : profession IADE uniquement %>
+    <div class="hidden" data-visible-when="profession:iade">
     <div class="section-label" style="margin-top:1.25rem">
       Gardes <span class="badge badge--var">IT7 / DHN</span>
     </div>
@@ -196,6 +193,7 @@
             data: { action: "input->simulation#updateSidebar" } %>
         <span class="field-hint field-hint--warn">Saisir l'activité du mois M−2</span>
       </div>
+    </div>
     </div>
 
   </div>

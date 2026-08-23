@@ -3,7 +3,7 @@ source "https://rubygems.org"
 ruby "3.3.5"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.3"
+gem "rails", "~> 8.1.3", ">= 8.1.3.1"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
@@ -17,6 +17,16 @@ gem "turbo-rails"
 gem "stimulus-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
+
+# Pin patched transitive dependencies flagged by bundler-audit.
+gem "concurrent-ruby", ">= 1.3.7"
+gem "crass", ">= 1.0.7"
+gem "json", ">= 2.19.9"
+gem "loofah", ">= 2.25.2"
+gem "mail", ">= 2.9.1"
+gem "nokogiri", ">= 1.19.4"
+gem "rails-html-sanitizer", ">= 1.7.1"
+gem "websocket-driver", ">= 0.8.2"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
@@ -51,7 +61,7 @@ gem "sassc-rails"
 
 group :development, :test do
   gem "dotenv-rails"
-  # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
+  # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
@@ -65,7 +75,7 @@ group :development, :test do
 end
 
 group :development do
-  # Use console on exceptions pages [https://github.com/rails/web-console]
+  # Use console on exceptions pages [https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-the-debug-gem]
   gem "web-console"
 end
 

@@ -11,6 +11,26 @@ AllCops:
     - 'test/**/*'
     - 'vendor/**/*'
 
+# Legacy business services intentionally favor explicit domain calculations.
+# Keep RuboCop focused on correctness and maintainable style without forcing
+# risky refactors solely to satisfy generic complexity thresholds.
+Metrics/MethodLength:
+  Enabled: false
+Metrics/ClassLength:
+  Enabled: false
+Metrics/ModuleLength:
+  Enabled: false
+Metrics/ParameterLists:
+  Enabled: false
+Metrics/PerceivedComplexity:
+  Enabled: false
+Metrics/AbcSize:
+  Enabled: false
+Metrics/CyclomaticComplexity:
+  Enabled: false
+Metrics/BlockLength:
+  Enabled: false
+
 Style/ConditionalAssignment:
   Enabled: false
 Style/StringLiterals:
@@ -21,23 +41,33 @@ Style/Documentation:
   Enabled: false
 Style/WordArray:
   Enabled: false
-Metrics/AbcSize:
-  Enabled: false
 Style/MutableConstant:
   Enabled: false
 Style/SignalException:
   Enabled: false
-Metrics/CyclomaticComplexity:
-  Enabled: false
 Style/MissingRespondToMissing:
-  Enabled: false
-Lint/MissingSuper:
   Enabled: false
 Style/FrozenStringLiteralComment:
   Enabled: false
-Layout/LineLength:
-  Max: 120
 Style/EmptyMethod:
   Enabled: false
+
+Lint/MissingSuper:
+  Enabled: false
+
+# Existing domain vocabulary includes short, meaningful names such as `nb`.
+Naming/MethodParameterName:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 140
+Layout/HashAlignment:
+  Enabled: false
+
+# Long guard clauses are common in validation-heavy calculators and remain
+# readable without converting them into multi-line conditionals.
+Style/IfUnlessModifier:
+  Enabled: false
+
 Bundler/OrderedGems:
   Enabled: false

@@ -86,6 +86,50 @@ module Iade
       assert_operator line(result, "KS1")[:montant], :>, BigDecimal("0")
     end
 
+    test "keeps night overtime within IT7 up to the twenty hour monthly contingent" do
+      result = PayslipCalculator.call(base_params.merge(hs_m2_nuit: 12))
+
+      assert_empty result.errors
+      assert_line(result, "IT7", type: :brut)
+      assert_nil line(result, "DHN")
+      assert result.warnings.any? { |warning| warning.include?("M-2") }
+    end
+
+    test "splits night overtime above twenty hours between IT7 and DHN" do
+      result = PayslipCalculator.call(base_params.merge(hs_m2_nuit: 25))
+      it7 = line(result, "IT7")
+      dhn = line(result, "DHN")
+
+      assert_empty result.errors
+      assert it7
+      assert dhn
+      assert_operator it7[:montant], :>, dhn[:montant]
+      assert_match(/20\.0h|20h/, it7[:detail])
+      assert_match(/5\.0h|5h/, dhn[:detail])
+    end
+
+    test "warns and makes the excess overtime taxable once the annual exemption cap is reached" do
+      result = PayslipCalculator.call(base_params.merge(
+                                        hs_m2_nuit: 25,
+                                        cumul_hs_brut_anterieur: "7490",
+                                        taux_pas: "5"
+                                      ))
+      q60 = line(result, "Q60")
+
+      assert_empty result.errors
+      assert q60
+      assert_equal true, q60[:estimatif]
+      assert result.warnings.any? { |warning| warning.include?("7 500") }
+      assert_operator q60[:base_imposable], :>, BigDecimal("0")
+    end
+
+    test "does not apply IADE-only overtime inputs to an IDE" do
+      result = PayslipCalculator.call(base_params.merge(profession: "ide", hs_m2_nuit: 10, tp7_heures: 4))
+
+      assert_empty result.errors
+      assert_nil line(result, "TP7")
+    end
+
     private
 
     def base_params

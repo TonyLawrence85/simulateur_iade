@@ -4,6 +4,26 @@ A Ruby on Rails application for simulating and explaining the remuneration of Fr
 
 The project turns complex payroll and career rules into dedicated, testable domain services: salary index calculations, contributions, bonuses, overtime, NBI/SFT, absences, withholding tax and career progression.
 
+## Screenshots
+
+### Build a detailed simulation
+
+The guided simulator combines professional status, grade, echelon and working-time parameters with a live payslip estimate.
+
+![IADE salary simulation form](docs/screenshots/simulation-form.png)
+
+### Understand the payslip result
+
+The result view summarizes gross pay, employee contributions and net pay, then exposes every calculated payroll line for transparency.
+
+![Detailed IADE payslip simulation result](docs/screenshots/payslip-result.png)
+
+### Project career progression
+
+The career module evaluates promotion conditions and estimates reclassification into the next IADE grade.
+
+![IADE career promotion projection](docs/screenshots/career-projection.png)
+
 ## Highlights
 
 - Monthly payslip simulation for IADE / IDE profiles

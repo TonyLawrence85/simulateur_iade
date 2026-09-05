@@ -6,8 +6,8 @@
 
       <div class="home-hero__badge">
         <span class="home-badge">
-          <span style="color:#4ade80">A</span>IDE pour les
-          <span style="color:#4ade80">IADE</span> AP-HP
+          <span style="color:#276749">AIDE</span> pour les
+          <span style="color:#276749">IADE · IDE · AS</span> AP-HP
         </span>
       </div>
 
@@ -17,8 +17,9 @@
       </h1>
 
       <p class="home-hero__sub">
-        Le logiciel de paie AP-HP génère des erreurs. IADE Contrôle calcule
-        votre rémunération théorique et la compare à votre bulletin reçu —
+        Le logiciel de paie AP-HP génère des erreurs.
+        <strong>Vérifie Paie Soignant</strong> calcule votre rémunération
+        théorique et la compare à votre bulletin reçu —
         pour détecter les anomalies en quelques secondes.
       </p>
 
@@ -74,8 +75,21 @@
 
   <%# ── 3 ARGUMENTS ───────────────────────────────────────── %>
   <section class="home-args">
+
     <div class="home-arg">
-      <div class="home-arg__icon">🧮</div>
+      <%# Icône calcul SVG %>
+      <div class="home-arg__icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="48" height="48" rx="12" fill="#e8f0fb"/>
+          <rect x="12" y="10" width="24" height="28" rx="4" fill="none" stroke="#003D8F" stroke-width="2"/>
+          <rect x="16" y="16" width="16" height="3" rx="1.5" fill="#003D8F" opacity="0.4"/>
+          <rect x="16" y="22" width="10" height="3" rx="1.5" fill="#003D8F" opacity="0.4"/>
+          <rect x="16" y="28" width="13" height="3" rx="1.5" fill="#003D8F" opacity="0.4"/>
+          <text x="34" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#003D8F">€</text>
+          <circle cx="34" cy="14" r="7" fill="#276749"/>
+          <polyline points="30,14 33,17 38,11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <h2 class="home-arg__title">Calcul exact selon votre situation</h2>
       <p class="home-arg__text">
         Grade, échelon, NBI, quotité, indemnités de résidence, SFT — chaque
@@ -85,7 +99,23 @@
     </div>
 
     <div class="home-arg">
-      <div class="home-arg__icon">📄</div>
+      <%# Icône bulletin + stéthoscope SVG %>
+      <div class="home-arg__icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="48" height="48" rx="12" fill="#e8f0fb"/>
+          <!-- Bulletin -->
+          <rect x="14" y="8" width="22" height="28" rx="4" fill="none" stroke="#003D8F" stroke-width="2"/>
+          <rect x="18" y="15" width="14" height="2" rx="1" fill="#003D8F" opacity="0.35"/>
+          <rect x="18" y="20" width="10" height="2" rx="1" fill="#003D8F" opacity="0.35"/>
+          <rect x="18" y="25" width="12" height="2" rx="1" fill="#003D8F" opacity="0.35"/>
+          <!-- Stéthoscope simplifié -->
+          <path d="M10 18 Q10 28 16 31 Q22 34 24 40" fill="none" stroke="#003D8F" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="24" cy="42" r="3" fill="#003D8F"/>
+          <!-- Checkmark upload -->
+          <circle cx="36" cy="14" r="7" fill="#276749"/>
+          <polyline points="32,14 35,17 40,11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <h2 class="home-arg__title">Importez votre bulletin en un clic</h2>
       <p class="home-arg__text">
         Déposez votre bulletin PDF ou prenez-en une photo. Notre moteur OCR
@@ -95,14 +125,28 @@
     </div>
 
     <div class="home-arg">
-      <div class="home-arg__icon">🛡️</div>
+      <%# Icône bouclier + croix SVG %>
+      <div class="home-arg__icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="48" height="48" rx="12" fill="#e8f0fb"/>
+          <!-- Bouclier -->
+          <path d="M24 8 L38 13 L38 26 Q38 36 24 42 Q10 36 10 26 L10 13 Z" fill="none" stroke="#003D8F" stroke-width="2"/>
+          <!-- Croix médicale symétrique dans bouclier -->
+          <rect x="18" y="22" width="12" height="5" rx="1.5" fill="#003D8F"/>
+          <rect x="21" y="19" width="5" height="11" rx="1.5" fill="#003D8F"/>
+          <!-- Point vert validation -->
+          <circle cx="36" cy="36" r="7" fill="#276749"/>
+          <polyline points="32,36 35,39 40,33" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <h2 class="home-arg__title">Un outil à vocation sociale</h2>
       <p class="home-arg__text">
-        IADE Contrôle est né d'un constat simple : trop d'IADE AP-HP sont
-        sous-payés sans le savoir. Cet outil gratuit vous donne les moyens
-        de défendre votre rémunération, chiffres à l'appui.
+        Vérifie Paie Soignant est né d'un constat simple : trop de soignants
+        AP-HP sont sous-payés sans le savoir. Cet outil gratuit vous donne
+        les moyens de défendre votre rémunération, chiffres à l'appui.
       </p>
     </div>
+
   </section>
 
   <%# ── CTA FINAL ─────────────────────────────────────────── %>

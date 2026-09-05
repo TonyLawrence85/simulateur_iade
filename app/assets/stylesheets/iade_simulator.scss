@@ -9,11 +9,12 @@
   --canvas:     #f7f8fa;
   --surface:    #ffffff;
   --border:     #dde3ec;
-  --border-focus: #2b6cb0;
+  --border-focus: #003D8F;
 
-  --blue:       #2b6cb0;
-  --blue-light: #ebf4ff;
-  --blue-mid:   #bee3f8;
+  --blue:       #003D8F;
+  --blue-dark:  #002a6b;
+  --blue-light: #e8f0fb;
+  --blue-mid:   #a9c6e8;
   --green:      #276749;
   --green-light:#f0fff4;
   --green-mid:  #9ae6b4;
@@ -674,10 +675,10 @@
 .sim-app .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .sim-app .btn--primary {
-  background: var(--ink); color: white; border-color: var(--ink);
+  background: var(--blue); color: white; border-color: var(--blue);
 }
 .sim-app .btn--primary:hover:not(:disabled) {
-  background: #2d3748; border-color: #2d3748; text-decoration: none; color: white;
+  background: var(--blue-dark); border-color: var(--blue-dark); text-decoration: none; color: white;
 }
 
 .sim-app .btn--secondary {
@@ -885,12 +886,12 @@
   white-space: nowrap;
 }
 .home-btn--primary {
-  background: #1a2332;
+  background: var(--blue);
   color: white;
-  border: 1px solid #1a2332;
+  border: 1px solid var(--blue);
 }
 .home-btn--primary:hover {
-  background: #2d3748;
+  background: var(--blue-dark);
   color: white;
   text-decoration: none;
 }
@@ -1139,8 +1140,8 @@
 }
 .auth-input:focus {
   outline: none;
-  border-color: #2b6cb0;
-  box-shadow: 0 0 0 3px rgba(43,108,176,.15);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,61,143,.15);
 }
 .auth-input::placeholder { color: var(--ink-mute); }
 
@@ -1164,12 +1165,12 @@
   cursor: pointer;
 }
 
-.auth-checkbox { accent-color: #1a2332; cursor: pointer; }
+.auth-checkbox { accent-color: var(--blue); cursor: pointer; }
 
 .auth-submit {
   width: 100%;
   padding: 11px;
-  background: #1a2332;
+  background: var(--blue);
   color: white;
   border: none;
   border-radius: var(--radius-md);
@@ -1180,10 +1181,10 @@
   transition: background 0.12s;
   margin-top: 0.5rem;
 }
-.auth-submit:hover { background: #2d3748; }
+.auth-submit:hover { background: var(--blue-dark); }
 
 .auth-link {
-  color: #2b6cb0;
+  color: var(--blue);
   text-decoration: none;
   font-size: 0.8125rem;
 }

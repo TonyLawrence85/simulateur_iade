@@ -1,0 +1,6 @@
+<div class="tab-bar" style="margin-bottom: 1.5rem">
+  <%= link_to "Simulations", admin_simulations_path,
+      class: "tab-btn #{'is-active' if controller_name == 'simulations'}" %>
+  <%= link_to "Utilisateurs", admin_users_path,
+      class: "tab-btn #{'is-active' if controller_name == 'users'}" %>
+</div>

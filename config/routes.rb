@@ -23,6 +23,11 @@ Rails.application.routes.draw do
 
   namespace :admin do
     resources :simulations, only: %i[index show]
+    resources :users, only: %i[index] do
+      member do
+        patch :toggle_admin
+      end
+    end
   end
 
   get  "carrieres/promotion-2e-grade", to: "carrieres#new_promotion",         as: :new_carriere_promotion

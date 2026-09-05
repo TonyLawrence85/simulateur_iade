@@ -1,0 +1,51 @@
+<% content_for :title, "Admin · Utilisateurs" %>
+
+<div class="sim-app">
+  <div class="sim-header">
+    <h1 class="sim-title">Utilisateurs</h1>
+    <p class="sim-subtitle"><%= @users.size %> compte(s) enregistré(s)</p>
+  </div>
+
+  <%= render "admin/nav" %>
+
+  <div class="step-panel">
+    <table class="diff-table">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th class="num">Simulations</th>
+          <th>Inscrit le</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td><%= user.email %></td>
+            <td class="td-num"><%= user.simulations_count %></td>
+            <td><%= user.created_at.strftime("%d/%m/%Y") %></td>
+            <td>
+              <% if user.admin? %>
+                <span class="badge badge--calc">Admin</span>
+              <% else %>
+                <span style="color: var(--ink-mute)">Utilisateur</span>
+              <% end %>
+            </td>
+            <td>
+              <% if user == current_user %>
+                <span style="color: var(--ink-mute); font-size: 0.8125rem">Vous-même</span>
+              <% else %>
+                <%= button_to (user.admin? ? "Retirer admin" : "Passer admin"),
+                    toggle_admin_admin_user_path(user),
+                    method: :patch,
+                    class: "btn btn--secondary btn--sm",
+                    data: { turbo_confirm: "#{user.admin? ? 'Retirer' : 'Accorder'} les droits admin à #{user.email} ?" } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -6,6 +6,8 @@
     <p class="sim-subtitle"><%= @simulations.size %> simulation(s) enregistrée(s), tous utilisateurs confondus</p>
   </div>
 
+  <%= render "admin/nav" %>
+
   <% if @simulations.empty? %>
     <div class="step-panel">
       <div class="panel-body" style="text-align:center; padding: 3rem">

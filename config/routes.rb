@@ -21,6 +21,10 @@ Rails.application.routes.draw do
     end
   end
 
+  namespace :admin do
+    resources :simulations, only: %i[index show]
+  end
+
   get  "carrieres/promotion-2e-grade", to: "carrieres#new_promotion",         as: :new_carriere_promotion
   get  "carrieres/ide-vers-iade",      to: "carrieres#new_reclassement_ide",  as: :new_carriere_reclassement_ide
   get  "carrieres/as-vers-ide",        to: "carrieres#new_reclassement_as",   as: :new_carriere_reclassement_as

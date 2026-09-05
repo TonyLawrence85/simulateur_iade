@@ -1,0 +1,57 @@
+<% content_for :title, "Admin · Simulation ##{@simulation.id}" %>
+
+<div class="sim-app">
+  <div class="sim-header">
+    <%= link_to "← Toutes les simulations", admin_simulations_path, class: "btn btn--secondary btn--sm" %>
+    <h1 class="sim-title" style="margin-top: 1rem">Simulation #<%= @simulation.id %></h1>
+    <p class="sim-subtitle"><%= @simulation.user.email %> — créée le <%= @simulation.created_at.strftime("%d/%m/%Y %H:%M") %></p>
+  </div>
+
+  <div class="step-panel">
+    <h2 class="panel-title">Identité</h2>
+    <table class="diff-table">
+      <tbody>
+        <tr><td class="td-label">Utilisateur</td><td><%= @simulation.user.email %></td></tr>
+        <tr><td class="td-label">Mois de paie</td><td><%= @simulation.mois_paie %></td></tr>
+        <tr><td class="td-label">Profession</td><td><%= @simulation.profession %></td></tr>
+        <tr><td class="td-label">Statut</td><td><%= @simulation.statut %></td></tr>
+        <tr><td class="td-label">Grade</td><td><%= grade_label(@simulation.grade) %></td></tr>
+        <tr><td class="td-label">Échelon</td><td><%= @simulation.echelon %></td></tr>
+        <tr><td class="td-label">Quotité</td><td><%= @simulation.quotite %></td></tr>
+        <tr><td class="td-label">Département</td><td><%= @simulation.departement_code %></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="step-panel" style="margin-top: 1.5rem">
+    <h2 class="panel-title">Résultat simulé</h2>
+    <table class="diff-table">
+      <tbody>
+        <tr><td class="td-label">Brut total</td><td class="td-num"><%= number_to_currency(@simulation.result_brut_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td></tr>
+        <tr><td class="td-label">Cotisations</td><td class="td-num"><%= number_to_currency(@simulation.result_cotisations_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td></tr>
+        <tr><td class="td-label">Net avant PAS</td><td class="td-num"><%= number_to_currency(@simulation.result_net_avant_pas, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td></tr>
+        <tr><td class="td-label">Net payé</td><td class="td-num"><%= number_to_currency(@simulation.result_net_paye, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @simulation.real_brut_total || @simulation.real_net_paye %>
+    <div class="step-panel" style="margin-top: 1.5rem">
+      <h2 class="panel-title">Bulletin réel importé</h2>
+      <table class="diff-table">
+        <tbody>
+          <tr><td class="td-label">Brut réel</td><td class="td-num"><%= number_to_currency(@simulation.real_brut_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td></tr>
+          <tr><td class="td-label">Net réel</td><td class="td-num"><%= number_to_currency(@simulation.real_net_paye, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td></tr>
+          <% if @simulation.result_brut_total %>
+            <tr>
+              <td class="td-label">Écart brut</td>
+              <td class="td-num rk-negative">
+                <%= number_to_currency(@simulation.real_brut_total - @simulation.result_brut_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>

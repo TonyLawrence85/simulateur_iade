@@ -65,6 +65,11 @@
           <li class="nav-item">
             <%= link_to "+ Nouvelle simulation", new_simulation_path, class: "nav-link" %>
           </li>
+          <% if current_user.admin? %>
+            <li class="nav-item">
+              <%= link_to "Admin", admin_simulations_path, class: "nav-link" %>
+            </li>
+          <% end %>
         <% else %>
           <li class="nav-item">
             <%= link_to "Connexion", new_user_session_path, class: "nav-link" %>

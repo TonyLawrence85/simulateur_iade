@@ -1,0 +1,64 @@
+<% content_for :title, "Admin · Simulations" %>
+
+<div class="sim-app">
+  <div class="sim-header">
+    <h1 class="sim-title">Toutes les simulations</h1>
+    <p class="sim-subtitle"><%= @simulations.size %> simulation(s) enregistrée(s), tous utilisateurs confondus</p>
+  </div>
+
+  <% if @simulations.empty? %>
+    <div class="step-panel">
+      <div class="panel-body" style="text-align:center; padding: 3rem">
+        <p style="color: var(--ink-soft)">Aucune simulation pour l'instant.</p>
+      </div>
+    </div>
+  <% else %>
+    <div class="step-panel">
+      <table class="diff-table">
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Mois</th>
+            <th>Profession</th>
+            <th>Grade / Échelon</th>
+            <th class="num">Brut simulé</th>
+            <th class="num">Brut bulletin</th>
+            <th class="num">Écart</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @simulations.each do |sim| %>
+            <% ecart = sim.real_brut_total && sim.result_brut_total ? (sim.real_brut_total - sim.result_brut_total) : nil %>
+            <tr>
+              <td><%= sim.user.email %></td>
+              <td><%= I18n.l(Date.strptime(sim.mois_paie, "%Y-%m"), format: "%B %Y").capitalize %></td>
+              <td><%= sim.profession.to_s.upcase %></td>
+              <td><%= grade_label(sim.grade) %> — éch. <%= sim.echelon %></td>
+              <td class="td-num"><%= number_to_currency(sim.result_brut_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %></td>
+              <td class="td-num">
+                <% if sim.real_brut_total %>
+                  <%= number_to_currency(sim.real_brut_total, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+                <% else %>
+                  <span style="color: var(--ink-mute)">—</span>
+                <% end %>
+              </td>
+              <td class="td-num">
+                <% if ecart %>
+                  <span class="<%= ecart.abs >= 1 ? 'rk-negative' : 'rk-positive' %>">
+                    <%= number_to_currency(ecart, unit: "€", delimiter: " ", precision: 2, format: "%n %u") %>
+                  </span>
+                <% else %>
+                  <span style="color: var(--ink-mute)">—</span>
+                <% end %>
+              </td>
+              <td><%= sim.created_at.strftime("%d/%m/%Y %H:%M") %></td>
+              <td><%= link_to "Voir →", admin_simulation_path(sim), class: "btn btn--secondary btn--sm" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>

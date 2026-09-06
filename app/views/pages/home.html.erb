@@ -37,129 +37,248 @@
       </p>
     </div>
 
-    <%# Aperçu simulateur %>
+    <%# Comparateur interactif — bulletin reçu vs bulletin vérifié %>
     <div class="home-hero__preview">
-      <div class="home-preview-card">
-        <div class="home-preview-card__header">
-          <div class="home-preview-dot home-preview-dot--red"></div>
-          <div class="home-preview-dot home-preview-dot--amber"></div>
-          <div class="home-preview-dot home-preview-dot--green"></div>
-          <span class="home-preview-card__title">Résultat simulation — Juin 2026</span>
+      <div class="bp-compare" data-controller="bulletin-compare">
+
+        <div class="bp-compare__tabs" role="tablist">
+          <button type="button" class="bp-compare__tab"
+                  data-bulletin-compare-target="tabBefore"
+                  data-action="bulletin-compare#showBefore"
+                  role="tab" aria-selected="true">
+            📄 Bulletin reçu
+          </button>
+          <button type="button" class="bp-compare__tab"
+                  data-bulletin-compare-target="tabAfter"
+                  data-action="bulletin-compare#showAfter"
+                  role="tab" aria-selected="false">
+            ✓ Bulletin vérifié
+          </button>
         </div>
-        <div class="home-preview-card__body">
-          <div class="home-preview-kpis">
-            <div class="home-preview-kpi">
-              <span class="home-preview-kpi__label">Brut simulé</span>
-              <span class="home-preview-kpi__value">4 312,45 €</span>
+
+        <div class="bp-compare__stage">
+
+          <%# Bulletin reçu, avec anomalies %>
+          <div class="bp-payslip bp-payslip--before" data-bulletin-compare-target="before">
+            <div class="bp-payslip__header">
+              <div class="home-preview-dot home-preview-dot--red"></div>
+              <div class="home-preview-dot home-preview-dot--amber"></div>
+              <div class="home-preview-dot home-preview-dot--green"></div>
+              <span class="bp-payslip__title">Bulletin reçu — Juin 2026</span>
             </div>
-            <div class="home-preview-kpi home-preview-kpi--alert">
-              <span class="home-preview-kpi__label">Brut bulletin</span>
-              <span class="home-preview-kpi__value">4 188,61 €</span>
-            </div>
-            <div class="home-preview-kpi home-preview-kpi--danger">
-              <span class="home-preview-kpi__label">Écart détecté</span>
-              <span class="home-preview-kpi__value">− 123,84 €</span>
+            <div class="bp-payslip__body">
+              <div class="bp-row">
+                <span class="bp-row__label">Traitement indiciaire brut (TIB)</span>
+                <span class="bp-row__value">3 648,97 €</span>
+              </div>
+              <div class="bp-row bp-row--anomaly">
+                <span class="bp-row__label">NBI</span>
+                <span class="bp-row__value">0,00 €</span>
+              </div>
+              <div class="bp-row bp-row--anomaly">
+                <span class="bp-row__label">Indemnité de nuit (JMA)</span>
+                <span class="bp-row__value">275,64 €</span>
+              </div>
+              <div class="bp-row">
+                <span class="bp-row__label">Prime IADE</span>
+                <span class="bp-row__value">180,00 €</span>
+              </div>
+              <div class="bp-row">
+                <span class="bp-row__label">SFT</span>
+                <span class="bp-row__value">84,00 €</span>
+              </div>
+              <div class="bp-row bp-row--total">
+                <span class="bp-row__label">Total brut</span>
+                <span class="bp-row__value">4 188,61 €</span>
+              </div>
             </div>
           </div>
-          <div class="home-preview-anomaly">
-            <span class="home-preview-anomaly__icon">⚠</span>
-            <div>
-              <strong>2 anomalies détectées</strong><br>
-              <span>KB1 — NBI manquante · JMA — nuits sous-comptées</span>
+
+          <%# Bulletin vérifié, avec les anomalies corrigées %>
+          <div class="bp-payslip bp-payslip--after" data-bulletin-compare-target="after" hidden>
+            <div class="bp-payslip__header bp-payslip__header--ok">
+              <div class="home-preview-dot home-preview-dot--red"></div>
+              <div class="home-preview-dot home-preview-dot--amber"></div>
+              <div class="home-preview-dot home-preview-dot--green"></div>
+              <span class="bp-payslip__title">Bulletin vérifié — Juin 2026</span>
+            </div>
+            <div class="bp-payslip__body">
+              <div class="bp-row">
+                <span class="bp-row__label">Traitement indiciaire brut (TIB)</span>
+                <span class="bp-row__value">3 648,97 €</span>
+              </div>
+              <div class="bp-row bp-row--fixed">
+                <span class="bp-row__label">NBI</span>
+                <span class="bp-row__value">89,64 € <em>+89,64</em></span>
+              </div>
+              <div class="bp-row bp-row--fixed">
+                <span class="bp-row__label">Indemnité de nuit (JMA)</span>
+                <span class="bp-row__value">309,84 € <em>+34,20</em></span>
+              </div>
+              <div class="bp-row">
+                <span class="bp-row__label">Prime IADE</span>
+                <span class="bp-row__value">180,00 €</span>
+              </div>
+              <div class="bp-row">
+                <span class="bp-row__label">SFT</span>
+                <span class="bp-row__value">84,00 €</span>
+              </div>
+              <div class="bp-row bp-row--total bp-row--total-ok">
+                <span class="bp-row__label">Total brut</span>
+                <span class="bp-row__value">4 312,45 €</span>
+              </div>
             </div>
           </div>
+
+        </div>
+      </div>
+
+      <div class="home-preview-anomaly">
+        <span class="home-preview-anomaly__icon">⚠</span>
+        <div>
+          <strong>2 anomalies détectées · − 123,84 € / mois</strong><br>
+          <span>NBI manquante · nuits sous-comptées</span>
         </div>
       </div>
     </div>
   </section>
 
-  <%# ── 3 ARGUMENTS ───────────────────────────────────────── %>
-  <section class="home-args">
+  <div data-controller="reveal">
 
-    <div class="home-arg">
-      <%# Icône calcul SVG %>
-      <div class="home-arg__icon">
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="48" height="48" rx="12" fill="#e8f0fb"/>
-          <rect x="12" y="10" width="24" height="28" rx="4" fill="none" stroke="#003D8F" stroke-width="2"/>
-          <rect x="16" y="16" width="16" height="3" rx="1.5" fill="#003D8F" opacity="0.4"/>
-          <rect x="16" y="22" width="10" height="3" rx="1.5" fill="#003D8F" opacity="0.4"/>
-          <rect x="16" y="28" width="13" height="3" rx="1.5" fill="#003D8F" opacity="0.4"/>
-          <text x="34" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#003D8F">€</text>
-          <circle cx="34" cy="14" r="7" fill="#276749"/>
-          <polyline points="30,14 33,17 38,11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+    <%# ── BANDEAU DE CONFIANCE ────────────────────────────── %>
+    <section class="home-trust reveal-item" data-reveal-target="item">
+      <div class="home-trust__item">
+        <span class="home-trust__icon">✓</span> 100&nbsp;% gratuit, sans engagement
       </div>
-      <h2 class="home-arg__title">Calcul exact selon votre situation</h2>
-      <p class="home-arg__text">
-        Grade, échelon, NBI, quotité, indemnités de résidence, SFT — chaque
-        élément de votre rémunération est calculé selon les grilles indiciaires
-        officielles AP-HP, mises à jour automatiquement.
-      </p>
-    </div>
-
-    <div class="home-arg">
-      <%# Icône bulletin + stéthoscope SVG %>
-      <div class="home-arg__icon">
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="48" height="48" rx="12" fill="#e8f0fb"/>
-          <!-- Bulletin -->
-          <rect x="14" y="8" width="22" height="28" rx="4" fill="none" stroke="#003D8F" stroke-width="2"/>
-          <rect x="18" y="15" width="14" height="2" rx="1" fill="#003D8F" opacity="0.35"/>
-          <rect x="18" y="20" width="10" height="2" rx="1" fill="#003D8F" opacity="0.35"/>
-          <rect x="18" y="25" width="12" height="2" rx="1" fill="#003D8F" opacity="0.35"/>
-          <!-- Stéthoscope simplifié -->
-          <path d="M10 18 Q10 28 16 31 Q22 34 24 40" fill="none" stroke="#003D8F" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="24" cy="42" r="3" fill="#003D8F"/>
-          <!-- Checkmark upload -->
-          <circle cx="36" cy="14" r="7" fill="#276749"/>
-          <polyline points="32,14 35,17 40,11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+      <div class="home-trust__item">
+        <span class="home-trust__icon">🔒</span> Aucune donnée transmise à l'AP-HP
       </div>
-      <h2 class="home-arg__title">Importez votre bulletin en un clic</h2>
-      <p class="home-arg__text">
-        Déposez votre bulletin PDF ou prenez-en une photo. Notre moteur OCR
-        extrait automatiquement les montants ligne par ligne et les compare
-        à la simulation — sans ressaisie manuelle.
-      </p>
-    </div>
-
-    <div class="home-arg">
-      <%# Icône bouclier + croix SVG %>
-      <div class="home-arg__icon">
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="48" height="48" rx="12" fill="#e8f0fb"/>
-          <!-- Bouclier -->
-          <path d="M24 8 L38 13 L38 26 Q38 36 24 42 Q10 36 10 26 L10 13 Z" fill="none" stroke="#003D8F" stroke-width="2"/>
-          <!-- Croix médicale symétrique dans bouclier -->
-          <rect x="18" y="22" width="12" height="5" rx="1.5" fill="#003D8F"/>
-          <rect x="21" y="19" width="5" height="11" rx="1.5" fill="#003D8F"/>
-          <!-- Point vert validation -->
-          <circle cx="36" cy="36" r="7" fill="#276749"/>
-          <polyline points="32,36 35,39 40,33" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+      <div class="home-trust__item">
+        <span class="home-trust__icon">📐</span> Grilles indiciaires 2026 à jour
       </div>
-      <h2 class="home-arg__title">Un outil à vocation sociale</h2>
-      <p class="home-arg__text">
-        Vérifie Paie Soignant est né d'un constat simple : trop de soignants
-        AP-HP sont sous-payés sans le savoir. Cet outil gratuit vous donne
-        les moyens de défendre votre rémunération, chiffres à l'appui.
+    </section>
+
+    <%# ── 3 ARGUMENTS ───────────────────────────────────────── %>
+    <section class="home-args">
+
+      <div class="home-arg reveal-item" data-reveal-target="item">
+        <%# Icône calcul SVG %>
+        <div class="home-arg__icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="#e8f0fb"/>
+            <rect x="12" y="10" width="24" height="28" rx="4" fill="none" stroke="#003D8F" stroke-width="2"/>
+            <rect x="16" y="16" width="16" height="3" rx="1.5" fill="#003D8F" opacity="0.4"/>
+            <rect x="16" y="22" width="10" height="3" rx="1.5" fill="#003D8F" opacity="0.4"/>
+            <rect x="16" y="28" width="13" height="3" rx="1.5" fill="#003D8F" opacity="0.4"/>
+            <text x="34" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#003D8F">€</text>
+            <circle cx="34" cy="14" r="7" fill="#276749"/>
+            <polyline points="30,14 33,17 38,11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="home-arg__title">Calcul exact selon votre situation</h2>
+        <p class="home-arg__text">
+          Grade, échelon, NBI, quotité, indemnités de résidence, SFT — chaque
+          élément de votre rémunération est calculé selon les grilles indiciaires
+          officielles AP-HP, mises à jour automatiquement.
+        </p>
+      </div>
+
+      <div class="home-arg reveal-item" data-reveal-target="item">
+        <%# Icône bulletin + stéthoscope SVG %>
+        <div class="home-arg__icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="#e8f0fb"/>
+            <!-- Bulletin -->
+            <rect x="14" y="8" width="22" height="28" rx="4" fill="none" stroke="#003D8F" stroke-width="2"/>
+            <rect x="18" y="15" width="14" height="2" rx="1" fill="#003D8F" opacity="0.35"/>
+            <rect x="18" y="20" width="10" height="2" rx="1" fill="#003D8F" opacity="0.35"/>
+            <rect x="18" y="25" width="12" height="2" rx="1" fill="#003D8F" opacity="0.35"/>
+            <!-- Stéthoscope simplifié -->
+            <path d="M10 18 Q10 28 16 31 Q22 34 24 40" fill="none" stroke="#003D8F" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="24" cy="42" r="3" fill="#003D8F"/>
+            <!-- Checkmark upload -->
+            <circle cx="36" cy="14" r="7" fill="#276749"/>
+            <polyline points="32,14 35,17 40,11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="home-arg__title">Importez votre bulletin en un clic</h2>
+        <p class="home-arg__text">
+          Déposez votre bulletin PDF ou prenez-en une photo. Notre moteur OCR
+          extrait automatiquement les montants ligne par ligne et les compare
+          à la simulation — sans ressaisie manuelle.
+        </p>
+      </div>
+
+      <div class="home-arg reveal-item" data-reveal-target="item">
+        <%# Icône bouclier + croix SVG %>
+        <div class="home-arg__icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="#e8f0fb"/>
+            <!-- Bouclier -->
+            <path d="M24 8 L38 13 L38 26 Q38 36 24 42 Q10 36 10 26 L10 13 Z" fill="none" stroke="#003D8F" stroke-width="2"/>
+            <!-- Croix médicale symétrique dans bouclier -->
+            <rect x="18" y="22" width="12" height="5" rx="1.5" fill="#003D8F"/>
+            <rect x="21" y="19" width="5" height="11" rx="1.5" fill="#003D8F"/>
+            <!-- Point vert validation -->
+            <circle cx="36" cy="36" r="7" fill="#276749"/>
+            <polyline points="32,36 35,39 40,33" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="home-arg__title">Un outil à vocation sociale</h2>
+        <p class="home-arg__text">
+          Vérifie Paie Soignant est né d'un constat simple : trop de soignants
+          AP-HP sont sous-payés sans le savoir. Cet outil gratuit vous donne
+          les moyens de défendre votre rémunération, chiffres à l'appui.
+        </p>
+      </div>
+
+    </section>
+
+    <%# ── USP : SANS vs AVEC ──────────────────────────────── %>
+    <section class="home-usp">
+      <h2 class="home-usp__title reveal-item" data-reveal-target="item">
+        Pourquoi vérifier votre bulletin ?
+      </h2>
+      <p class="home-usp__sub reveal-item" data-reveal-target="item">
+        Un oubli de NBI ou une nuit mal décomptée, c'est souvent plus de
+        100&nbsp;€ par mois qui vous échappent — invisibles si personne ne vérifie.
       </p>
-    </div>
 
-  </section>
+      <div class="home-usp__grid">
+        <div class="home-usp-card home-usp-card--without reveal-item" data-reveal-target="item">
+          <h3 class="home-usp-card__title">Sans vérification</h3>
+          <ul class="home-usp-card__list">
+            <li>Vous faites confiance au logiciel de paie de l'AP-HP, sans moyen de le vérifier</li>
+            <li>Les erreurs s'accumulent mois après mois, sans que personne ne s'en aperçoive</li>
+            <li>Réclamer un rappel de solde suppose des preuves chiffrées que vous n'avez pas</li>
+          </ul>
+        </div>
 
-  <%# ── CTA FINAL ─────────────────────────────────────────── %>
-  <section class="home-cta">
-    <h2 class="home-cta__title">
-      Prêt à vérifier votre fiche de paie ?
-    </h2>
-    <p class="home-cta__sub">
-      Créez votre compte en 30 secondes — aucune carte bancaire requise.
-    </p>
-    <%= link_to "Commencer gratuitement →",
-        new_user_registration_path,
-        class: "home-btn home-btn--primary home-btn--lg" %>
-  </section>
+        <div class="home-usp-card home-usp-card--with reveal-item" data-reveal-target="item">
+          <span class="home-usp-card__badge">Vérifie Paie Soignant</span>
+          <h3 class="home-usp-card__title">Avec la vérification</h3>
+          <ul class="home-usp-card__list">
+            <li>Un calcul théorique fondé sur les grilles indiciaires officielles AP-HP</li>
+            <li>Une comparaison ligne à ligne avec votre bulletin réel, anomalies mises en évidence</li>
+            <li>Un écart chiffré et détaillé, prêt à être présenté à votre service RH</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <%# ── CTA FINAL ─────────────────────────────────────────── %>
+    <section class="home-cta reveal-item" data-reveal-target="item">
+      <h2 class="home-cta__title">
+        Prêt à vérifier votre fiche de paie ?
+      </h2>
+      <p class="home-cta__sub">
+        Créez votre compte en 30 secondes — aucune carte bancaire requise.
+      </p>
+      <%= link_to "Commencer gratuitement →",
+          new_user_registration_path,
+          class: "home-btn home-btn--primary home-btn--lg" %>
+    </section>
+
+  </div>
 
 </div>
